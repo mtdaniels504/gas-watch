@@ -1946,14 +1946,13 @@
 
                 
                 <!-- extSearchBar -->
-                <form onsubmit="event.preventDefault(); return false;">
-                    <div class="search">
-                        <input class="userInput" id="searchBar" placeholder="Search Zip Codes and Cities Here!"
-                            data-function="searchFunction" data-self="searchBar" data-searchListener="true"
-                        >
-                        <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
-                    </div>
-                </form>
+                <div class="search">
+                    <input class="userInput" id="searchBar" placeholder="Search Zip Codes and Cities Here!"
+                        data-function="searchFunction" data-self="searchBar" data-searchListener="true"
+                    >
+                    <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
+                </div>
+
 
                 <!-- NavIcons (left(A)) -->
                 <div class="IconAs">
@@ -2769,272 +2768,448 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
         <!-- Include your custom JavaScript code -->
-        <script>
+<script>
 
-            var isSearching = false;
+let isSearching = false;
+let initialLoadTriggered = false;
+let markers = [];
 
-            // 1. Initialize map container with fallback view (Denver)
-            var map = L.map('map').setView([39.7392, -104.9903], 13);
-            var markers = []; 
+/* ==========================================================================
+   MAP INIT
+========================================================================== */
 
-            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: 'Map data &copy; Google'
-            }).addTo(map);
+const map = L.map('map', {
+    zoomControl: true,
+    tap: false // iOS Safari touch fix
+}).setView([39.7392, -104.9903], 13);
 
-// NEW CONTROL VARIABLE: Stops double-firing
-var initialLoadTriggered = false;
+L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: 'Map data © Google'
+}).addTo(map);
 
-function initApp() {
-    if (initialLoadTriggered) return;
+/* ==========================================================================
+   FETCH WITH TIMEOUT
+========================================================================== */
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function (position) {
-                if (initialLoadTriggered) return;
-                initialLoadTriggered = true;
+async function fetchWithTimeout(resource, options = {}) {
+    const timeout = options.timeout || 15000;
 
-                var userLat = position.coords.latitude;
-                var userLon = position.coords.longitude;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
 
-                map.setView([userLat, userLon], 13);
+    try {
+        const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+        });
 
-                var startingMarker = L.marker([userLat, userLon], { 
-                    icon: L.divIcon({ className: 'black-marker-icon' }) 
-                }).addTo(map);
+        clearTimeout(id);
+        return response;
 
-                startingMarker.bindPopup("<b>You are here</b>").openPopup();
-                
-                // Clear out to fetch user coords
-                getPricesNow("Current Location", userLat, userLon);
-            },
-            function (error) {
-                console.log("Geolocation failed or denied. Using Denver fallback.");
-                loadDenverFallback();
-            },
-            { timeout: 5000 } // Don't let iOS hang forever waiting for a choice
-        );
-    } else {
-        loadDenverFallback();
+    } catch (err) {
+        clearTimeout(id);
+        throw err;
     }
 }
 
-function loadDenverFallback() {
+/* ==========================================================================
+   APP INIT
+========================================================================== */
+
+function initApp() {
+
     if (initialLoadTriggered) return;
-    initialLoadTriggered = true;
 
-    map.setView([39.7392, -104.9903], 13);
-    var startingMarker = L.marker([39.7392, -104.9903], { 
-        icon: L.divIcon({ className: 'black-marker-icon' }) 
-    }).addTo(map);
+    // Mobile geolocation requires HTTPS
+    if (location.protocol !== 'https:') {
+        console.warn("HTTPS required for geolocation.");
+        loadDenverFallback();
+        return;
+    }
 
-    startingMarker.bindPopup("<b>Denver Fallback</b>").openPopup();
+    if (!navigator.geolocation) {
+        loadDenverFallback();
+        return;
+    }
 
-    getPricesNow("80204", 39.7392, -104.9903);
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+            if (initialLoadTriggered) return;
+            initialLoadTriggered = true;
+
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+
+            moveMapSafely(userLat, userLon);
+
+            const startingMarker = L.marker([userLat, userLon], {
+                icon: L.divIcon({
+                    className: 'black-marker-icon'
+                })
+            }).addTo(map);
+
+            startingMarker
+                .bindPopup("<b>You are here</b>")
+                .openPopup();
+
+            getPricesNow("Current Location", userLat, userLon);
+        },
+
+        function(error) {
+            console.warn("Geolocation failed:", error);
+            loadDenverFallback();
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        }
+    );
 }
 
-// Start the sequence exactly once
-initApp();
+/* ==========================================================================
+   FALLBACK
+========================================================================== */
 
-            /* ==========================================================================
-            APIFY REAL GAS PRICE ENGINE OVERLAY
-            ========================================================================== */
-function getPricesNow(searchQuery, targetLat, targetLon) {
-    console.log("=== EXECUTING SECURE BACKEND FETCH ENGINE ===");
+function loadDenverFallback() {
 
-    var searchField = document.getElementById('searchBar');
-    if (searchField) searchField.placeholder = "Scraping live gas prices (takes ~10s)...";
+    if (initialLoadTriggered) return;
 
-    // Update this to your live production server URL when you deploy online
-    const BACKEND_URL = "https://gas-watch-server.onrender.com/api/gas-prices";
+    initialLoadTriggered = true;
 
-    // Securely request data from your private Node backend gateway
-    fetch(BACKEND_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ search: searchQuery }) 
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok via secure backend.");
-        return response.json();
-    })
-    .then(datasetItems => {
-        if (searchField) searchField.placeholder = "Search Extended Section Here!";
-        
+    const lat = 39.7392;
+    const lon = -104.9903;
+
+    moveMapSafely(lat, lon);
+
+    const marker = L.marker([lat, lon], {
+        icon: L.divIcon({
+            className: 'black-marker-icon'
+        })
+    }).addTo(map);
+
+    marker
+        .bindPopup("<b>Denver Fallback</b>")
+        .openPopup();
+
+    getPricesNow("80204", lat, lon);
+}
+
+/* ==========================================================================
+   SAFE MAP MOVEMENT
+========================================================================== */
+
+function moveMapSafely(lat, lon) {
+
+    setTimeout(() => {
+
+        map.setView([lat, lon], 13);
+
+        requestAnimationFrame(() => {
+            map.invalidateSize(true);
+        });
+
+    }, 400);
+}
+
+/* ==========================================================================
+   CLEAR MARKERS
+========================================================================== */
+
+function clearMarkers() {
+
+    markers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+
+    markers = [];
+}
+
+/* ==========================================================================
+   GAS PRICE FETCH
+========================================================================== */
+
+async function getPricesNow(searchQuery, targetLat, targetLon) {
+
+    if (isSearching) return;
+
+    isSearching = true;
+
+    console.log("Fetching gas prices...");
+
+    const searchField = document.getElementById('searchBar');
+
+    if (searchField) {
+        searchField.placeholder = "Loading gas prices...";
+    }
+
+    const BACKEND_URL =
+        "https://gas-watch-server.onrender.com/api/gas-prices";
+
+    try {
+
+        const response = await fetchWithTimeout(BACKEND_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                search: searchQuery
+            }),
+            timeout: 20000
+        });
+
+        if (!response.ok) {
+            throw new Error("Backend request failed.");
+        }
+
+        const datasetItems = await response.json();
+
+        if (searchField) {
+            searchField.placeholder =
+                "Search city or ZIP code...";
+        }
+
         if (datasetItems.error) {
-            alert("Error: " + datasetItems.error);
-            return;
+            throw new Error(datasetItems.error);
         }
 
         if (!datasetItems || datasetItems.length === 0) {
-            alert("No gas stations found in this area.");
+            alert("No gas stations found.");
             return;
         }
 
-        // Clear previous markers safely
-        for (var i = 0; i < markers.length; i++) {
-            map.removeLayer(markers[i]);
-        }
-        markers = [];
+        clearMarkers();
 
         datasetItems.forEach((station, index) => {
-            // Leaflet map placement calculation logic 
-            var angle = index * (360 / datasetItems.length) * (Math.PI / 180);
-            var radiusOffset = 0.08 * Math.random(); 
-            
-            var lat = targetLat + (Math.sin(angle) * radiusOffset);
-            var lon = targetLon + (Math.cos(angle) * radiusOffset);
-            
-            var currentPrice = parseFloat(station.price_cash || station.price_credit || 3.49);
-            var stationName = station.name || "Gas Station";
-            var streetAddress = station.address_line1 || "Address Unlisted";
-            var locality = station.address_locality || "";
 
-            var priceIcon = L.divIcon({
+            const angle =
+                index * (360 / datasetItems.length) * (Math.PI / 180);
+
+            const radiusOffset =
+                0.02 + (Math.random() * 0.03);
+
+            const lat =
+                targetLat + (Math.sin(angle) * radiusOffset);
+
+            const lon =
+                targetLon + (Math.cos(angle) * radiusOffset);
+
+            const currentPrice =
+                parseFloat(
+                    station.price_cash ||
+                    station.price_credit ||
+                    3.49
+                );
+
+            const stationName =
+                station.name || "Gas Station";
+
+            const streetAddress =
+                station.address_line1 || "Address unavailable";
+
+            const locality =
+                station.address_locality || "";
+
+            const priceIcon = L.divIcon({
                 className: 'gas-price-marker',
-                html: "$" + currentPrice.toFixed(2)
+                html: `$${currentPrice.toFixed(2)}`
             });
 
-            var marker = L.marker([lat, lon], { icon: priceIcon });
+            const marker = L.marker([lat, lon], {
+                icon: priceIcon
+            });
 
             marker.bindPopup(`
                 <div class="custom-popup">
                     <h3>${stationName}</h3>
                     <p>${streetAddress}, ${locality}</p>
-                    <div class="price-tag">Regular: $${currentPrice.toFixed(2)}</div>
+                    <div class="price-tag">
+                        Regular: $${currentPrice.toFixed(2)}
+                    </div>
                 </div>
             `);
 
             marker.addTo(map);
+
             markers.push(marker);
         });
 
-    })
-    .catch(error => {
-        if (searchField) searchField.placeholder = "Search Extended Section Here!";
-        alert("Error fetching gas prices: " + error.message);
-    });
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Error fetching gas prices.");
+
+    } finally {
+
+        isSearching = false;
+
+        if (searchField) {
+            searchField.placeholder =
+                "Search city or ZIP code...";
+        }
+    }
 }
 
-function searchFunction() {
-    searchLocation();
-}
-function searchByZipcode(zipcode) {
-    var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
-    fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) throw new Error('Location not found');
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.places && data.places[0]) {
-                var latitude = parseFloat(data.places[0]["latitude"]);
-                var longitude = parseFloat(data.places[0]["longitude"]);
-                
-                // MOBILE FIX 1: Wrap map movement in a small timeout.
-                // This gives iOS Safari time to slide down the virtual keyboard before Leaflet draws layout changes.
-                setTimeout(function() {
-                    map.setView([latitude, longitude], 13);
-                    // MOBILE FIX 2: Forces Leaflet to recalculate container dimensions after the keyboard closes
-                    map.invalidateSize();
-                }, 300);
-                
-                getPricesNow(zipcode, latitude, longitude);
-            } else {
-                throw new Error('Invalid location data match');
-            }
-        })
-        .catch(error => alert("Zip Search: " + error.message));
+/* ==========================================================================
+   ZIP SEARCH
+========================================================================== */
+
+async function searchByZipcode(zipcode) {
+
+    try {
+
+        const response =
+            await fetchWithTimeout(
+                `https://api.zippopotam.us/us/${zipcode}`
+            );
+
+        if (!response.ok) {
+            throw new Error("ZIP code not found.");
+        }
+
+        const data = await response.json();
+
+        const latitude =
+            parseFloat(data.places[0]["latitude"]);
+
+        const longitude =
+            parseFloat(data.places[0]["longitude"]);
+
+        moveMapSafely(latitude, longitude);
+
+        getPricesNow(zipcode, latitude, longitude);
+
+    } catch (error) {
+
+        alert(error.message);
+    }
 }
 
-function searchByPlaceName(placeName) {
-    var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
-    
-    fetch(nominatimUrl, {
-        method: "GET",
-        headers: {
-            'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
+/* ==========================================================================
+   PLACE SEARCH
+========================================================================== */
+
+async function searchByPlaceName(placeName) {
+
+    try {
+
+        const url =
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeName)}&format=json&limit=1`;
+
+        const response =
+            await fetchWithTimeout(url);
+
+        if (!response.ok) {
+            throw new Error("Location search failed.");
         }
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Address or Place not found');
-        return response.json();
-    })
-    .then(data => {
-        if (data && data.length > 0) {
-            var latitude = parseFloat(data[0].lat);
-            var longitude = parseFloat(data[0].lon);
-            
-            // MOBILE FIX 1: Wrap map movement in a small timeout.
-            setTimeout(function() {
-                map.setView([latitude, longitude], 13);
-                map.invalidateSize();
-            }, 300);
-            
-            getPricesNow(placeName, latitude, longitude);
-        } else {
-            alert("Location not found.");
+
+        const data = await response.json();
+
+        if (!data.length) {
+            throw new Error("Location not found.");
         }
-    })
-    .catch(error => {
-        console.error("iOS Fetch Diagnostics:", error);
-        alert("Search failed: " + error.message);
-    });
+
+        const latitude = parseFloat(data[0].lat);
+        const longitude = parseFloat(data[0].lon);
+
+        moveMapSafely(latitude, longitude);
+
+        getPricesNow(placeName, latitude, longitude);
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(error.message);
+    }
 }
+
+/* ==========================================================================
+   SEARCH HANDLER
+========================================================================== */
 
 function searchLocation() {
-    for (var i = 0; i < markers.length; i++) {
-        map.removeLayer(markers[i]);
-    }
-    markers = [];
 
-    var searchBarEl = document.getElementById('searchBar');
-    if (!searchBarEl) return;
+    if (isSearching) return;
 
-    var combinedInput = searchBarEl.value.trim();
-    if (!combinedInput) return;
+    const searchBar =
+        document.getElementById('searchBar');
 
-    // MOBILE FIX 3: Programmatically dismisses the virtual keyboard instantly.
-    // Without this, the keyboard remains up, causing Leaflet coordinates to offset out of view.
-    searchBarEl.blur(); 
+    if (!searchBar) return;
 
-    if (/^\d{5}$/.test(combinedInput)) {
-        searchByZipcode(combinedInput);
+    const input =
+        searchBar.value.trim();
+
+    if (!input) return;
+
+    // Dismiss mobile keyboard
+    searchBar.blur();
+
+    clearMarkers();
+
+    if (/^\d{5}$/.test(input)) {
+
+        searchByZipcode(input);
+
     } else {
-        searchByPlaceName(combinedInput);
+
+        searchByPlaceName(input);
     }
 }
 
+/* ==========================================================================
+   DOM READY
+========================================================================== */
+
 document.addEventListener("DOMContentLoaded", function() {
-    var bar = document.getElementById("searchBar");
+
+    const bar =
+        document.getElementById("searchBar");
+
     if (bar) {
-        bar.addEventListener("keypress", function(event) {
-            // MOBILE FIX 4: Intercepts both desktop Enter and native iOS "Go/Search/Return" keyboard actions.
-            if (event.key === "Enter" || event.keyCode === 13) {
-                // MOBILE FIX 5: Crucial step. Stops iOS from triggering default form/input processes which kill fetch requests mid-transit.
-                event.preventDefault(); 
+
+        // iOS-safe Enter handling
+        bar.addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
                 searchLocation();
             }
         });
     }
-    
-    var icon = document.getElementById("extSearchIcon");
-    if (icon) {
-        // MOBILE FIX 6: Explicitly intercept touchstart to prevent iOS from adding a 300ms delay or ignoring tap altogether.
-        var handleTouchSearch = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            searchLocation();
-        };
 
-        icon.addEventListener("click", searchLocation);
-        icon.addEventListener("touchstart", handleTouchSearch, { passive: false });
+    const icon =
+        document.getElementById("extSearchIcon");
+
+    if (icon) {
+
+        // Universal mobile-safe handler
+        icon.addEventListener("pointerup", function(event) {
+
+            event.preventDefault();
+
+            searchLocation();
+        });
     }
+
+    // Allow viewport to stabilize before Leaflet sizing
+    setTimeout(() => {
+
+        map.invalidateSize(true);
+
+        initApp();
+
+    }, 500);
 });
 
-
-        </script>
+</script>
     </body>
 </html>
