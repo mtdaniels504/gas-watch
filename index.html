@@ -2771,7 +2771,6 @@
         <script>
 
             var isSearching = false;
-            var mobileMoveTimeout = null; // FIXED: Tracks finger movements to prevent crashing mobile devices
 
             // 1. Initialize map container with fallback view (Denver)
             var map = L.map('map').setView([39.7392, -104.9903], 13);
@@ -2787,13 +2786,17 @@
                     var userLat = position.coords.latitude;
                     var userLon = position.coords.longitude;
 
+                    // Move map to user location
                     map.setView([userLat, userLon], 13);
 
+                    // Add starting marker at user location
                     var startingMarker = L.marker([userLat, userLon], { 
                         icon: L.divIcon({ className: 'black-marker-icon' }) 
                     }).addTo(map);
 
                     startingMarker.bindPopup("<b>You are here</b>").openPopup();
+
+                    // AUTOMATIC PULL ON PAGE LOAD: Fires the scraper instantly using your physical GPS coordinates
                     getPricesNow("Current Location", userLat, userLon);
                 },
                 function (error) {
@@ -2807,94 +2810,96 @@
                 var startingMarker = L.marker([39.7392, -104.9903], { 
                     icon: L.divIcon({ className: 'black-marker-icon' }) 
                 }).addTo(map);
+
+                // AUTOMATIC FALLBACK PULL: Scrapes Denver gas options automatically if geolocation fails
                 getPricesNow("80204", 39.7392, -104.9903);
             }
 
             /* ==========================================================================
             APIFY REAL GAS PRICE ENGINE OVERLAY
             ========================================================================== */
-            function getPricesNow(searchQuery, targetLat, targetLon) {
-                console.log("=== EXECUTING SECURE BACKEND FETCH ENGINE ===");
+function getPricesNow(searchQuery, targetLat, targetLon) {
+    console.log("=== EXECUTING SECURE BACKEND FETCH ENGINE ===");
 
-                var searchField = document.getElementById('searchBar');
-                if (searchField) searchField.placeholder = "Scraping live gas prices (takes ~10s)...";
+    var searchField = document.getElementById('searchBar');
+    if (searchField) searchField.placeholder = "Scraping live gas prices (takes ~10s)...";
 
-                // Update this to your live production server URL when you deploy online
-                const BACKEND_URL = "https://gas-watch-server.onrender.com/api/gas-prices";
+    // Update this to your live production server URL when you deploy online
+    const BACKEND_URL = "https://gas-watch-server.onrender.com/api/gas-prices";
 
-                // Securely request data from your private Node backend gateway
-                fetch(BACKEND_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ search: searchQuery }) 
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error("Network response was not ok via secure backend.");
-                    return response.json();
-                })
-                .then(datasetItems => {
-                    if (searchField) searchField.placeholder = "Search Extended Section Here!";
-                    
-                    if (datasetItems.error) {
-                        alert("Error: " + datasetItems.error);
-                        return;
-                    }
+    // Securely request data from your private Node backend gateway
+    fetch(BACKEND_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ search: searchQuery }) 
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok via secure backend.");
+        return response.json();
+    })
+    .then(datasetItems => {
+        if (searchField) searchField.placeholder = "Search Extended Section Here!";
+        
+        if (datasetItems.error) {
+            alert("Error: " + datasetItems.error);
+            return;
+        }
 
-                    if (!datasetItems || datasetItems.length === 0) {
-                        alert("No gas stations found in this area.");
-                        return;
-                    }
+        if (!datasetItems || datasetItems.length === 0) {
+            alert("No gas stations found in this area.");
+            return;
+        }
 
-                    // Clear previous markers safely
-                    for (var i = 0; i < markers.length; i++) {
-                        map.removeLayer(markers[i]);
-                    }
-                    markers = [];
+        // Clear previous markers safely
+        for (var i = 0; i < markers.length; i++) {
+            map.removeLayer(markers[i]);
+        }
+        markers = [];
 
-                    datasetItems.forEach((station, index) => {
-                        // Leaflet map placement calculation logic 
-                        var angle = index * (360 / datasetItems.length) * (Math.PI / 180);
-                        var radiusOffset = 0.08 * Math.random(); 
-                        
-                        var lat = targetLat + (Math.sin(angle) * radiusOffset);
-                        var lon = targetLon + (Math.cos(angle) * radiusOffset);
-                        
-                        var currentPrice = parseFloat(station.price_cash || station.price_credit || 3.49);
-                        var stationName = station.name || "Gas Station";
-                        var streetAddress = station.address_line1 || "Address Unlisted";
-                        var locality = station.address_locality || "";
+        datasetItems.forEach((station, index) => {
+            // Leaflet map placement calculation logic 
+            var angle = index * (360 / datasetItems.length) * (Math.PI / 180);
+            var radiusOffset = 0.08 * Math.random(); 
+            
+            var lat = targetLat + (Math.sin(angle) * radiusOffset);
+            var lon = targetLon + (Math.cos(angle) * radiusOffset);
+            
+            var currentPrice = parseFloat(station.price_cash || station.price_credit || 3.49);
+            var stationName = station.name || "Gas Station";
+            var streetAddress = station.address_line1 || "Address Unlisted";
+            var locality = station.address_locality || "";
 
-                        var priceIcon = L.divIcon({
-                            className: 'gas-price-marker',
-                            html: "$" + currentPrice.toFixed(2)
-                        });
+            var priceIcon = L.divIcon({
+                className: 'gas-price-marker',
+                html: "$" + currentPrice.toFixed(2)
+            });
 
-                        var marker = L.marker([lat, lon], { icon: priceIcon });
+            var marker = L.marker([lat, lon], { icon: priceIcon });
 
-                        marker.bindPopup(`
-                            <div class="custom-popup">
-                                <h3>${stationName}</h3>
-                                <p>${streetAddress}, ${locality}</p>
-                                <div class="price-tag">Regular: $${currentPrice.toFixed(2)}</div>
-                            </div>
-                        `);
+            marker.bindPopup(`
+                <div class="custom-popup">
+                    <h3>${stationName}</h3>
+                    <p>${streetAddress}, ${locality}</p>
+                    <div class="price-tag">Regular: $${currentPrice.toFixed(2)}</div>
+                </div>
+            `);
 
-                        marker.addTo(map);
-                        markers.push(marker);
-                    });
+            marker.addTo(map);
+            markers.push(marker);
+        });
 
-                })
-                .catch(error => {
-                    if (searchField) searchField.placeholder = "Search Extended Section Here!";
-                    alert("Error fetching gas prices: " + error.message);
-                });
-            }
+    })
+    .catch(error => {
+        if (searchField) searchField.placeholder = "Search Extended Section Here!";
+        alert("Error fetching gas prices: " + error.message);
+    });
+}
 
-            function searchFunction() {
-                searchLocation();
-            }
+function searchFunction() {
+    searchLocation();
+}
 
             function searchByZipcode(zipcode) {
                 var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
@@ -2904,14 +2909,17 @@
                         return response.json();
                     })
                     .then(data => {
+                        // FIXED: Uses correct string bracket properties for safety
                         var latitude = parseFloat(data.places[0]["latitude"]);
                         var longitude = parseFloat(data.places[0]["longitude"]);
+                        
                         getPricesNow(zipcode, latitude, longitude);
                     })
                     .catch(error => alert(error.message));
             }
 
             function searchByPlaceName(placeName) {
+                // FIXED: Directs request to the dedicated data sub-engine
                 var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
                 
                 fetch(nominatimUrl, {
@@ -2925,9 +2933,13 @@
                     })
                     .then(data => {
                         if (data.length > 0) {
+                            // FIXED: Target index zero array properties and parse text to real float digits
                             var latitude = parseFloat(data[0].lat);
                             var longitude = parseFloat(data[0].lon);
+                            
+                            // Move the map view instantly to your search location numbers
                             map.setView([latitude, longitude], 13);
+                            
                             getPricesNow(placeName, latitude, longitude);
                         } else {
                             alert("Location not found.");
@@ -2937,6 +2949,7 @@
             }
 
             function searchLocation() {
+                // Clear any leftover map markers before drawing new location search loops
                 for (var i = 0; i < markers.length; i++) {
                     map.removeLayer(markers[i]);
                 }
@@ -2944,9 +2957,6 @@
 
                 var combinedInput = document.getElementById('searchBar').value.trim();
                 if (!combinedInput) return;
-
-                // FIXED: Dismisses the virtual keyboard automatically on mobile screens upon search submit
-                document.getElementById('searchBar').blur(); 
 
                 if (/^\d{5}$/.test(combinedInput)) {
                     searchByZipcode(combinedInput);
@@ -2962,57 +2972,51 @@
                         if (event.key === "Enter") searchLocation();
                     });
                 }
-                
                 var icon = document.getElementById("extSearchIcon");
                 if (icon) {
-                    // FIXED: Added touchstart listener to bypass the 300ms click delay on mobile browsers
                     icon.addEventListener("click", searchLocation);
-                    icon.addEventListener("touchstart", function(e) {
-                        e.preventDefault();
-                        searchLocation();
-                    });
                 }
             });
 
-            // FIXED MOBILE DRAG & PINCH MANAGEMENT ENGINE
+            // Listen for the exact second a user stops panning or zooming the map canvas
             map.on('moveend', function() {
+                // If an API call is already running, skip this movement trigger
                 if (isSearching) return; 
+                
+                // 1. Get the brand new center coordinates of where the user dragged the map
+                var center = map.getCenter();
+                var currentLat = center.lat;
+                var currentLon = center.lng;
 
-                // Clear any previous countdown clocks so twitchy finger movements don't spawn multiple requests
-                if (mobileMoveTimeout) {
-                    clearTimeout(mobileMoveTimeout);
-                }
+                isSearching = true;
 
-                // FIXED: Wait exactly 800 milliseconds after the screen stops moving before executing.
-                // This allows the user to pinch-zoom or swipe multiple times without locking up the mobile phone.
-                mobileMoveTimeout = setTimeout(function() {
-                    var center = map.getCenter();
-                    var currentLat = center.lat;
-                    var currentLon = center.lng;
-
-                    isSearching = true;
-
-                    var reverseUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon;
+                // 2. Ask Nominatim what city matches these map coordinates
+                var reverseUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon;
+                
+                fetch(reverseUrl, {
+                    headers: {
+                        'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Extract the city name, neighborhood, or county name string safely
+                    var placeName = data.address.city || data.address.town || data.address.village || data.address.county || "Current Location";
                     
-                    fetch(reverseUrl, {
-                        headers: {
-                            'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        var placeName = data.address.city || data.address.town || data.address.village || data.address.county || "Current Location";
-                        console.log("Map dragged to new region:", placeName);
-                        getPricesNow(placeName, currentLat, currentLon);
-                    })
-                    .catch(error => {
-                        console.log("Error reverse geocoding map position:", error.message);
-                    })
-                    .finally(() => {
-                        isSearching = false; 
-                    });
-                }, 800); 
+                    console.log("Map dragged to new region:", placeName);
+                    
+                    // 3. Fire off your working Apify engine using the new center coordinates
+                    getPricesNow(placeName, currentLat, currentLon);
+                })
+                .catch(error => {
+                    console.log("Error reverse geocoding map position:", error.message);
+                })
+                .finally(() => {
+                    // Unlock the switch so the next map drag can process
+                    isSearching = false; 
+                });
             });
+
         </script>
     </body>
 </html>
