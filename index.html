@@ -2770,50 +2770,60 @@
         <!-- Include your custom JavaScript code -->
         <script>
 
-            var isSearching = false;
+var isSearching = false;
+var map = L.map('map').setView([39.7392, -104.9903], 13);
+var markers = []; 
+var startingMarker = null; // Track this globally to clear it
 
-            // 1. Initialize map container with fallback view (Denver)
-            var map = L.map('map').setView([39.7392, -104.9903], 13);
-            var markers = []; 
+L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: 'Map data &copy; Google'
+}).addTo(map);
 
-            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: 'Map data &copy; Google'
-            }).addTo(map);
+// FIX 1: Explicit Geolocation Options for iOS hardware
+var geoOptions = {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
+};
 
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    var userLat = position.coords.latitude;
-                    var userLon = position.coords.longitude;
+// Check for HTTPS (iOS requirement)
+if (navigator.geolocation && window.isSecureContext) {
+    navigator.geolocation.getCurrentPosition(
+        function (position) {
+            var userLat = position.coords.latitude;
+            var userLon = position.coords.longitude;
 
-                    // Move map to user location
-                    map.setView([userLat, userLon], 13);
+            map.setView([userLat, userLon], 13);
+            updateStartingMarker(userLat, userLon, "<b>You are here</b>");
+            getPricesNow("Current Location", userLat, userLon);
+        },
+        function (error) {
+            console.warn("Geolocation failed (" + error.code + "): " + error.message);
+            loadDenverFallback();
+        },
+        geoOptions
+    );
+} else {
+    console.log("Not a secure context or Geolocation unsupported. Fallback loaded.");
+    loadDenverFallback();
+}
 
-                    // Add starting marker at user location
-                    var startingMarker = L.marker([userLat, userLon], { 
-                        icon: L.divIcon({ className: 'black-marker-icon' }) 
-                    }).addTo(map);
+function updateStartingMarker(lat, lon, popupText) {
+    if (startingMarker) {
+        map.removeLayer(startingMarker);
+    }
+    startingMarker = L.marker([lat, lon], { 
+        icon: L.divIcon({ className: 'black-marker-icon' }) 
+    }).addTo(map);
+    startingMarker.bindPopup(popupText).openPopup();
+}
 
-                    startingMarker.bindPopup("<b>You are here</b>").openPopup();
-
-                    // AUTOMATIC PULL ON PAGE LOAD: Fires the scraper instantly using your physical GPS coordinates
-                    getPricesNow("Current Location", userLat, userLon);
-                },
-                function (error) {
-                    console.log("Geolocation failed or denied. Using Denver fallback.");
-                    loadDenverFallback();
-                }
-            );
-
-            function loadDenverFallback() {
-                map.setView([39.7392, -104.9903], 13);
-                var startingMarker = L.marker([39.7392, -104.9903], { 
-                    icon: L.divIcon({ className: 'black-marker-icon' }) 
-                }).addTo(map);
-
-                // AUTOMATIC FALLBACK PULL: Scrapes Denver gas options automatically if geolocation fails
-                getPricesNow("80204", 39.7392, -104.9903);
-            }
+function loadDenverFallback() {
+    map.setView([39.7392, -104.9903], 13);
+    updateStartingMarker(39.7392, -104.9903, "<b>Denver Fallback</b>");
+    getPricesNow("80204", 39.7392, -104.9903);
+}
 
             /* ==========================================================================
             APIFY REAL GAS PRICE ENGINE OVERLAY
@@ -2901,83 +2911,89 @@ function searchFunction() {
     searchLocation();
 }
 
-            function searchByZipcode(zipcode) {
-                var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
-                fetch(apiUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Location not found');
-                        return response.json();
-                    })
-                    .then(data => {
-                        // FIXED: Uses correct string bracket properties for safety
-                        var latitude = parseFloat(data.places[0]["latitude"]);
-                        var longitude = parseFloat(data.places[0]["longitude"]);
-                        
-                        getPricesNow(zipcode, latitude, longitude);
-                    })
-                    .catch(error => alert(error.message));
-            }
+function searchByZipcode(zipcode) {
+    var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) throw new Error('Location not found');
+            return response.json();
+        })
+        .then(data => {
+            var latitude = parseFloat(data.places[0]["latitude"]);
+            var longitude = parseFloat(data.places[0]["longitude"]);
+            
+            map.setView([latitude, longitude], 13);
+            updateStartingMarker(latitude, longitude, "<b>Zip: " + zipcode + "</b>");
+            getPricesNow(zipcode, latitude, longitude);
+        })
+        .catch(error => alert(error.message));
+}
 
-            function searchByPlaceName(placeName) {
-                // FIXED: Directs request to the dedicated data sub-engine
-                var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
+function searchByPlaceName(placeName) {
+    var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
+    
+    fetch(nominatimUrl, {
+        headers: {
+            'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
+        }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error('Address or Place not found');
+            return response.json();
+        })
+        .then(data => {
+            if (data.length > 0) {
+                var latitude = parseFloat(data[0].lat);
+                var longitude = parseFloat(data[0].lon);
                 
-                fetch(nominatimUrl, {
-                    headers: {
-                        'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
-                    }
-                })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Address or Place not found');
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.length > 0) {
-                            // FIXED: Target index zero array properties and parse text to real float digits
-                            var latitude = parseFloat(data[0].lat);
-                            var longitude = parseFloat(data[0].lon);
-                            
-                            // Move the map view instantly to your search location numbers
-                            map.setView([latitude, longitude], 13);
-                            
-                            getPricesNow(placeName, latitude, longitude);
-                        } else {
-                            alert("Location not found.");
-                        }
-                    })
-                    .catch(error => alert(error.message));
+                map.setView([latitude, longitude], 13);
+                updateStartingMarker(latitude, longitude, "<b>" + placeName + "</b>");
+                getPricesNow(placeName, latitude, longitude);
+            } else {
+                alert("Location not found.");
             }
+        })
+        .catch(error => alert(error.message));
+}
 
-            function searchLocation() {
-                // Clear any leftover map markers before drawing new location search loops
-                for (var i = 0; i < markers.length; i++) {
-                    map.removeLayer(markers[i]);
-                }
-                markers = [];
+function searchLocation() {
+    // Clear dynamic markers
+    for (var i = 0; i < markers.length; i++) {
+        map.removeLayer(markers[i]);
+    }
+    markers = [];
 
-                var combinedInput = document.getElementById('searchBar').value.trim();
-                if (!combinedInput) return;
+    var bar = document.getElementById('searchBar');
+    var combinedInput = bar.value.trim();
+    if (!combinedInput) return;
 
-                if (/^\d{5}$/.test(combinedInput)) {
-                    searchByZipcode(combinedInput);
-                } else {
-                    searchByPlaceName(combinedInput);
-                }
-            }
+    // FIX 2: Force mobile keyboard to dismiss
+    bar.blur(); 
 
-            document.addEventListener("DOMContentLoaded", function() {
-                var bar = document.getElementById("searchBar");
-                if (bar) {
-                    bar.addEventListener("keypress", function(event) {
-                        if (event.key === "Enter") searchLocation();
-                    });
-                }
-                var icon = document.getElementById("extSearchIcon");
-                if (icon) {
-                    icon.addEventListener("click", searchLocation);
-                }
-            });
+    if (/^\d{5}$/.test(combinedInput)) {
+        searchByZipcode(combinedInput);
+    } else {
+        searchByPlaceName(combinedInput);
+    }
+}
 
+document.addEventListener("DOMContentLoaded", function() {
+    var bar = document.getElementById("searchBar");
+    if (bar) {
+        bar.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") searchLocation();
+        });
+    }
+    var icon = document.getElementById("extSearchIcon");
+    if (icon) {
+        // FIX 3: Touch events for mobile responsiveness
+        icon.addEventListener("click", searchLocation);
+        icon.addEventListener("touchend", function(e) {
+            e.preventDefault();
+            searchLocation();
+        });
+    }
+});
 
         </script>
     </body>
