@@ -2814,83 +2814,39 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 /* ==========================================================================
-   IN-APP BROWSER DETECTION + FORCE EXTERNAL BROWSER
+   IN-APP BROWSER DETECTION
 ========================================================================== */
 
-(function () {
+function isInAppBrowser() {
 
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    const ua =
+        navigator.userAgent ||
+        navigator.vendor ||
+        window.opera;
 
-    const isInAppBrowser = /FBAN|FBAV|Instagram|Line|Twitter/i.test(ua);
+    return (
+        ua.includes("FBAN") ||       // Facebook iOS
+        ua.includes("FBAV") ||       // Facebook
+        ua.includes("Instagram") ||  // Instagram
+        ua.includes("Line") ||
+        ua.includes("Twitter")
+    );
+}
 
-    if (!isInAppBrowser) return;
+const USING_IN_APP_BROWSER = isInAppBrowser();
 
-    console.warn("In-app browser detected — forcing external browser");
+if (USING_IN_APP_BROWSER) {
 
-    // prevent app from running anything underneath
-    window.SKIP_APP_INIT = true;
+    console.warn("In-app browser detected.");
 
-    const url = window.location.href;
-
-    const overlay = document.createElement("div");
-
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.background = "rgba(0,0,0,0.96)";
-    overlay.style.color = "#fff";
-    overlay.style.zIndex = "999999";
-    overlay.style.display = "flex";
-    overlay.style.flexDirection = "column";
-    overlay.style.justifyContent = "center";
-    overlay.style.alignItems = "center";
-    overlay.style.textAlign = "center";
-    overlay.style.padding = "20px";
-
-    overlay.innerHTML = `
-        <h2 style="margin-bottom:10px;">Open in Safari or Chrome</h2>
-        <p style="max-width:320px; opacity:0.8; font-size:14px;">
-            This app requires a full browser. Instagram and Facebook in-app browsers block location and live data.
-        </p>
-
-        <button id="openExternalBtn"
-            style="
-                margin-top:20px;
-                padding:14px 18px;
-                font-size:16px;
-                border:none;
-                border-radius:10px;
-                background:#1a73e8;
-                color:white;
-            ">
-            Open Now
-        </button>
-    `;
-
-    document.addEventListener("DOMContentLoaded", function () {
-
-        document.body.appendChild(overlay);
-
-        document.getElementById("openExternalBtn").onclick = function () {
-
-            // iOS Chrome
-            window.location.href = "googlechrome://navigate?url=" + url;
-
-            // fallback (forces system browser prompt)
-            setTimeout(() => {
-                window.location.href = url;
-            }, 250);
-        };
-
-        // aggressive auto-redirect attempt (sometimes works in IG)
         setTimeout(() => {
-            window.location.href = url;
-        }, 1200);
-    });
 
-})();
+            console.warn(
+                "For best performance, open this page in Safari or Chrome."
+            );
+
+        }, 1200);
+}
 
 /* ==========================================================================
    APP INIT
