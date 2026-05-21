@@ -2813,71 +2813,39 @@ async function fetchWithTimeout(resource, options = {}) {
     }
 }
 
-function forceExternalGate() {
+/* ==========================================================================
+   IN-APP BROWSER DETECTION
+========================================================================== */
 
-    const url = window.location.href;
+function isInAppBrowser() {
 
-    const overlay = document.createElement("div");
+    const ua =
+        navigator.userAgent ||
+        navigator.vendor ||
+        window.opera;
 
-    overlay.style = `
-        position:fixed;
-        inset:0;
-        background:#000;
-        color:#fff;
-        z-index:999999;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        text-align:center;
-        padding:24px;
-    `;
+    return (
+        ua.includes("FBAN") ||       // Facebook iOS
+        ua.includes("FBAV") ||       // Facebook
+        ua.includes("Instagram") ||  // Instagram
+        ua.includes("Line") ||
+        ua.includes("Twitter")
+    );
+}
 
-    overlay.innerHTML = `
-        <h2>Open in Safari or Chrome</h2>
-        <p style="opacity:0.7; max-width:320px;">
-            Instagram and Facebook block location + data access. Open this page in your browser to continue.
-        </p>
+const USING_IN_APP_BROWSER = isInAppBrowser();
 
-        <button id="openBtn" style="
-            margin-top:16px;
-            padding:14px 18px;
-            border-radius:10px;
-            border:none;
-            background:#1a73e8;
-            color:white;
-            font-size:16px;
-        ">
-            Open in Safari
-        </button>
+if (USING_IN_APP_BROWSER) {
 
-        <button id="copyBtn" style="
-            margin-top:10px;
-            padding:12px 16px;
-            border-radius:10px;
-            border:1px solid #444;
-            background:transparent;
-            color:white;
-        ">
-            Copy Link
-        </button>
-    `;
+    console.warn("In-app browser detected.");
 
-    document.body.appendChild(overlay);
+        setTimeout(() => {
 
-    document.getElementById("copyBtn").onclick = async () => {
-        await navigator.clipboard.writeText(url);
-        alert("Link copied. Open Safari and paste it.");
-    };
+            console.warn(
+                "For best performance, open this page in Safari or Chrome."
+            );
 
-    document.getElementById("openBtn").onclick = () => {
-
-        // iOS ONLY: sometimes triggers system browser chooser
-        window.open(url, "_blank");
-
-        // fallback copy again
-        navigator.clipboard?.writeText(url);
-    };
+        }, 1200);
 }
 
 /* ==========================================================================
