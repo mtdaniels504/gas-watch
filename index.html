@@ -2775,45 +2775,46 @@ var isSearching = false;
 // Initialize map container with fallback view (Denver)
 var map = L.map('map').setView([39.7392, -104.9903], 13);
 var markers = []; 
-var startingMarker = null; // Track globally to prevent duplicate user markers
+var startingMarker = null; 
 
 L.tileLayer('https://google.com{x}&y={y}&z={z}', {
     maxZoom: 20,
     attribution: 'Map data &copy; Google'
 }).addTo(map);
 
-// MOBILE FIX 1: Strict configuration forces iOS hardware to wake up and pass GPS info
+// FIX 1: Explicitly structured timeout and high accuracy required by iOS
 var geoOptions = {
     enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 0
+    timeout: 8000,          // 8 seconds max wait for GPS chip initialization
+    maximumAge: 60000       // Accept a cached location up to 1 minute old
 };
 
-// iOS requires a Secure Context (HTTPS) for Geolocation to fire
-if (navigator.geolocation && window.isSecureContext) {
-    navigator.geolocation.getCurrentPosition(
-        function (position) {
-            var userLat = position.coords.latitude;
-            var userLon = position.coords.longitude;
+function triggerGeolocation() {
+    // iOS ABSOLUTELY requires HTTPS. localhost or 127.0.0.1 bypasses this for local testing.
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                var userLat = position.coords.latitude;
+                var userLon = position.coords.longitude;
 
-            map.setView([userLat, userLon], 13);
-            updateUserMarker(userLat, userLon, "<b>You are here</b>");
-
-            // AUTOMATIC PULL ON PAGE LOAD
-            getPricesNow("Current Location", userLat, userLon);
-        },
-        function (error) {
-            console.warn("Geolocation failed or denied (" + error.code + "). Using Denver fallback.");
-            loadDenverFallback();
-        },
-        geoOptions
-    );
-} else {
-    console.warn("Context insecure (HTTP) or geolocation unsupported. Using Denver fallback.");
-    loadDenverFallback();
+                map.setView([userLat, userLon], 13);
+                updateUserMarker(userLat, userLon, "<b>You are here</b>");
+                getPricesNow("Current Location", userLat, userLon);
+            },
+            function (error) {
+                console.warn("iOS Geolocation error code " + error.code + ": " + error.message);
+                loadDenverFallback();
+            },
+            geoOptions
+        );
+    } else {
+        loadDenverFallback();
+    }
 }
 
-// Helper to safely manage the primary location marker without duplicating layers
+// Fire geolocation safely
+triggerGeolocation();
+
 function updateUserMarker(lat, lon, popupText) {
     if (startingMarker) {
         map.removeLayer(startingMarker);
@@ -2826,9 +2827,6 @@ function updateUserMarker(lat, lon, popupText) {
 
 function loadDenverFallback() {
     map.setView([39.7392, -104.9903], 13);
-    updateUserMarker(39.7392, -104.9903, "<b>Denver Fallback</b>");
-
-    // AUTOMATIC FALLBACK PULL
     getPricesNow("80204", 39.7392, -104.9903);
 }
 
@@ -2922,14 +2920,24 @@ function searchByZipcode(zipcode) {
             return response.json();
         })
         .then(data => {
-            var latitude = parseFloat(data.places[0]["latitude"]);
-            var longitude = parseFloat(data.places[0]["longitude"]);
-            
-            // MOBILE FIX 2: Explicitly move map view for Zip code searches
-            map.setView([latitude, longitude], 13);
-            updateUserMarker(latitude, longitude, "<b>Zip: " + zipcode + "</b>");
-            
-            getPricesNow(zipcode, latitude, longitude);
+            if (data && data.places && data.places[0]) {
+                var latitude = parseFloat(data.places[0]["latitude"]);
+                var longitude = parseFloat(data.places[0]["longitude"]);
+                
+                // MOBILE FIX 1: Wrap view movement in a setTimeout. 
+                // This gives iOS Safari time to close the keyboard before moving the map viewport.
+                setTimeout(function() {
+                    map.setView([latitude, longitude], 13, { animate: true, duration: 1.0 });
+                    updateUserMarker(latitude, longitude, "<b>Zip: " + zipcode + "</b>");
+                    
+                    // MOBILE FIX 2: Forces Leaflet to recalculate the container size and redraw graphic tiles instantly
+                    map.invalidateSize();
+                }, 300);
+
+                getPricesNow(zipcode, latitude, longitude);
+            } else {
+                throw new Error('Invalid data payload returned');
+            }
         })
         .catch(error => alert(error.message));
 }
@@ -2947,13 +2955,19 @@ function searchByPlaceName(placeName) {
             return response.json();
         })
         .then(data => {
-            if (data.length > 0) {
+            if (data && data.length > 0) {
                 var latitude = parseFloat(data[0].lat);
-                var longitude = parseFloat(0.lon || data[0].lon);
+                var longitude = parseFloat(data[0].lon);
                 
-                map.setView([latitude, longitude], 13);
-                updateUserMarker(latitude, longitude, "<b>" + placeName + "</b>");
-                
+                // MOBILE FIX 1: Delayed pan execution path for WebKit render threads
+                setTimeout(function() {
+                    map.setView([latitude, longitude], 13, { animate: true, duration: 1.0 });
+                    updateUserMarker(latitude, longitude, "<b>" + placeName + "</b>");
+                    
+                    // MOBILE FIX 2: Forces engine graphical layout updates
+                    map.invalidateSize();
+                }, 300);
+
                 getPricesNow(placeName, latitude, longitude);
             } else {
                 alert("Location not found.");
@@ -2963,17 +2977,18 @@ function searchByPlaceName(placeName) {
 }
 
 function searchLocation() {
-    // Clear dynamic station markers
     for (var i = 0; i < markers.length; i++) {
         map.removeLayer(markers[i]);
     }
     markers = [];
 
     var searchBarEl = document.getElementById('searchBar');
+    if (!searchBarEl) return;
+    
     var combinedInput = searchBarEl.value.trim();
     if (!combinedInput) return;
 
-    // MOBILE FIX 3: Dismisses virtual keyboard instantly so it doesn't break Leaflet layout sizing
+    // Force virtual keyboard away IMMEDIATELY 
     searchBarEl.blur(); 
 
     if (/^\d{5}$/.test(combinedInput)) {
@@ -2991,18 +3006,23 @@ document.addEventListener("DOMContentLoaded", function() {
     var bar = document.getElementById("searchBar");
     if (bar) {
         bar.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") searchLocation();
+            if (event.key === "Enter" || event.keyCode === 13) {
+                event.preventDefault(); // Stop iOS from reloading form blocks
+                searchLocation();
+            }
         });
     }
+    
     var icon = document.getElementById("extSearchIcon");
     if (icon) {
-        icon.addEventListener("click", searchLocation);
-        
-        // MOBILE FIX 4: Eliminates click delay on mobile webkit layout frameworks
-        icon.addEventListener("touchend", function(e) {
-            e.preventDefault(); // Stop ghost mouse clicks from firing twice
+        var handleSearchTouch = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             searchLocation();
-        });
+        };
+        
+        icon.addEventListener("click", searchLocation);
+        icon.addEventListener("touchstart", handleSearchTouch, { passive: false });
     }
 });
         </script>
