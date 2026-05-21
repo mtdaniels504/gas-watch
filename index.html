@@ -2814,39 +2814,83 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 /* ==========================================================================
-   IN-APP BROWSER DETECTION
+   IN-APP BROWSER DETECTION + FORCE EXTERNAL BROWSER
 ========================================================================== */
 
-function isInAppBrowser() {
+(function () {
 
-    const ua =
-        navigator.userAgent ||
-        navigator.vendor ||
-        window.opera;
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
 
-    return (
-        ua.includes("FBAN") ||       // Facebook iOS
-        ua.includes("FBAV") ||       // Facebook
-        ua.includes("Instagram") ||  // Instagram
-        ua.includes("Line") ||
-        ua.includes("Twitter")
-    );
-}
+    const isInAppBrowser = /FBAN|FBAV|Instagram|Line|Twitter/i.test(ua);
 
-const USING_IN_APP_BROWSER = isInAppBrowser();
+    if (!isInAppBrowser) return;
 
-if (USING_IN_APP_BROWSER) {
+    console.warn("In-app browser detected — forcing external browser");
 
-    console.warn("In-app browser detected.");
+    // prevent app from running anything underneath
+    window.SKIP_APP_INIT = true;
 
+    const url = window.location.href;
+
+    const overlay = document.createElement("div");
+
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0,0,0,0.96)";
+    overlay.style.color = "#fff";
+    overlay.style.zIndex = "999999";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.textAlign = "center";
+    overlay.style.padding = "20px";
+
+    overlay.innerHTML = `
+        <h2 style="margin-bottom:10px;">Open in Safari or Chrome</h2>
+        <p style="max-width:320px; opacity:0.8; font-size:14px;">
+            This app requires a full browser. Instagram and Facebook in-app browsers block location and live data.
+        </p>
+
+        <button id="openExternalBtn"
+            style="
+                margin-top:20px;
+                padding:14px 18px;
+                font-size:16px;
+                border:none;
+                border-radius:10px;
+                background:#1a73e8;
+                color:white;
+            ">
+            Open Now
+        </button>
+    `;
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        document.body.appendChild(overlay);
+
+        document.getElementById("openExternalBtn").onclick = function () {
+
+            // iOS Chrome
+            window.location.href = "googlechrome://navigate?url=" + url;
+
+            // fallback (forces system browser prompt)
+            setTimeout(() => {
+                window.location.href = url;
+            }, 250);
+        };
+
+        // aggressive auto-redirect attempt (sometimes works in IG)
         setTimeout(() => {
-
-            console.warn(
-                "For best performance, open this page in Safari or Chrome."
-            );
-
+            window.location.href = url;
         }, 1200);
-}
+    });
+
+})();
 
 /* ==========================================================================
    APP INIT
@@ -2984,258 +3028,144 @@ function clearMarkers() {
 
 async function getPricesNow(searchQuery, targetLat, targetLon) {
 
-    if (isSearching) {
-        console.warn("Search already running.");
-        return;
-    }
-
+    if (isSearching) return;
     isSearching = true;
 
-    console.log("Starting gas price fetch...");
-
-    const searchField =
-        document.getElementById('searchBar');
+    const searchField = document.getElementById('searchBar');
 
     if (searchField) {
-        searchField.placeholder =
-            "Loading gas prices...";
+        searchField.placeholder = "Loading gas prices...";
     }
 
     const BACKEND_URL =
         "https://gas-watch-server.onrender.com/api/gas-prices";
 
-    // In-app browsers and Render cold starts need LONGER
-    const REQUEST_TIMEOUT =
-        USING_IN_APP_BROWSER ? 45000 : 30000;
-
-    // Retry attempts help with Render wake-up
-    const MAX_RETRIES = 2;
-
-    let lastError = null;
+    const TIMEOUT =
+        USING_IN_APP_BROWSER ? 50000 : 30000;
 
     try {
 
-        let datasetItems = null;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
 
-        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const response = await fetch(BACKEND_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({ search: searchQuery }),
+            signal: controller.signal,
+            cache: "no-store",
+            mode: "cors",
+            credentials: "omit"
+        });
 
-            try {
+        clearTimeout(timeoutId);
 
-                console.log(
-                    `Gas price fetch attempt ${attempt}...`
-                );
+        console.log("Backend status:", response.status);
 
-                const response =
-                    await fetchWithTimeout(BACKEND_URL, {
-
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            search: searchQuery
-                        }),
-
-                        timeout: REQUEST_TIMEOUT,
-
-                        cache: "no-store",
-
-                        mode: "cors",
-
-                        credentials: "omit"
-                    });
-
-                console.log(
-                    "Backend response status:",
-                    response.status
-                );
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        `Backend HTTP ${response.status}`
-                    );
-                }
-
-                // Read raw text first for diagnostics
-                const rawText =
-                    await response.text();
-
-                console.log(
-                    "Raw backend response:",
-                    rawText
-                );
-
-                // Empty response protection
-                if (!rawText || !rawText.trim()) {
-
-                    throw new Error(
-                        "Empty backend response."
-                    );
-                }
-
-                // Parse JSON safely
-                try {
-
-                    datasetItems =
-                        JSON.parse(rawText);
-
-                } catch (jsonError) {
-
-                    console.error(
-                        "JSON parse failure:",
-                        jsonError
-                    );
-
-                    throw new Error(
-                        "Invalid JSON response."
-                    );
-                }
-
-                // Successful fetch
-                break;
-
-            } catch (attemptError) {
-
-                console.error(
-                    `Attempt ${attempt} failed:`,
-                    attemptError
-                );
-
-                lastError = attemptError;
-
-                // Wait before retrying
-                if (attempt < MAX_RETRIES) {
-
-                    await new Promise(resolve =>
-                        setTimeout(resolve, 2500)
-                    );
-                }
-            }
+        // HARD FAIL SAFETY
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
         }
 
-        // All retries failed
-        if (!datasetItems) {
+        // IMPORTANT: read as text first (in-app browsers often lie about JSON)
+        const text = await response.text();
 
-            throw lastError ||
-                new Error("Failed to load gas prices.");
+        if (!text || !text.trim()) {
+            throw new Error("Empty backend response");
         }
 
-        if (searchField) {
+        let data;
 
-            searchField.placeholder =
-                "Search city or ZIP code...";
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+
+            console.error("Non-JSON response received:", text);
+
+            throw new Error("Invalid JSON (backend may be returning HTML error page)");
         }
 
-        if (datasetItems.error) {
-
-            throw new Error(datasetItems.error);
+        if (!Array.isArray(data)) {
+            throw new Error("Unexpected response format");
         }
 
-        if (!Array.isArray(datasetItems)) {
-
-            throw new Error(
-                "Backend returned invalid data format."
-            );
-        }
-
-        if (datasetItems.length === 0) {
-
-            alert("No gas stations found.");
+        if (data.length === 0) {
+            alert("No gas stations found in this area.");
             return;
         }
 
         clearMarkers();
 
-        datasetItems.forEach((station, index) => {
+        data.forEach((station, index) => {
 
             const angle =
-                index *
-                (360 / datasetItems.length) *
-                (Math.PI / 180);
+                (index / data.length) * Math.PI * 2;
 
-            const radiusOffset =
-                0.02 + (Math.random() * 0.03);
+            const radius =
+                0.02 + Math.random() * 0.03;
 
             const lat =
-                targetLat +
-                (Math.sin(angle) * radiusOffset);
+                targetLat + Math.sin(angle) * radius;
 
             const lon =
-                targetLon +
-                (Math.cos(angle) * radiusOffset);
+                targetLon + Math.cos(angle) * radius;
 
-            const currentPrice =
+            const price =
                 parseFloat(
                     station.price_cash ||
                     station.price_credit ||
                     3.49
                 );
 
-            const stationName =
-                station.name ||
-                "Gas Station";
-
-            const streetAddress =
-                station.address_line1 ||
-                "Address unavailable";
-
-            const locality =
-                station.address_locality ||
-                "";
-
-            const priceIcon =
-                L.divIcon({
+            const marker = L.marker([lat, lon], {
+                icon: L.divIcon({
                     className: 'gas-price-marker',
-                    html:
-                        `$${currentPrice.toFixed(2)}`
-                });
-
-            const marker =
-                L.marker([lat, lon], {
-                    icon: priceIcon
-                });
+                    html: `$${price.toFixed(2)}`
+                })
+            });
 
             marker.bindPopup(`
                 <div class="custom-popup">
-                    <h3>${stationName}</h3>
-                    <p>${streetAddress}, ${locality}</p>
+                    <h3>${station.name || "Gas Station"}</h3>
+                    <p>${station.address_line1 || ""}</p>
                     <div class="price-tag">
-                        Regular:
-                        $${currentPrice.toFixed(2)}
+                        $${price.toFixed(2)}
                     </div>
                 </div>
             `);
 
             marker.addTo(map);
-
             markers.push(marker);
         });
 
-        console.log(
-            "Gas prices loaded successfully."
-        );
-
     } catch (error) {
 
-        console.error(
-            "FINAL GAS FETCH FAILURE:",
-            error
-        );
+        console.error("Gas fetch failed:", error);
 
-        alert(
-            "Unable to load gas prices.\n\n" +
-            error.message
-        );
+        // IMPORTANT: don’t just fail silently in in-app browsers
+        if (USING_IN_APP_BROWSER) {
+
+            console.warn("In-app browser fallback triggered.");
+
+            // retry ONCE after short delay (fixes Render wake-up issue)
+            setTimeout(() => {
+                isSearching = false;
+                getPricesNow(searchQuery, targetLat, targetLon);
+            }, 2500);
+
+            return;
+        }
+
+        alert("Unable to load gas prices: " + error.message);
 
     } finally {
 
         isSearching = false;
 
         if (searchField) {
-
             searchField.placeholder =
                 "Search city or ZIP code...";
         }
