@@ -2781,39 +2781,59 @@
                 attribution: 'Map data &copy; Google'
             }).addTo(map);
 
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    var userLat = position.coords.latitude;
-                    var userLon = position.coords.longitude;
+// NEW CONTROL VARIABLE: Stops double-firing
+var initialLoadTriggered = false;
 
-                    // Move map to user location
-                    map.setView([userLat, userLon], 13);
+function initApp() {
+    if (initialLoadTriggered) return;
 
-                    // Add starting marker at user location
-                    var startingMarker = L.marker([userLat, userLon], { 
-                        icon: L.divIcon({ className: 'black-marker-icon' }) 
-                    }).addTo(map);
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                if (initialLoadTriggered) return;
+                initialLoadTriggered = true;
 
-                    startingMarker.bindPopup("<b>You are here</b>").openPopup();
+                var userLat = position.coords.latitude;
+                var userLon = position.coords.longitude;
 
-                    // AUTOMATIC PULL ON PAGE LOAD: Fires the scraper instantly using your physical GPS coordinates
-                    getPricesNow("Current Location", userLat, userLon);
-                },
-                function (error) {
-                    console.log("Geolocation failed or denied. Using Denver fallback.");
-                    loadDenverFallback();
-                }
-            );
+                map.setView([userLat, userLon], 13);
 
-            function loadDenverFallback() {
-                map.setView([39.7392, -104.9903], 13);
-                var startingMarker = L.marker([39.7392, -104.9903], { 
+                var startingMarker = L.marker([userLat, userLon], { 
                     icon: L.divIcon({ className: 'black-marker-icon' }) 
                 }).addTo(map);
 
-                // AUTOMATIC FALLBACK PULL: Scrapes Denver gas options automatically if geolocation fails
-                getPricesNow("80204", 39.7392, -104.9903);
-            }
+                startingMarker.bindPopup("<b>You are here</b>").openPopup();
+                
+                // Clear out to fetch user coords
+                getPricesNow("Current Location", userLat, userLon);
+            },
+            function (error) {
+                console.log("Geolocation failed or denied. Using Denver fallback.");
+                loadDenverFallback();
+            },
+            { timeout: 5000 } // Don't let iOS hang forever waiting for a choice
+        );
+    } else {
+        loadDenverFallback();
+    }
+}
+
+function loadDenverFallback() {
+    if (initialLoadTriggered) return;
+    initialLoadTriggered = true;
+
+    map.setView([39.7392, -104.9903], 13);
+    var startingMarker = L.marker([39.7392, -104.9903], { 
+        icon: L.divIcon({ className: 'black-marker-icon' }) 
+    }).addTo(map);
+
+    startingMarker.bindPopup("<b>Denver Fallback</b>").openPopup();
+
+    getPricesNow("80204", 39.7392, -104.9903);
+}
+
+// Start the sequence exactly once
+initApp();
 
             /* ==========================================================================
             APIFY REAL GAS PRICE ENGINE OVERLAY
