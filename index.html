@@ -2788,6 +2788,24 @@ L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     attribution: 'Map data © Google'
 }).addTo(map);
 
+let isSearching = false;
+let initialLoadTriggered = false;
+let markers = [];
+
+/* ==========================================================================
+   MAP INIT
+========================================================================== */
+
+const map = L.map('map', {
+    zoomControl: true,
+    tap: false // iOS Safari touch fix
+}).setView([39.7392, -104.9903], 13);
+
+L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: 'Map data © Google'
+}).addTo(map);
+
 /* ==========================================================================
    FETCH WITH TIMEOUT
 ========================================================================== */
@@ -2814,38 +2832,82 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 /* ==========================================================================
-   IN-APP BROWSER DETECTION
+   SIMPLE IN-APP BROWSER NOTICE (NO REDIRECTS, NO GLITCHES)
 ========================================================================== */
 
 function isInAppBrowser() {
-
-    const ua =
-        navigator.userAgent ||
-        navigator.vendor ||
-        window.opera;
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
 
     return (
-        ua.includes("FBAN") ||       // Facebook iOS
-        ua.includes("FBAV") ||       // Facebook
-        ua.includes("Instagram") ||  // Instagram
+        ua.includes("FBAN") ||
+        ua.includes("FBAV") ||
+        ua.includes("Instagram") ||
         ua.includes("Line") ||
         ua.includes("Twitter")
     );
 }
 
-const USING_IN_APP_BROWSER = isInAppBrowser();
+if (isInAppBrowser()) {
 
-if (USING_IN_APP_BROWSER) {
+    document.addEventListener("DOMContentLoaded", () => {
 
-    console.warn("In-app browser detected.");
+        const url = window.location.href;
 
-        setTimeout(() => {
+        const overlay = document.createElement("div");
 
-            console.warn(
-                "For best performance, open this page in Safari or Chrome."
-            );
+        overlay.style.cssText = `
+            position:fixed;
+            inset:0;
+            background:#000;
+            color:#fff;
+            z-index:999999;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+            padding:24px;
+        `;
 
-        }, 1200);
+        overlay.innerHTML = `
+            <h2 style="margin-bottom:10px;">
+                Best used in Safari or Chrome
+            </h2>
+
+            <p style="opacity:0.7; max-width:320px; font-size:14px;">
+                This app works best in your device’s browser.
+            </p>
+
+            <button id="copyBtn" style="
+                margin-top:18px;
+                padding:14px 18px;
+                border-radius:10px;
+                border:none;
+                background:#1a73e8;
+                color:white;
+                font-size:16px;
+            ">
+                Copy Link
+            </button>
+        `;
+
+        document.body.appendChild(overlay);
+
+        document.getElementById("copyBtn").onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(url);
+                alert("Link copied. Open Safari or Chrome and paste it.");
+            } catch (e) {
+                alert("Copy failed. Please copy the URL manually.");
+            }
+        };
+    });
+}
+
+
+/* run it immediately */
+if (isInAppBrowser()) {
+    document.addEventListener("DOMContentLoaded", showInAppWarning);
 }
 
 /* ==========================================================================
