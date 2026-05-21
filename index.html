@@ -2978,44 +2978,6 @@ function searchFunction() {
                 }
             });
 
-            // Listen for the exact second a user stops panning or zooming the map canvas
-            map.on('moveend', function() {
-                // If an API call is already running, skip this movement trigger
-                if (isSearching) return; 
-                
-                // 1. Get the brand new center coordinates of where the user dragged the map
-                var center = map.getCenter();
-                var currentLat = center.lat;
-                var currentLon = center.lng;
-
-                isSearching = true;
-
-                // 2. Ask Nominatim what city matches these map coordinates
-                var reverseUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon;
-                
-                fetch(reverseUrl, {
-                    headers: {
-                        'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Extract the city name, neighborhood, or county name string safely
-                    var placeName = data.address.city || data.address.town || data.address.village || data.address.county || "Current Location";
-                    
-                    console.log("Map dragged to new region:", placeName);
-                    
-                    // 3. Fire off your working Apify engine using the new center coordinates
-                    getPricesNow(placeName, currentLat, currentLon);
-                })
-                .catch(error => {
-                    console.log("Error reverse geocoding map position:", error.message);
-                })
-                .finally(() => {
-                    // Unlock the switch so the next map drag can process
-                    isSearching = false; 
-                });
-            });
 
         </script>
     </body>
