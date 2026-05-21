@@ -2826,7 +2826,7 @@ function getPricesNow(searchQuery, targetLat, targetLon) {
     if (searchField) searchField.placeholder = "Scraping live gas prices (takes ~10s)...";
 
     // Update this to your live production server URL when you deploy online
-    const BACKEND_URL = "https://gas-watch-server.onrender.com";
+    const BACKEND_URL = "https://gas-watch-server.onrender.com/api/gas-prices";
 
     // Securely request data from your private Node backend gateway
     fetch(BACKEND_URL, {
