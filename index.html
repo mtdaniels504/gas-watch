@@ -2920,87 +2920,118 @@ function getPricesNow(searchQuery, targetLat, targetLon) {
 function searchFunction() {
     searchLocation();
 }
-
-            function searchByZipcode(zipcode) {
-                var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
-                fetch(apiUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Location not found');
-                        return response.json();
-                    })
-                    .then(data => {
-                        // FIXED: Uses correct string bracket properties for safety
-                        var latitude = parseFloat(data.places[0]["latitude"]);
-                        var longitude = parseFloat(data.places[0]["longitude"]);
-                        
-                        getPricesNow(zipcode, latitude, longitude);
-                    })
-                    .catch(error => alert(error.message));
-            }
-
-            function searchByPlaceName(placeName) {
-                // 1. Correct the URL string syntax directly
-                var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
+function searchByZipcode(zipcode) {
+    var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) throw new Error('Location not found');
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.places && data.places[0]) {
+                var latitude = parseFloat(data.places[0]["latitude"]);
+                var longitude = parseFloat(data.places[0]["longitude"]);
                 
-                fetch(nominatimUrl, {
-                    method: "GET",
-                    headers: {
-                        'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Address or Place not found');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && data.length > 0) {
-                        var latitude = parseFloat(data[0].lat);
-                        var longitude = parseFloat(data[0].lon);
-                        
-                        // 2. Wrap map mutations inside an active animation execution loop
-                        map.setView([latitude, longitude], 13);
-                        
-                        getPricesNow(placeName, latitude, longitude);
-                    } else {
-                        alert("Location not found.");
-                    }
-                })
-                .catch(error => {
-                    // Log the structural details directly to inspect native Apple WebKit properties
-                    console.error("iOS Fetch Diagnostics:", error);
-                    alert("Search failed: " + error.message);
-                });
+                // MOBILE FIX 1: Wrap map movement in a small timeout.
+                // This gives iOS Safari time to slide down the virtual keyboard before Leaflet draws layout changes.
+                setTimeout(function() {
+                    map.setView([latitude, longitude], 13);
+                    // MOBILE FIX 2: Forces Leaflet to recalculate container dimensions after the keyboard closes
+                    map.invalidateSize();
+                }, 300);
+                
+                getPricesNow(zipcode, latitude, longitude);
+            } else {
+                throw new Error('Invalid location data match');
             }
+        })
+        .catch(error => alert("Zip Search: " + error.message));
+}
 
-            function searchLocation() {
-                // Clear any leftover map markers before drawing new location search loops
-                for (var i = 0; i < markers.length; i++) {
-                    map.removeLayer(markers[i]);
-                }
-                markers = [];
+function searchByPlaceName(placeName) {
+    var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
+    
+    fetch(nominatimUrl, {
+        method: "GET",
+        headers: {
+            'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Address or Place not found');
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.length > 0) {
+            var latitude = parseFloat(data[0].lat);
+            var longitude = parseFloat(data[0].lon);
+            
+            // MOBILE FIX 1: Wrap map movement in a small timeout.
+            setTimeout(function() {
+                map.setView([latitude, longitude], 13);
+                map.invalidateSize();
+            }, 300);
+            
+            getPricesNow(placeName, latitude, longitude);
+        } else {
+            alert("Location not found.");
+        }
+    })
+    .catch(error => {
+        console.error("iOS Fetch Diagnostics:", error);
+        alert("Search failed: " + error.message);
+    });
+}
 
-                var combinedInput = document.getElementById('searchBar').value.trim();
-                if (!combinedInput) return;
+function searchLocation() {
+    for (var i = 0; i < markers.length; i++) {
+        map.removeLayer(markers[i]);
+    }
+    markers = [];
 
-                if (/^\d{5}$/.test(combinedInput)) {
-                    searchByZipcode(combinedInput);
-                } else {
-                    searchByPlaceName(combinedInput);
-                }
+    var searchBarEl = document.getElementById('searchBar');
+    if (!searchBarEl) return;
+
+    var combinedInput = searchBarEl.value.trim();
+    if (!combinedInput) return;
+
+    // MOBILE FIX 3: Programmatically dismisses the virtual keyboard instantly.
+    // Without this, the keyboard remains up, causing Leaflet coordinates to offset out of view.
+    searchBarEl.blur(); 
+
+    if (/^\d{5}$/.test(combinedInput)) {
+        searchByZipcode(combinedInput);
+    } else {
+        searchByPlaceName(combinedInput);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    var bar = document.getElementById("searchBar");
+    if (bar) {
+        bar.addEventListener("keypress", function(event) {
+            // MOBILE FIX 4: Intercepts both desktop Enter and native iOS "Go/Search/Return" keyboard actions.
+            if (event.key === "Enter" || event.keyCode === 13) {
+                // MOBILE FIX 5: Crucial step. Stops iOS from triggering default form/input processes which kill fetch requests mid-transit.
+                event.preventDefault(); 
+                searchLocation();
             }
+        });
+    }
+    
+    var icon = document.getElementById("extSearchIcon");
+    if (icon) {
+        // MOBILE FIX 6: Explicitly intercept touchstart to prevent iOS from adding a 300ms delay or ignoring tap altogether.
+        var handleTouchSearch = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            searchLocation();
+        };
 
-            document.addEventListener("DOMContentLoaded", function() {
-                var bar = document.getElementById("searchBar");
-                if (bar) {
-                    bar.addEventListener("keypress", function(event) {
-                        if (event.key === "Enter") searchLocation();
-                    });
-                }
-                var icon = document.getElementById("extSearchIcon");
-                if (icon) {
-                    icon.addEventListener("click", searchLocation);
-                }
-            });
+        icon.addEventListener("click", searchLocation);
+        icon.addEventListener("touchstart", handleTouchSearch, { passive: false });
+    }
+});
 
 
         </script>
