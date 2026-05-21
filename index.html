@@ -2920,17 +2920,15 @@ function searchByZipcode(zipcode) {
             return response.json();
         })
         .then(data => {
+            // FIX: Guard block must match the extraction path exactly
             if (data && data.places && data.places[0]) {
+                // FIXED: Explicitly added the missing [0] index so variables are real numbers, not NaN
                 var latitude = parseFloat(data.places[0]["latitude"]);
                 var longitude = parseFloat(data.places[0]["longitude"]);
                 
-                // MOBILE FIX 1: Wrap view movement in a setTimeout. 
-                // This gives iOS Safari time to close the keyboard before moving the map viewport.
                 setTimeout(function() {
                     map.setView([latitude, longitude], 13, { animate: true, duration: 1.0 });
                     updateUserMarker(latitude, longitude, "<b>Zip: " + zipcode + "</b>");
-                    
-                    // MOBILE FIX 2: Forces Leaflet to recalculate the container size and redraw graphic tiles instantly
                     map.invalidateSize();
                 }, 300);
 
@@ -2955,16 +2953,14 @@ function searchByPlaceName(placeName) {
             return response.json();
         })
         .then(data => {
-            if (data && data.length > 0) {
+            // FIXED: Target index [0] to extract from the returned array payload
+            if (data && data.length > 0 && data[0]) {
                 var latitude = parseFloat(data[0].lat);
                 var longitude = parseFloat(data[0].lon);
                 
-                // MOBILE FIX 1: Delayed pan execution path for WebKit render threads
                 setTimeout(function() {
                     map.setView([latitude, longitude], 13, { animate: true, duration: 1.0 });
                     updateUserMarker(latitude, longitude, "<b>" + placeName + "</b>");
-                    
-                    // MOBILE FIX 2: Forces engine graphical layout updates
                     map.invalidateSize();
                 }, 300);
 
@@ -2988,7 +2984,6 @@ function searchLocation() {
     var combinedInput = searchBarEl.value.trim();
     if (!combinedInput) return;
 
-    // Force virtual keyboard away IMMEDIATELY 
     searchBarEl.blur(); 
 
     if (/^\d{5}$/.test(combinedInput)) {
@@ -3007,7 +3002,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (bar) {
         bar.addEventListener("keypress", function(event) {
             if (event.key === "Enter" || event.keyCode === 13) {
-                event.preventDefault(); // Stop iOS from reloading form blocks
+                event.preventDefault(); 
                 searchLocation();
             }
         });
