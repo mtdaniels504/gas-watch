@@ -2787,17 +2787,28 @@
                 function (position) {
                     var userLat = position.coords.latitude;
                     var userLon = position.coords.longitude;
-                    isProgrammaticMove = true; // FIXED: Safely locks out the mobile drag intercept loop
+                    
+                    // Block the mobile drag intercept loop from breaking the initial fly-to action
+                    isProgrammaticMove = true; 
+                    
                     map.setView([userLat, userLon], 13);
+
                     var startingMarker = L.marker([userLat, userLon], { 
                         icon: L.divIcon({ className: 'black-marker-icon' }) 
                     }).addTo(map);
+
                     startingMarker.bindPopup("<b>You are here</b>").openPopup();
                     getPricesNow("Current Location", userLat, userLon);
                 },
                 function (error) {
                     console.log("Geolocation failed or denied. Using Denver fallback.");
                     loadDenverFallback();
+                },
+                //  CRITICAL PARAMETER CONFIGURATIONS FOR HARDWARE MOBILE ACCURACY
+                {
+                    enableHighAccuracy: true,  // Forces mobile device to fire up real onboard satellite GPS chips
+                    timeout: 10000,            // Give the phone up to 10 seconds to lock onto high-accuracy satellite grids
+                    maximumAge: 0              // Forces the phone to pull a brand new live location instead of reading cache
                 }
             );
 
