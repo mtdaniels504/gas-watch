@@ -1947,7 +1947,7 @@
                 
                 <!-- extSearchBar -->
                 <div class="search">
-                    <input class="userInput" id="searchBar" placeholder="Enter Zip Code or City"
+                    <input class="userInput" id="searchBar" placeholder="Search Zip Codes and Cities Here!"
                         data-function="searchFunction" data-self="searchBar" data-searchListener="true"
                     >
                     <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
@@ -2820,7 +2820,7 @@
             APIFY REAL GAS PRICE ENGINE OVERLAY
             ========================================================================== */
             function getPricesNow(searchQuery, targetLat, targetLon) {
-                const APIFY_TOKEN = "apify_api_l2Q4NRPfHdgw41q60PZMJBDgkG8ZbM1g2SeU"; 
+                const APIFY_TOKEN = "apify_api_S4sIKOFdSVBPQYLZksh5iBY5pZGOab4aUIFn"; 
                 const ACTOR_ID = "johnvc~fuelprices"; 
 
                 console.log("=== NEW RENAMED FUNCTION EXECUTED SUCCESSFULLY ===");
@@ -2917,7 +2917,7 @@
 
                 })
                 .catch(error => {
-                    if (searchField) searchField.placeholder = "Enter Zip Code or City";
+                    if (searchField) searchField.placeholder = "Search Extended Section Here!";
                     alert("Error fetching gas prices: " + error.message);
                 });
             }
