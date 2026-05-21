@@ -2770,65 +2770,50 @@
         <!-- Include your custom JavaScript code -->
         <script>
 
-var isSearching = false;
+            var isSearching = false;
 
-// Initialize map container with fallback view (Denver)
-var map = L.map('map').setView([39.7392, -104.9903], 13);
-var markers = []; 
-var startingMarker = null; 
+            // 1. Initialize map container with fallback view (Denver)
+            var map = L.map('map').setView([39.7392, -104.9903], 13);
+            var markers = []; 
 
-L.tileLayer('https://mt1.google.com/vt/lyrs=m?x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    attribution: 'Map data &copy; Google'
-}).addTo(map);
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: 'Map data &copy; Google'
+            }).addTo(map);
 
-// FIX 1: Explicitly structured timeout and high accuracy required by iOS
-var geoOptions = {
-    enableHighAccuracy: true,
-    timeout: 8000,          // 8 seconds max wait for GPS chip initialization
-    maximumAge: 60000       // Accept a cached location up to 1 minute old
-};
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    var userLat = position.coords.latitude;
+                    var userLon = position.coords.longitude;
 
-function triggerGeolocation() {
-    // iOS ABSOLUTELY requires HTTPS. localhost or 127.0.0.1 bypasses this for local testing.
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function (position) {
-                var userLat = position.coords.latitude;
-                var userLon = position.coords.longitude;
+                    // Move map to user location
+                    map.setView([userLat, userLon], 13);
 
-                map.setView([userLat, userLon], 13);
-                updateUserMarker(userLat, userLon, "<b>You are here</b>");
-                getPricesNow("Current Location", userLat, userLon);
-            },
-            function (error) {
-                console.warn("iOS Geolocation error code " + error.code + ": " + error.message);
-                loadDenverFallback();
-            },
-            geoOptions
-        );
-    } else {
-        loadDenverFallback();
-    }
-}
+                    // Add starting marker at user location
+                    var startingMarker = L.marker([userLat, userLon], { 
+                        icon: L.divIcon({ className: 'black-marker-icon' }) 
+                    }).addTo(map);
 
-// Fire geolocation safely
-triggerGeolocation();
+                    startingMarker.bindPopup("<b>You are here</b>").openPopup();
 
-function updateUserMarker(lat, lon, popupText) {
-    if (startingMarker) {
-        map.removeLayer(startingMarker);
-    }
-    startingMarker = L.marker([lat, lon], { 
-        icon: L.divIcon({ className: 'black-marker-icon' }) 
-    }).addTo(map);
-    startingMarker.bindPopup(popupText).openPopup();
-}
+                    // AUTOMATIC PULL ON PAGE LOAD: Fires the scraper instantly using your physical GPS coordinates
+                    getPricesNow("Current Location", userLat, userLon);
+                },
+                function (error) {
+                    console.log("Geolocation failed or denied. Using Denver fallback.");
+                    loadDenverFallback();
+                }
+            );
 
-function loadDenverFallback() {
-    map.setView([39.7392, -104.9903], 13);
-    getPricesNow("80204", 39.7392, -104.9903);
-}
+            function loadDenverFallback() {
+                map.setView([39.7392, -104.9903], 13);
+                var startingMarker = L.marker([39.7392, -104.9903], { 
+                    icon: L.divIcon({ className: 'black-marker-icon' }) 
+                }).addTo(map);
+
+                // AUTOMATIC FALLBACK PULL: Scrapes Denver gas options automatically if geolocation fails
+                getPricesNow("80204", 39.7392, -104.9903);
+            }
 
             /* ==========================================================================
             APIFY REAL GAS PRICE ENGINE OVERLAY
@@ -2912,114 +2897,88 @@ function getPricesNow(searchQuery, targetLat, targetLon) {
     });
 }
 
-function searchByZipcode(zipcode) {
-    var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
-    fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) throw new Error('Location not found');
-            return response.json();
-        })
-        .then(data => {
-            // FIX: Guard block must match the extraction path exactly
-            if (data && data.places && data.places[0]) {
-                // FIXED: Explicitly added the missing [0] index so variables are real numbers, not NaN
-                var latitude = parseFloat(data.places[0]["latitude"]);
-                var longitude = parseFloat(data.places[0]["longitude"]);
-                
-                setTimeout(function() {
-                    map.setView([latitude, longitude], 13, { animate: true, duration: 1.0 });
-                    updateUserMarker(latitude, longitude, "<b>Zip: " + zipcode + "</b>");
-                    map.invalidateSize();
-                }, 300);
-
-                getPricesNow(zipcode, latitude, longitude);
-            } else {
-                throw new Error('Invalid data payload returned');
-            }
-        })
-        .catch(error => alert(error.message));
-}
-
-function searchByPlaceName(placeName) {
-    var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
-    
-    fetch(nominatimUrl, {
-        headers: {
-            'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
-        }
-    })
-        .then(response => {
-            if (!response.ok) throw new Error('Address or Place not found');
-            return response.json();
-        })
-        .then(data => {
-            // FIXED: Target index [0] to extract from the returned array payload
-            if (data && data.length > 0 && data[0]) {
-                var latitude = parseFloat(data[0].lat);
-                var longitude = parseFloat(data[0].lon);
-                
-                setTimeout(function() {
-                    map.setView([latitude, longitude], 13, { animate: true, duration: 1.0 });
-                    updateUserMarker(latitude, longitude, "<b>" + placeName + "</b>");
-                    map.invalidateSize();
-                }, 300);
-
-                getPricesNow(placeName, latitude, longitude);
-            } else {
-                alert("Location not found.");
-            }
-        })
-        .catch(error => alert(error.message));
-}
-
-function searchLocation() {
-    for (var i = 0; i < markers.length; i++) {
-        map.removeLayer(markers[i]);
-    }
-    markers = [];
-
-    var searchBarEl = document.getElementById('searchBar');
-    if (!searchBarEl) return;
-    
-    var combinedInput = searchBarEl.value.trim();
-    if (!combinedInput) return;
-
-    searchBarEl.blur(); 
-
-    if (/^\d{5}$/.test(combinedInput)) {
-        searchByZipcode(combinedInput);
-    } else {
-        searchByPlaceName(combinedInput);
-    }
-}
-
 function searchFunction() {
     searchLocation();
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    var bar = document.getElementById("searchBar");
-    if (bar) {
-        bar.addEventListener("keypress", function(event) {
-            if (event.key === "Enter" || event.keyCode === 13) {
-                event.preventDefault(); 
-                searchLocation();
+            function searchByZipcode(zipcode) {
+                var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Location not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        // FIXED: Uses correct string bracket properties for safety
+                        var latitude = parseFloat(data.places[0]["latitude"]);
+                        var longitude = parseFloat(data.places[0]["longitude"]);
+                        
+                        getPricesNow(zipcode, latitude, longitude);
+                    })
+                    .catch(error => alert(error.message));
             }
-        });
-    }
-    
-    var icon = document.getElementById("extSearchIcon");
-    if (icon) {
-        var handleSearchTouch = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            searchLocation();
-        };
-        
-        icon.addEventListener("click", searchLocation);
-        icon.addEventListener("touchstart", handleSearchTouch, { passive: false });
-    }
-});
+
+            function searchByPlaceName(placeName) {
+                // FIXED: Directs request to the dedicated data sub-engine
+                var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
+                
+                fetch(nominatimUrl, {
+                    headers: {
+                        'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Address or Place not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.length > 0) {
+                            // FIXED: Target index zero array properties and parse text to real float digits
+                            var latitude = parseFloat(data[0].lat);
+                            var longitude = parseFloat(data[0].lon);
+                            
+                            // Move the map view instantly to your search location numbers
+                            map.setView([latitude, longitude], 13);
+                            
+                            getPricesNow(placeName, latitude, longitude);
+                        } else {
+                            alert("Location not found.");
+                        }
+                    })
+                    .catch(error => alert(error.message));
+            }
+
+            function searchLocation() {
+                // Clear any leftover map markers before drawing new location search loops
+                for (var i = 0; i < markers.length; i++) {
+                    map.removeLayer(markers[i]);
+                }
+                markers = [];
+
+                var combinedInput = document.getElementById('searchBar').value.trim();
+                if (!combinedInput) return;
+
+                if (/^\d{5}$/.test(combinedInput)) {
+                    searchByZipcode(combinedInput);
+                } else {
+                    searchByPlaceName(combinedInput);
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", function() {
+                var bar = document.getElementById("searchBar");
+                if (bar) {
+                    bar.addEventListener("keypress", function(event) {
+                        if (event.key === "Enter") searchLocation();
+                    });
+                }
+                var icon = document.getElementById("extSearchIcon");
+                if (icon) {
+                    icon.addEventListener("click", searchLocation);
+                }
+            });
+
+
         </script>
     </body>
 </html>
