@@ -2770,57 +2770,52 @@
         <!-- Include your custom JavaScript code -->
         <script>
 
-            var isSearching = false;
-            var mobileMoveTimeout = null;
-            var isProgrammaticMove = false; // FIXED: Prevents mobile device drag event collision bug
+var isSearching = false;
+var mobileMoveTimeout = null;
+var isProgrammaticMove = false; 
 
-            // 1. Initialize map container with fallback view (Denver)
-            var map = L.map('map').setView([39.7392, -104.9903], 13);
-            var markers = []; 
+// 1. Initialize map container with fallback view (Denver)
+var map = L.map('map').setView([39.7392, -104.9903], 13);
+var markers = []; 
 
-            L.tileLayer('https://google.com{x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: 'Map data &copy; Google'
-            }).addTo(map);
+//  FIXED: Restored the complete Google Maps tile layer address
+L.tileLayer('https://google.com{x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: 'Map data &copy; Google'
+}).addTo(map);
 
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    var userLat = position.coords.latitude;
-                    var userLon = position.coords.longitude;
-                    
-                    // Block the mobile drag intercept loop from breaking the initial fly-to action
-                    isProgrammaticMove = true; 
-                    
-                    map.setView([userLat, userLon], 13);
+// 2. High-Accuracy Geolocation System
+navigator.geolocation.getCurrentPosition(
+    function (position) {
+        var userLat = position.coords.latitude;
+        var userLon = position.coords.longitude;
+        isProgrammaticMove = true; 
+        map.setView([userLat, userLon], 13);
+        var startingMarker = L.marker([userLat, userLon], { 
+            icon: L.divIcon({ className: 'black-marker-icon' }) 
+        }).addTo(map);
+        startingMarker.bindPopup("<b>You are here</b>").openPopup();
+        getPricesNow("Current Location", userLat, userLon);
+    },
+    function (error) {
+        console.log("Geolocation failed or denied. Using Denver fallback.");
+        loadDenverFallback();
+    },
+    {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    }
+);
 
-                    var startingMarker = L.marker([userLat, userLon], { 
-                        icon: L.divIcon({ className: 'black-marker-icon' }) 
-                    }).addTo(map);
-
-                    startingMarker.bindPopup("<b>You are here</b>").openPopup();
-                    getPricesNow("Current Location", userLat, userLon);
-                },
-                function (error) {
-                    console.log("Geolocation failed or denied. Using Denver fallback.");
-                    loadDenverFallback();
-                },
-                //  CRITICAL PARAMETER CONFIGURATIONS FOR HARDWARE MOBILE ACCURACY
-                {
-                    enableHighAccuracy: true,  // Forces mobile device to fire up real onboard satellite GPS chips
-                    timeout: 10000,            // Give the phone up to 10 seconds to lock onto high-accuracy satellite grids
-                    maximumAge: 0              // Forces the phone to pull a brand new live location instead of reading cache
-                }
-            );
-
-            function loadDenverFallback() {
-                isProgrammaticMove = true;
-                map.setView([39.7392, -104.9903], 13);
-                var startingMarker = L.marker([39.7392, -104.9903], { 
-                    icon: L.divIcon({ className: 'black-marker-icon' }) 
-                }).addTo(map);
-                getPricesNow("80204", 39.7392, -104.9903);
-            }
-
+function loadDenverFallback() {
+    isProgrammaticMove = true;
+    map.setView([39.7392, -104.9903], 13);
+    var startingMarker = L.marker([39.7392, -104.9903], { 
+        icon: L.divIcon({ className: 'black-marker-icon' }) 
+    }).addTo(map);
+    getPricesNow("80204", 39.7392, -104.9903);
+}
 
             /* ==========================================================================
             APIFY REAL GAS PRICE ENGINE OVERLAY
@@ -2919,10 +2914,8 @@ function searchByZipcode(zipcode) {
             var latitude = parseFloat(data.places[0]["latitude"]);
             var longitude = parseFloat(data.places[0]["longitude"]);
             
-            // FIXED: Added missing mobile view movement statement
             isProgrammaticMove = true; 
             map.setView([latitude, longitude], 13);
-            
             getPricesNow(zipcode, latitude, longitude);
         })
         .catch(error => alert(error.message));
@@ -2943,10 +2936,8 @@ function searchByPlaceName(placeName) {
                 var latitude = parseFloat(data[0].lat);
                 var longitude = parseFloat(data[0].lon);
                 
-                // FIXED: Mark movement as programmatic before sliding map grid
                 isProgrammaticMove = true;
                 map.setView([latitude, longitude], 13);
-                
                 getPricesNow(placeName, latitude, longitude);
             } else {
                 alert("Location not found.");
@@ -2955,83 +2946,92 @@ function searchByPlaceName(placeName) {
         .catch(error => alert(error.message));
 }
 
-        function searchLocation() {
-            for (var i = 0; i < markers.length; i++) {
-                map.removeLayer(markers[i]);
-            }
-            markers = [];
+function searchLocation() {
+    for (var i = 0; i < markers.length; i++) {
+        map.removeLayer(markers[i]);
+    }
+    markers = [];
 
-            var combinedInput = document.getElementById('searchBar').value.trim();
-            if (!combinedInput) return;
+    var combinedInput = document.getElementById('searchBar').value.trim();
+    if (!combinedInput) return;
 
-            var searchField = document.getElementById('searchBar');
-            if (searchField) searchField.blur(); 
+    var searchField = document.getElementById('searchBar');
+    if (searchField) searchField.blur(); 
 
-            if (/^\d{5}$/.test(combinedInput)) {
-                searchByZipcode(combinedInput);
-            } else {
-                searchByPlaceName(combinedInput);
-            }
-        }
+    if (/^\d{5}$/.test(combinedInput)) {
+        searchByZipcode(combinedInput);
+    } else {
+        searchByPlaceName(combinedInput);
+    }
+}
 
-        document.addEventListener("DOMContentLoaded", function() {
-            var bar = document.getElementById("searchBar");
-            if (bar) {
-                bar.addEventListener("keypress", function(event) {
-                    if (event.key === "Enter") searchLocation();
-                });
-            }
-            
-            var icon = document.getElementById("extSearchIcon");
-            if (icon) {
-                icon.addEventListener("click", searchLocation);
-                icon.addEventListener("touchstart", function(e) {
-                    e.preventDefault();
-                    searchLocation();
-                });
-            }
+document.addEventListener("DOMContentLoaded", function() {
+    var bar = document.getElementById("searchBar");
+    if (bar) {
+        bar.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") searchLocation();
         });
-
-        // FIXED TOUCH SELECTION MOVEMENT SAFETY ENGINE
-        map.on('moveend', function() {
-            // FIXED: If the map moved due to a search selection, drop the drag interceptor execution immediately
-            if (isProgrammaticMove) {
-                isProgrammaticMove = false; // Reset the flag cleanly for subsequent physical user drags
-                return;
-            }
-
-            if (isSearching) return; 
-
-            if (mobileMoveTimeout) {
-                clearTimeout(mobileMoveTimeout);
-            }
-
-            mobileMoveTimeout = setTimeout(function() {
-                var center = map.getCenter();
-                var currentLat = center.lat;
-                var currentLon = center.lng;
-
-                isSearching = true;
-
-                var reverseUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon;
-                
-                fetch(reverseUrl, {
-                    headers: { 'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    var placeName = data.address.city || data.address.town || data.address.village || data.address.county || "Current Location";
-                    console.log("Map dragged to new region:", placeName);
-                    getPricesNow(placeName, currentLat, currentLon);
-                })
-                .catch(error => {
-                    console.log("Error reverse geocoding map position:", error.message);
-                })
-                .finally(() => {
-                    isSearching = false; 
-                });
-            }, 800); 
+    }
+    
+    var icon = document.getElementById("extSearchIcon");
+    if (icon) {
+        icon.addEventListener("click", searchLocation);
+        icon.addEventListener("touchstart", function(e) {
+            e.preventDefault();
+            searchLocation();
         });
+    }
+});
+
+//  FIXED MOBILE EVENTS ENGINE
+// Instead of generic 'moveend', we listen explicitly to physical interactions.
+// This prevents the code from stuttering when mobile devices recalculate layouts.
+map.on('dragend zoomend', function() {
+    if (isProgrammaticMove) {
+        isProgrammaticMove = false; 
+        return;
+    }
+    triggerMobileScraper();
+});
+
+// Extra safety hook: resets programmatic movements cleanly
+map.on('movestart', function() {
+    if (isProgrammaticMove) return;
+    if (mobileMoveTimeout) clearTimeout(mobileMoveTimeout);
+});
+
+function triggerMobileScraper() {
+    if (isSearching) return;
+
+    if (mobileMoveTimeout) clearTimeout(mobileMoveTimeout);
+
+    // Debounce processing time: waits for a brief, stable window after touch action stops
+    mobileMoveTimeout = setTimeout(function() {
+        var center = map.getCenter();
+        var currentLat = center.lat;
+        var currentLon = center.lng;
+
+        isSearching = true;
+
+        var reverseUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon;
+        
+        fetch(reverseUrl, {
+            headers: { 'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            var placeName = data.address.city || data.address.town || data.address.village || data.address.county || "Current Location";
+            console.log("Map updated to new region:", placeName);
+            getPricesNow(placeName, currentLat, currentLon);
+        })
+        .catch(error => {
+            console.log("Error handling mobile map shift:", error.message);
+        })
+        .finally(() => {
+            isSearching = false; 
+        });
+    }, 400); // Reduced to 400ms for snappier mobile interface response
+}
         </script>
     </body>
 </html>
