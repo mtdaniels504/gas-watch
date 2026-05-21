@@ -2832,7 +2832,7 @@ if (IS_IN_APP) {
 
         const overlay = document.createElement("div");
 
-        overlay.style = `
+        overlay.style.cssText = `
             position:fixed;
             inset:0;
             background:#000;
@@ -2847,9 +2847,10 @@ if (IS_IN_APP) {
         `;
 
         overlay.innerHTML = `
-            <h2>Open in Safari or Chrome</h2>
+            <h2>Open in your browser</h2>
             <p style="opacity:0.7; max-width:320px;">
-                This app does not work inside Instagram/Facebook browsers.
+                This page does not work inside Instagram or Facebook browsers.
+                Please open it in Safari or Chrome.
             </p>
 
             <button id="openBtn" style="
@@ -2880,34 +2881,34 @@ if (IS_IN_APP) {
 
         document.getElementById("copyBtn").onclick = async () => {
             await navigator.clipboard.writeText(url);
-            alert("Link copied — open Safari and paste it.");
+            alert("Link copied. Open Safari and paste it.");
         };
 
         document.getElementById("openBtn").onclick = () => {
 
             const ua = navigator.userAgent;
 
-            // Android → force Chrome external via intent
+            // Android (best possible trigger)
             if (/Android/i.test(ua)) {
+
+                // This sometimes triggers Chrome externally
                 window.location.href =
-                    "intent://" + window.location.href.replace(/^https?:\/\//, "") +
-                    "#Intent;scheme=https;package=com.android.chrome;end;";
+                    "intent://" +
+                    window.location.href.replace(/^https?:\/\//, "") +
+                    "#Intent;scheme=https;package=com.android.chrome;end";
+
                 return;
             }
 
-            // iOS → must rely on top-level navigation (this is the only thing Apple allows)
+            // iOS (IMPORTANT: only real option)
+            // This does NOT force Safari — it just attempts top-level navigation
             window.location.href = url;
 
-            // fallback copy (helps in Instagram)
+            // fallback
             setTimeout(() => {
-                navigator.clipboard?.writeText(url);
-            }, 300);
+                alert("If nothing happened, tap the ⋯ menu and choose 'Open in browser'.");
+            }, 800);
         };
-
-        // auto-attempt escape (works sometimes in IG)
-        setTimeout(() => {
-            window.location.href = url;
-        }, 800);
     });
 }
 /* ==========================================================================
