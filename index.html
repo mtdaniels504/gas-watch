@@ -1946,13 +1946,14 @@
 
                 
                 <!-- extSearchBar -->
-                <div class="search">
-                    <input class="userInput" id="searchBar" placeholder="Search Zip Codes and Cities Here!"
-                        data-function="searchFunction" data-self="searchBar" data-searchListener="true"
-                    >
-                    <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
-                </div>
-
+                <form onsubmit="event.preventDefault(); return false;">
+                    <div class="search">
+                        <input class="userInput" id="searchBar" placeholder="Search Zip Codes and Cities Here!"
+                            data-function="searchFunction" data-self="searchBar" data-searchListener="true"
+                        >
+                        <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
+                    </div>
+                </form>
 
                 <!-- NavIcons (left(A)) -->
                 <div class="IconAs">
