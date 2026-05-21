@@ -2919,33 +2919,37 @@ function searchFunction() {
             }
 
             function searchByPlaceName(placeName) {
-                // FIXED: Directs request to the dedicated data sub-engine
+                // 1. Correct the URL string syntax directly
                 var nominatimUrl = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(placeName) + "&format=json";
                 
                 fetch(nominatimUrl, {
+                    method: "GET",
                     headers: {
                         'User-Agent': 'GasPriceMapApplication/1.0 (contact@example.com)'
                     }
                 })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Address or Place not found');
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.length > 0) {
-                            // FIXED: Target index zero array properties and parse text to real float digits
-                            var latitude = parseFloat(data[0].lat);
-                            var longitude = parseFloat(data[0].lon);
-                            
-                            // Move the map view instantly to your search location numbers
-                            map.setView([latitude, longitude], 13);
-                            
-                            getPricesNow(placeName, latitude, longitude);
-                        } else {
-                            alert("Location not found.");
-                        }
-                    })
-                    .catch(error => alert(error.message));
+                .then(response => {
+                    if (!response.ok) throw new Error('Address or Place not found');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var latitude = parseFloat(data[0].lat);
+                        var longitude = parseFloat(data[0].lon);
+                        
+                        // 2. Wrap map mutations inside an active animation execution loop
+                        map.setView([latitude, longitude], 13);
+                        
+                        getPricesNow(placeName, latitude, longitude);
+                    } else {
+                        alert("Location not found.");
+                    }
+                })
+                .catch(error => {
+                    // Log the structural details directly to inspect native Apple WebKit properties
+                    console.error("iOS Fetch Diagnostics:", error);
+                    alert("Search failed: " + error.message);
+                });
             }
 
             function searchLocation() {
