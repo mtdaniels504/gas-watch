@@ -2819,111 +2819,88 @@
             /* ==========================================================================
             APIFY REAL GAS PRICE ENGINE OVERLAY
             ========================================================================== */
-            function getPricesNow(searchQuery, targetLat, targetLon) {
-                const APIFY_TOKEN = "apify_api_S4sIKOFdSVBPQYLZksh5iBY5pZGOab4aUIFn"; 
-                const ACTOR_ID = "johnvc~fuelprices"; 
+function getPricesNow(searchQuery, targetLat, targetLon) {
+    console.log("=== EXECUTING SECURE BACKEND FETCH ENGINE ===");
 
-                console.log("=== NEW RENAMED FUNCTION EXECUTED SUCCESSFULLY ===");
+    var searchField = document.getElementById('searchBar');
+    if (searchField) searchField.placeholder = "Scraping live gas prices (takes ~10s)...";
 
-                // 1. Build the exact object layout required by the Apify scraper engine
-                var inputConfig = {
-                    "search": searchQuery,
-                    "fuel": 1,
-                    "maxAge": 0,
-                    "lang": "en",
-                    "radius": 15
-                };
+    // Update this to your live production server URL when you deploy online
+    const BACKEND_URL = "http://localhost:3000/api/gas-prices";
 
-                // 2. Turn the object into a text string
-                var jsonString = JSON.stringify(inputConfig);
-                
-                // 3. Construct the clean Apify target string. 
-                var rawApifyUrl = "https://api.apify.com/v2/acts/" + ACTOR_ID + "/run-sync-get-dataset-items?token=" + APIFY_TOKEN + "&timeout=120";
-                
-                // 4. Wrap the entire address cleanly inside the AllOrigins proxy parameter
-                var proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rawApifyUrl);
+    // Securely request data from your private Node backend gateway
+    fetch(BACKEND_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ search: searchQuery }) 
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok via secure backend.");
+        return response.json();
+    })
+    .then(datasetItems => {
+        if (searchField) searchField.placeholder = "Search Extended Section Here!";
+        
+        if (datasetItems.error) {
+            alert("Error: " + datasetItems.error);
+            return;
+        }
 
-                console.log("FIXED Data URL:", rawApifyUrl);
-                console.log("FIXED Proxy URL:", proxyUrl);
+        if (!datasetItems || datasetItems.length === 0) {
+            alert("No gas stations found in this area.");
+            return;
+        }
 
+        // Clear previous markers safely
+        for (var i = 0; i < markers.length; i++) {
+            map.removeLayer(markers[i]);
+        }
+        markers = [];
 
-                var searchField = document.getElementById('searchBar');
-                if (searchField) searchField.placeholder = "Scraping live gas prices (takes ~10s)...";
+        datasetItems.forEach((station, index) => {
+            // Leaflet map placement calculation logic 
+            var angle = index * (360 / datasetItems.length) * (Math.PI / 180);
+            var radiusOffset = 0.08 * Math.random(); 
+            
+            var lat = targetLat + (Math.sin(angle) * radiusOffset);
+            var lon = targetLon + (Math.cos(angle) * radiusOffset);
+            
+            var currentPrice = parseFloat(station.price_cash || station.price_credit || 3.49);
+            var stationName = station.name || "Gas Station";
+            var streetAddress = station.address_line1 || "Address Unlisted";
+            var locality = station.address_locality || "";
 
-                // FIXED: Direct call to Apify bypassing the broken proxy tunnel entirely
-                // 2. Direct POST request straight to Apify
-                fetch(rawApifyUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(inputConfig) // Safely uploads your exact config object
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error("Network response was not ok");
-                    return response.json();
-                })
-                // FIXED: Processes raw data results straight from Apify without .contents string parsing
-                .then(datasetItems => {
-                    if (searchField) searchField.placeholder = "Search Extended Section Here!";
-                    
-                    if (datasetItems.error) {
-                        alert("Apify Error: " + datasetItems.error.message);
-                        return;
-                    }
+            var priceIcon = L.divIcon({
+                className: 'gas-price-marker',
+                html: "$" + currentPrice.toFixed(2)
+            });
 
-                    if (!datasetItems || datasetItems.length === 0) {
-                        alert("No gas stations found in this area.");
-                        return;
-                    }
+            var marker = L.marker([lat, lon], { icon: priceIcon });
 
-                    // Clear previous markers safely
-                    for (var i = 0; i < markers.length; i++) {
-                        map.removeLayer(markers[i]);
-                    }
-                    markers = [];
+            marker.bindPopup(`
+                <div class="custom-popup">
+                    <h3>${stationName}</h3>
+                    <p>${streetAddress}, ${locality}</p>
+                    <div class="price-tag">Regular: $${currentPrice.toFixed(2)}</div>
+                </div>
+            `);
 
-                    datasetItems.forEach((station, index) => {
-                        // Leaflet map placement calculation logic 
-                        var angle = index * (360 / datasetItems.length) * (Math.PI / 180);
-                        var radiusOffset = 0.08 * Math.random(); // Increased from 0.012 to spread markers across the wider area
-                        
-                        var lat = targetLat + (Math.sin(angle) * radiusOffset);
-                        var lon = targetLon + (Math.cos(angle) * radiusOffset);
-                        
-                        var currentPrice = parseFloat(station.price_cash || station.price_credit || 3.49);
-                        var stationName = station.name || "Gas Station";
-                        var streetAddress = station.address_line1 || "Address Unlisted";
-                        var locality = station.address_locality || "";
+            marker.addTo(map);
+            markers.push(marker);
+        });
 
-                        var priceIcon = L.divIcon({
-                            className: 'gas-price-marker',
-                            html: "$" + currentPrice.toFixed(2)
-                        });
+    })
+    .catch(error => {
+        if (searchField) searchField.placeholder = "Search Extended Section Here!";
+        alert("Error fetching gas prices: " + error.message);
+    });
+}
 
-                        var marker = L.marker([lat, lon], { icon: priceIcon });
-
-                        marker.bindPopup(`
-                            <div class="custom-popup">
-                                <h3>${stationName}</h3>
-                                <p>${streetAddress}, ${locality}</p>
-                                <div class="price-tag">Regular: $${currentPrice.toFixed(2)}</div>
-                            </div>
-                        `);
-
-                        marker.addTo(map);
-                        markers.push(marker);
-                    });
-
-                })
-                .catch(error => {
-                    if (searchField) searchField.placeholder = "Search Extended Section Here!";
-                    alert("Error fetching gas prices: " + error.message);
-                });
-            }
-            function searchFunction() {
-                searchLocation();
-            }
+function searchFunction() {
+    searchLocation();
+}
 
             function searchByZipcode(zipcode) {
                 var apiUrl = "https://api.zippopotam.us/us/" + zipcode;
@@ -3015,7 +2992,7 @@
                 isSearching = true;
 
                 // 2. Ask Nominatim what city matches these map coordinates
-                var reverseUrl = "https://openstreetmap.org" + currentLat + "&lon=" + currentLon;
+                var reverseUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + currentLat + "&lon=" + currentLon;
                 
                 fetch(reverseUrl, {
                     headers: {
