@@ -2814,6 +2814,41 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 /* ==========================================================================
+   IN-APP BROWSER DETECTION
+========================================================================== */
+
+function isInAppBrowser() {
+
+    const ua =
+        navigator.userAgent ||
+        navigator.vendor ||
+        window.opera;
+
+    return (
+        ua.includes("FBAN") ||       // Facebook iOS
+        ua.includes("FBAV") ||       // Facebook
+        ua.includes("Instagram") ||  // Instagram
+        ua.includes("Line") ||
+        ua.includes("Twitter")
+    );
+}
+
+const USING_IN_APP_BROWSER = isInAppBrowser();
+
+if (USING_IN_APP_BROWSER) {
+
+    console.warn("In-app browser detected.");
+
+        setTimeout(() => {
+
+            console.warn(
+                "For best performance, open this page in Safari or Chrome."
+            );
+
+        }, 1200);
+}
+
+/* ==========================================================================
    APP INIT
 ========================================================================== */
 
@@ -2860,13 +2895,31 @@ function initApp() {
 
         function(error) {
             console.warn("Geolocation failed:", error);
-            loadDenverFallback();
+            // Social app browsers fail geolocation constantly.
+            // Fallback faster and more gracefully.
+
+            if (USING_IN_APP_BROWSER) {
+
+                console.warn("Using fallback due to in-app browser.");
+
+                setTimeout(() => {
+                    loadDenverFallback();
+                }, 800);
+
+            } else {
+
+                loadDenverFallback();
+            }
         },
 
         {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
+            enableHighAccuracy: !USING_IN_APP_BROWSER,
+
+            // In-app browsers need longer timeouts
+            timeout: USING_IN_APP_BROWSER ? 25000 : 15000,
+
+            // Allow cached location for social browsers
+            maximumAge: USING_IN_APP_BROWSER ? 60000 : 0
         }
     );
 }
