@@ -2998,16 +2998,18 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
         "https://gas-watch-server.onrender.com/api/gas-prices";
 
     try {
-
+        
         const response = await fetchWithTimeout(BACKEND_URL, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache"
             },
             body: JSON.stringify({
-                search: searchQuery
+                search: searchQuery,
+                _t: Date.now() // 🔥 cache-buster
             }),
-            timeout: 20000
+            cache: "no-store"
         });
 
         if (!response.ok) {
