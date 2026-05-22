@@ -1997,7 +1997,7 @@ if (isInAppBrowser()) {
 
     document.addEventListener("DOMContentLoaded", () => {
 
-        const url = window.location.href;
+        const url = "https://gas-watch.com";
 
         const overlay = document.createElement("div");
 
@@ -2942,10 +2942,6 @@ function loadDenverFallback() {
             className: 'black-marker-icon'
         })
     }).addTo(map);
-
-    marker
-        .bindPopup("<b>Denver Fallback</b>")
-        .openPopup();
 
     getPricesNow("80204", lat, lon);
 }
