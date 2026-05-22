@@ -2788,65 +2788,6 @@ L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     attribution: 'Map data © Google'
 }).addTo(map);
 
-/* ==========================================================================
-   FETCH WITH TIMEOUT
-========================================================================== */
-
-async function fetchWithTimeout(resource, options = {}) {
-    const timeout = options.timeout || 15000;
-
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        const response = await fetch(resource, {
-            ...options,
-            signal: controller.signal
-        });
-
-        clearTimeout(id);
-        return response;
-
-    } catch (err) {
-        clearTimeout(id);
-        throw err;
-    }
-}
-
-/* ==========================================================================
-   IN-APP BROWSER DETECTION
-========================================================================== */
-
-function isInAppBrowser() {
-
-    const ua =
-        navigator.userAgent ||
-        navigator.vendor ||
-        window.opera;
-
-    return (
-        ua.includes("FBAN") ||       // Facebook iOS
-        ua.includes("FBAV") ||       // Facebook
-        ua.includes("Instagram") ||  // Instagram
-        ua.includes("Line") ||
-        ua.includes("Twitter")
-    );
-}
-
-const USING_IN_APP_BROWSER = isInAppBrowser();
-
-if (USING_IN_APP_BROWSER) {
-
-    console.warn("In-app browser detected.");
-
-        setTimeout(() => {
-
-            console.warn(
-                "For best performance, open this page in Safari or Chrome."
-            );
-
-        }, 1200);
-}
 
 /* ==========================================================================
    APP INIT
