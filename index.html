@@ -1980,6 +1980,57 @@
             </div>
         </section>
 
+        <script>
+function isInAppBrowser() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+    return (
+        ua.includes("FBAN") ||
+        ua.includes("FBAV") ||
+        ua.includes("Instagram") ||
+        ua.includes("Line") ||
+        ua.includes("Twitter")
+    );
+}
+
+if (isInAppBrowser()) {
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const url = window.location.href;
+
+        const overlay = document.createElement("div");
+
+        overlay.style.cssText = `
+            position:fixed;
+            inset:0;
+            background:#000;
+            color:#fff;
+            z-index:999999;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+            padding:24px;
+            font-family: sans-serif;
+        `;
+
+        overlay.innerHTML = `
+            <h2 style="margin-bottom:12px;">
+                Best used in Safari or Chrome
+            </h2>
+
+            <p style="opacity:0.8; font-size:14px; word-break:break-all;">
+                ${url}
+            </p>
+        `;
+
+        document.body.appendChild(overlay);
+    });
+}
+</script>
+
         <script id="colorPalette_script">
 
             const white1 = '#fff';
@@ -2788,6 +2839,30 @@ L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     attribution: 'Map data © Google'
 }).addTo(map);
 
+/* ==========================================================================
+   FETCH WITH TIMEOUT
+========================================================================== */
+
+async function fetchWithTimeout(resource, options = {}) {
+    const timeout = options.timeout || 15000;
+
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+        });
+
+        clearTimeout(id);
+        return response;
+
+    } catch (err) {
+        clearTimeout(id);
+        throw err;
+    }
+}
 
 /* ==========================================================================
    APP INIT
@@ -2836,31 +2911,13 @@ function initApp() {
 
         function(error) {
             console.warn("Geolocation failed:", error);
-            // Social app browsers fail geolocation constantly.
-            // Fallback faster and more gracefully.
-
-            if (USING_IN_APP_BROWSER) {
-
-                console.warn("Using fallback due to in-app browser.");
-
-                setTimeout(() => {
-                    loadDenverFallback();
-                }, 800);
-
-            } else {
-
-                loadDenverFallback();
-            }
+            loadDenverFallback();
         },
 
         {
-            enableHighAccuracy: !USING_IN_APP_BROWSER,
-
-            // In-app browsers need longer timeouts
-            timeout: USING_IN_APP_BROWSER ? 25000 : 15000,
-
-            // Allow cached location for social browsers
-            maximumAge: USING_IN_APP_BROWSER ? 60000 : 0
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
         }
     );
 }
@@ -2885,6 +2942,10 @@ function loadDenverFallback() {
             className: 'black-marker-icon'
         })
     }).addTo(map);
+
+    marker
+        .bindPopup("<b>Denver Fallback</b>")
+        .openPopup();
 
     getPricesNow("80204", lat, lon);
 }
@@ -2925,165 +2986,50 @@ function clearMarkers() {
 
 async function getPricesNow(searchQuery, targetLat, targetLon) {
 
-    if (isSearching) {
-        console.warn("Search already running.");
-        return;
-    }
+    if (isSearching) return;
 
     isSearching = true;
 
-    console.log("Starting gas price fetch...");
+    console.log("Fetching gas prices...");
 
-    const searchField =
-        document.getElementById('searchBar');
+    const searchField = document.getElementById('searchBar');
 
     if (searchField) {
-        searchField.placeholder =
-            "Loading gas prices...";
+        searchField.placeholder = "Loading gas prices...";
     }
 
     const BACKEND_URL =
         "https://gas-watch-server.onrender.com/api/gas-prices";
 
-    // In-app browsers and Render cold starts need LONGER
-    const REQUEST_TIMEOUT =
-        USING_IN_APP_BROWSER ? 45000 : 30000;
-
-    // Retry attempts help with Render wake-up
-    const MAX_RETRIES = 2;
-
-    let lastError = null;
-
     try {
 
-        let datasetItems = null;
+        const response = await fetchWithTimeout(BACKEND_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                search: searchQuery
+            }),
+            timeout: 20000
+        });
 
-        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-
-            try {
-
-                console.log(
-                    `Gas price fetch attempt ${attempt}...`
-                );
-
-                const response =
-                    await fetchWithTimeout(BACKEND_URL, {
-
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            search: searchQuery
-                        }),
-
-                        timeout: REQUEST_TIMEOUT,
-
-                        cache: "no-store",
-
-                        mode: "cors",
-
-                        credentials: "omit"
-                    });
-
-                console.log(
-                    "Backend response status:",
-                    response.status
-                );
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        `Backend HTTP ${response.status}`
-                    );
-                }
-
-                // Read raw text first for diagnostics
-                const rawText =
-                    await response.text();
-
-                console.log(
-                    "Raw backend response:",
-                    rawText
-                );
-
-                // Empty response protection
-                if (!rawText || !rawText.trim()) {
-
-                    throw new Error(
-                        "Empty backend response."
-                    );
-                }
-
-                // Parse JSON safely
-                try {
-
-                    datasetItems =
-                        JSON.parse(rawText);
-
-                } catch (jsonError) {
-
-                    console.error(
-                        "JSON parse failure:",
-                        jsonError
-                    );
-
-                    throw new Error(
-                        "Invalid JSON response."
-                    );
-                }
-
-                // Successful fetch
-                break;
-
-            } catch (attemptError) {
-
-                console.error(
-                    `Attempt ${attempt} failed:`,
-                    attemptError
-                );
-
-                lastError = attemptError;
-
-                // Wait before retrying
-                if (attempt < MAX_RETRIES) {
-
-                    await new Promise(resolve =>
-                        setTimeout(resolve, 2500)
-                    );
-                }
-            }
+        if (!response.ok) {
+            throw new Error("Backend request failed.");
         }
 
-        // All retries failed
-        if (!datasetItems) {
-
-            throw lastError ||
-                new Error("Failed to load gas prices.");
-        }
+        const datasetItems = await response.json();
 
         if (searchField) {
-
             searchField.placeholder =
                 "Search city or ZIP code...";
         }
 
         if (datasetItems.error) {
-
             throw new Error(datasetItems.error);
         }
 
-        if (!Array.isArray(datasetItems)) {
-
-            throw new Error(
-                "Backend returned invalid data format."
-            );
-        }
-
-        if (datasetItems.length === 0) {
-
+        if (!datasetItems || datasetItems.length === 0) {
             alert("No gas stations found.");
             return;
         }
@@ -3093,20 +3039,16 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
         datasetItems.forEach((station, index) => {
 
             const angle =
-                index *
-                (360 / datasetItems.length) *
-                (Math.PI / 180);
+                index * (360 / datasetItems.length) * (Math.PI / 180);
 
             const radiusOffset =
                 0.02 + (Math.random() * 0.03);
 
             const lat =
-                targetLat +
-                (Math.sin(angle) * radiusOffset);
+                targetLat + (Math.sin(angle) * radiusOffset);
 
             const lon =
-                targetLon +
-                (Math.cos(angle) * radiusOffset);
+                targetLon + (Math.cos(angle) * radiusOffset);
 
             const currentPrice =
                 parseFloat(
@@ -3116,36 +3058,29 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
                 );
 
             const stationName =
-                station.name ||
-                "Gas Station";
+                station.name || "Gas Station";
 
             const streetAddress =
-                station.address_line1 ||
-                "Address unavailable";
+                station.address_line1 || "Address unavailable";
 
             const locality =
-                station.address_locality ||
-                "";
+                station.address_locality || "";
 
-            const priceIcon =
-                L.divIcon({
-                    className: 'gas-price-marker',
-                    html:
-                        `$${currentPrice.toFixed(2)}`
-                });
+            const priceIcon = L.divIcon({
+                className: 'gas-price-marker',
+                html: `$${currentPrice.toFixed(2)}`
+            });
 
-            const marker =
-                L.marker([lat, lon], {
-                    icon: priceIcon
-                });
+            const marker = L.marker([lat, lon], {
+                icon: priceIcon
+            });
 
             marker.bindPopup(`
                 <div class="custom-popup">
                     <h3>${stationName}</h3>
                     <p>${streetAddress}, ${locality}</p>
                     <div class="price-tag">
-                        Regular:
-                        $${currentPrice.toFixed(2)}
+                        Regular: $${currentPrice.toFixed(2)}
                     </div>
                 </div>
             `);
@@ -3155,33 +3090,23 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
             markers.push(marker);
         });
 
-        console.log(
-            "Gas prices loaded successfully."
-        );
-
     } catch (error) {
 
-        console.error(
-            "FINAL GAS FETCH FAILURE:",
-            error
-        );
+        console.error(error);
 
-        alert(
-            "Unable to load gas prices.\n\n" +
-            error.message
-        );
+        alert("Error fetching gas prices.");
 
     } finally {
 
         isSearching = false;
 
         if (searchField) {
-
             searchField.placeholder =
                 "Search city or ZIP code...";
         }
     }
 }
+
 /* ==========================================================================
    ZIP SEARCH
 ========================================================================== */
