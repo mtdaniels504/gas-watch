@@ -3039,11 +3039,15 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
             const angle =
                 index * (360 / datasetItems.length) * (Math.PI / 180);
 
-            // 1. Set a fixed 5-mile radius
-            const radiusMiles = 5; 
+            // 1. Set the maximum radius limit (5 miles)
+            const maxRadiusMiles = 5; 
             
-            // 2. Convert 5 miles to geographic degrees (1 degree ≈ 69 miles)
-            const radiusOffset = radiusMiles / 69; 
+            // 2. Convert that maximum limit to geographic degrees
+            const maxRadiusDegrees = maxRadiusMiles / 69; 
+
+            // 3. FIX: Randomize the radius for each item so they scatter INSIDE the circle
+            // Using Math.sqrt ensures an even spread across the circle's surface area
+            const radiusOffset = Math.sqrt(Math.random()) * maxRadiusDegrees;
 
             const lat =
                 targetLat + (Math.sin(angle) * radiusOffset);
