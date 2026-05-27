@@ -3,6 +3,8 @@
 <html lang="en">
     <head>
         <title>Gas Watch by TWMM</title>
+        <meta name="description" content="Find the cheapest gas prices in your area instantly. Search by city, zip code, or address on our interactive live fuel map to save money on gas today.">
+
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -80,14 +82,14 @@
             }
             
             h5, p, 
-            span, details, a, strong, 
+            span, details, a, strong, label,
             input, textarea, select, option  {
                 font-size: clamp(0.55rem, 0.3rem + .7dvw, 0.75rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
             }
 
 
-            strong {
+            strong, label {
                 font-weight: 600;
             }
 
@@ -588,6 +590,7 @@
 
             .Nav {
                 background: transparent;
+                margin-top: 0;
             }
 
             .Head {
@@ -739,7 +742,7 @@
                 height: 44px;
                 min-width: 96px;
                 width: calc(90px + 5dvw);
-                max-width: 140px;
+                max-width: 200px;
                 border-radius: 2px;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
             }
@@ -930,9 +933,12 @@
 
             .subNav {
                 position: absolute;
-                width: 32%;
+                width: calc(200px + 5dvw);
                 height: auto;
                 gap: 1px;
+                z-index: 999;
+                top: 60px;
+                left: 0;
             }
 
             .subNavRow, .subNavRow2 {
@@ -981,6 +987,75 @@
             .subMoreToggle {
                 transform: rotate(-90deg);
                 margin-right: 1px;
+            }
+
+
+            /* -- FilterDisplay -- */
+
+            .filterDisplay {
+                position: absolute;
+                width: calc(200px + 5dvw);
+                height: calc(100dvh - 60px);
+                z-index: 999;
+                top: 60px;
+                right: 0;
+            }
+
+            .filterForm {
+                width: 100%;
+            }
+
+            .filterForm input {
+                width: 100%;
+            }
+
+            .filterRow, .halfRow {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin: 4px 0;
+                padding: 4px;
+                gap: 4px;
+                width: 100%;
+            }
+
+            .filterRowDuo {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                width: 100%;
+                gap: 4px;
+            }
+
+            .filterRowDuo .filterRow {
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .halfRow {
+                width: 50%;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .priceRangeInputs {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                gap: 4px;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
             }
 
 
@@ -1589,21 +1664,6 @@
             }
 
 
-            /*--extBody--*/
-
-            #extSubNav {
-                z-index: 810;
-                top: clamp(104.5px, 78.75px + 3.7dvw, 122px);
-                left: clamp(4px, 1dvw - 2px, 7px);
-            }
-
-            .extDisplayReports {
-                z-index: 810;
-                top: clamp(146.5px, 122.5px + 3.7dvw, 165px);
-                right: clamp(8px, 1dvw - 4px, 12px);
-            }
-
-
             /* ----- Nav Section ----- */
 
             #navHead, #navBody {
@@ -1738,7 +1798,7 @@
     background: #059669 !important; /* Slightly deeper emerald green on focus */
     transform: translate(-50%, -50%) scale(1.1) !important; /* Micro-scaling physical feedback */
     box-shadow: 0 6px 16px rgba(5, 150, 105, 0.45) !important;
-    z-index: 99999 !important; /* Forces hovered price straight to top visible depth layer */
+    z-index: 800 !important; /* Forces hovered price straight to top visible depth layer */
 }
 
 /* ==========================================================================
@@ -1833,105 +1893,14 @@
 
         <div class="backPlane" id="plane3">
 
-            <section class="Nav part" id="extNav">
+            <section class="Nav part" id="Nav">
 
                 <div class="IconAs">
                     <!-- navIcon -->
                     <div class="IconAs navHeadIcons">
                         <i class="IconA fa-solid fa-bars"
-                            data-sub="extSubNav" data-section="Extended"
+                            data-sub="subNav" data-section="Nav"
                         ></i>
-
-                        <!--extSubNav(Head)-->
-                        <div class="subNav" id="extSubNav" style="display: none;">
-
-                            <!--subNavHome-->
-                            <div class="subNavRow">
-                                <span class="subNavItem">Home</span>
-                                <i class="subNavButton subHomeButton fa-solid fa-home"></i>
-                            </div>
-
-                            <!--subNavFriends-->
-                            <div class="subNavRow" data-target="#extSubNav-friends" data-slug="#extSubMore-friends">
-                                <span class="subNavItem">Friends</span>
-                                <i class="subNavButton subMoreToggle" id="extSubMore-friends">▼</i>
-                            </div>
-                            <!--subNavMore-->
-                            <div class="subNavMore" id="extSubNav-friends" style="display: none;">
-                                <hr class="subNavHr">
-                                <div class="subNavMoreBox">
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">Find Friends</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">Follows</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!--subNavHelp-->
-                            <div class="subNavRow" data-target="#extSubNav-help" data-slug="#extSubMore-help">
-                                <span class="subNavItem">Help</span>
-                                <i class="subNavButton subMoreToggle" id="extSubMore-help">▼</i>
-                            </div>
-                            <!--subNavMore-->
-                            <div class="subNavMore" id="extSubNav-help" style="display: none;">
-                                <hr class="subNavHr">
-                                <div class="subNavMoreBox">
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">FAQs</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                </div>
-                            </div>         
-                            
-                            <!--subNavSettings-->
-                            <div class="subNavRow" data-target="#extSubNav-settings" data-slug="#extSubMore-settings">
-                                <span class="subNavItem">Settings</span>
-                                <i class="subNavButton subMoreToggle" id="extSubMore-settings">▼</i>
-                            </div>
-                            <!--subNavMore-->
-                            <div class="subNavMore" id="extSubNav-settings" style="display: none;">
-                                <hr class="subNavHr">
-                                <div class="subNavMoreBox">
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">Accessibility</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">Preferences</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!--subNavAccount-->
-                            <div class="subNavRow" data-target="#extSubNav-account" data-slug="#extSubMore-account">
-                                <span class="subNavItem">Account</span>
-                                <i class="subNavButton subMoreToggle" id="extSubMore-account">▼</i>
-                            </div>
-                            <!--subNavMore-->
-                            <div class="subNavMore" id="extSubNav-account" style="display: none;">
-                                <hr class="subNavHr">
-                                <div class="subNavMoreBox">
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">My Account</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">Create Account</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                    <div class="subNavRow2">
-                                        <span class="subNavItem">Sign In</span>
-                                        <i class="subNavButton subPlusButton">+</i>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
                     </div>
 
                     <!-- Ext Logo -->
@@ -1960,7 +1929,7 @@
                         <i class="fa-solid fa-sort"></i>
                     </div>
                     <div class="IconA">
-                        <i class="fa-solid fa-filter"></i>
+                        <i class="fa-solid fa-filter" data-target="filterDisplay"></i>
                     </div>
                 </div>
 
@@ -1976,6 +1945,131 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Extended -->
+
+            <div class="subNav" id="subNav" style="display: none;">
+
+                <!--subNavHome-->
+                <div class="subNavRow">
+                    <span class="subNavItem">Home</span>
+                    <i class="subNavButton subHomeButton fa-solid fa-home"></i>
+                </div>
+
+                <!--subNavHelp-->
+                <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
+                    <span class="subNavItem">Help</span>
+                    <i class="subNavButton subMoreToggle" id="subMore-help">▼</i>
+                </div>
+                <!--subNavMore-->
+                <div class="subNavMore" id="subNav-help" style="display: none;">
+                    <hr class="subNavHr">
+                    <div class="subNavMoreBox">
+                        <div class="subNavRow2">
+                            <span class="subNavItem">FAQs</span>
+                            <i class="subNavButton subPlusButton">+</i>
+                        </div>
+                    </div>
+                </div>         
+                
+                <!--subNavSettings-->
+                <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
+                    <span class="subNavItem">Settings</span>
+                    <i class="subNavButton subMoreToggle" id="subMore-settings">▼</i>
+                </div>
+                <!--subNavMore-->
+                <div class="subNavMore" id="subNav-settings" style="display: none;">
+                    <hr class="subNavHr">
+                    <div class="subNavMoreBox">
+                        <div class="subNavRow2">
+                            <span class="subNavItem">Accessibility</span>
+                            <i class="subNavButton subPlusButton">+</i>
+                        </div>
+                        <div class="subNavRow2">
+                            <span class="subNavItem">Preferences</span>
+                            <i class="subNavButton subPlusButton">+</i>
+                        </div>
+                    </div>
+                </div>
+
+                <!--subNavAccount-->
+                <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
+                    <span class="subNavItem">Account</span>
+                    <i class="subNavButton subMoreToggle" id="subMore-account">▼</i>
+                </div>
+                <!--subNavMore-->
+                <div class="subNavMore" id="subNav-account" style="display: none;">
+                    <hr class="subNavHr">
+                    <div class="subNavMoreBox">
+                        <div class="subNavRow2">
+                            <span class="subNavItem">My Account</span>
+                            <i class="subNavButton subPlusButton">+</i>
+                        </div>
+                        <div class="subNavRow2">
+                            <span class="subNavItem">Create Account</span>
+                            <i class="subNavButton subPlusButton">+</i>
+                        </div>
+                        <div class="subNavRow2">
+                            <span class="subNavItem">Sign In</span>
+                            <i class="subNavButton subPlusButton">+</i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="filterDisplay" id="filterDisplay" style="display: none;">
+                <form class="filterForm">
+                    <div class="filterRow">
+                        <label for="filterAddress">Address:</label>
+                        <input type="text" id="filterAddress" name="filterAddress" placeholder="Enter Address">
+                    </div>
+                    <div class="filterRow">
+                        <label for="filterCity">City:</label>
+                        <input type="text" id="filterCity" name="filterCity" placeholder="Enter City">
+                    </div>
+                    <div class="filterRowDuo">
+                        <div class="filterRow">
+                            <label for="filterState">State:</label>
+                            <input type="text" id="filterState" name="filterState" placeholder="Enter State">
+                        </div>
+                        <div class="filterRow">
+                            <label for="filterZip">Zip Code:</label>
+                            <input type="text" id="filterZip" name="filterZip" placeholder="Enter Zip Code">
+                        </div>
+                    </div>
+                    <div class="filterRow">
+                        <label for="filterStoreName">Store Name or Reference Point:</label>
+                        <input type="text" id="filterStoreName" name="filterStoreName" placeholder="e.g., Shell, Walmart, Main St.">
+                    </div>
+                    <div class="filterRow">
+                        <div class="halfRow">
+                            <label for="distanceRange">Distance (miles):</label>
+                            <input type="text" id="distanceValue" name="distanceValue" placeholder="Enter Radius">
+                            <input type="range" id="distanceRange" name="distanceRange" min="0" max="20" step="1">
+                        </div>
+                    </div>
+                    <div class="filterRow" style="display: none;">
+                        <label for="priceRangeMin">Price Range ($):</label>
+                        <div class="priceRangeInputs">
+                            <input type="text" id="priceMinValue" name="priceMinValue" placeholder="Min">
+                            <span class="priceRangeSeparator">To</span>
+                            <input type="text" id="priceValue" name="priceValue" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="filterRow" style="display: none;">
+                        <label for="fuelType">Fuel Type:</label>
+                        <select id="fuelType" name="fuelType">
+                            <option value="">Any</option>
+                            <option value="regular">Regular</option>
+                            <option value="midgrade">Midgrade</option>
+                            <option value="premium">Premium</option>
+                            <option value="diesel">Diesel</option>
+                        </select>
+                    </div>
+                    <button type="submit" class=" fullButton applyFiltersButton">Apply Filters</button>
+                </form>
+            </div>
 
             </div>
         </section>
@@ -2307,6 +2401,48 @@ if (isInAppBrowser()) {
                     }
                 });
             });
+
+
+            /* FilterDisplay */
+
+            const filters = document.querySelectorAll('.fa-filter');
+
+            filters.forEach(filter => {
+
+                const dataTarget = document.getElementById(filter.getAttribute('data-target'));
+
+                filter.addEventListener('click', () => {
+
+                    if (dataTarget.style.display === 'none') {
+                        dataTarget.style.display = 'flex';
+                    } else {
+                        dataTarget.style.display = 'none';
+                    }
+
+                    function blurFilterDisplay(event) {
+                        
+                        //If Not Bars or subNav OR toggle: Display None
+                        if (!filter.contains(event.target) && !dataTarget.contains(event.target)
+                           ) {
+
+                            //filterDisplay
+                            dataTarget.style.display = 'none';
+                            
+
+                            document.addEventListener('click', blur);
+
+                            return;
+                        }
+
+                        return;
+                    }
+
+                    document.addEventListener('click', blurSubNav);
+
+                });
+
+            });
+
 
             
             // Tab Toggles
@@ -2809,6 +2945,160 @@ if (isInAppBrowser()) {
 
         </script>
 
+        <script id="filter_script">
+
+            document.addEventListener("DOMContentLoaded", () => {
+                // --- DISTANCE FILTER LOGIC ---
+                const distanceRange = document.getElementById("distanceRange");
+                const distanceValue = document.getElementById("distanceValue");
+
+                // Initialize distance at 5 miles
+                distanceRange.value = 5;
+                distanceValue.value = 5;
+
+                // Sync Slider -> Input (Strictly capping display/slider range to 10 as requested)
+                distanceRange.max = 20; 
+                distanceRange.addEventListener("input", (e) => {
+                    distanceValue.value = e.target.value;
+                });
+
+                // Sync Input -> Slider
+                distanceValue.addEventListener("input", (e) => {
+                    let val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val >= 0 && val <= 10) {
+                        distanceRange.value = val;
+                    }
+                });
+            });
+
+
+            /* ==========================================================================
+   FILTER SEARCH
+========================================================================== */
+
+function buildFilterSearchString() {
+
+    const storeName =
+        document.getElementById('filterStoreName')?.value.trim();
+
+    const address =
+        document.getElementById('filterAddress')?.value.trim();
+
+    const city =
+        document.getElementById('filterCity')?.value.trim();
+
+    const state =
+        document.getElementById('filterState')?.value.trim();
+
+    const zip =
+        document.getElementById('filterZip')?.value.trim();
+
+    // Remove empty values automatically
+    const searchParts = [
+        storeName,
+        address,
+        city,
+        state,
+        zip
+    ].filter(part => part && part.length > 0);
+
+    // Build clean comma-separated string
+    return searchParts.join(', ');
+}
+
+/* ==========================================================================
+   APPLY FILTERS
+========================================================================== */
+
+function applyFilters(event) {
+
+    event.preventDefault();
+
+    if (isSearching) return;
+
+    const finalSearchString =
+        buildFilterSearchString();
+
+    if (!finalSearchString) {
+
+        alert("Please enter at least one filter field.");
+
+        return;
+    }
+
+    console.log(
+        "Filter search:",
+        finalSearchString
+    );
+
+    clearMarkers();
+
+    // ZIP-only optimization
+    if (/^\d{5}$/.test(finalSearchString)) {
+
+        searchByZipcode(finalSearchString);
+
+    } else {
+
+        searchByPlaceName(finalSearchString);
+    }
+
+
+
+    const distanceInput =
+        document.getElementById('distanceValue');
+
+    const distanceSlider =
+        document.getElementById('distanceRange');
+
+    const selectedDistance =
+        parseFloat(
+            distanceInput?.value ||
+            distanceSlider?.value
+        );
+
+    if (
+        !isNaN(selectedDistance) &&
+        selectedDistance > 0
+    ) {
+
+        activeRadiusMiles = selectedDistance;
+
+    } else {
+
+        // fallback default
+        activeRadiusMiles = 5;
+    }
+
+    console.log(
+        "ACTIVE RADIUS:",
+        activeRadiusMiles,
+        "miles"
+    );
+
+
+
+    const fields = [
+        'filterStoreName',
+        'filterAddress',
+    ];
+
+    fields.forEach(id => {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.value = '';
+        }
+    });
+
+}
+
+            
+
+        </script>
+
 
 
         <!-- Include Leaflet JavaScript file -->
@@ -2824,6 +3114,8 @@ if (isInAppBrowser()) {
 let isSearching = false;
 let initialLoadTriggered = false;
 let markers = [];
+
+let activeRadiusMiles = 5;
 
 /* ==========================================================================
    MAP INIT
@@ -3040,7 +3332,7 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
                 index * (360 / datasetItems.length) * (Math.PI / 180);
 
             // 1. Set the maximum radius limit (5 miles)
-            const maxRadiusMiles = 5; 
+            const maxRadiusMiles = activeRadiusMiles;
             
             // 2. Convert that maximum limit to geographic degrees
             const maxRadiusDegrees = maxRadiusMiles / 69; 
@@ -3266,6 +3558,22 @@ document.addEventListener("DOMContentLoaded", function() {
     }, 500);
 });
 
+/* ==========================================================================
+   FILTER FORM SUBMIT
+========================================================================== */
+
+const filterForm =
+    document.querySelector('.filterForm');
+
+if (filterForm) {
+
+    filterForm.addEventListener(
+        'submit',
+        applyFilters
+    );
+}
+
 </script>
+
     </body>
 </html>
