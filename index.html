@@ -3079,6 +3079,8 @@ if (isInAppBrowser()) {
 
                 // Price filter
 
+                /*
+
                 const priceMaxInput = document.getElementById('priceValue');
                 const parsedMaxPrice = parseFloat(priceMaxInput?.value);
 
@@ -3088,6 +3090,7 @@ if (isInAppBrowser()) {
                     maxPriceAllowed = null;
                 }
 
+                */
 
   
 
@@ -3314,7 +3317,7 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
             },
             body: JSON.stringify({
                 search: searchQuery,
-                _t: Date.now()
+                _t: Date.now() // 🔥 cache-buster
             }),
             cache: "no-store"
         });
@@ -3341,43 +3344,20 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
 
         clearMarkers();
 
-        /* =========================================================
-           PRICE FILTER (APPLIED BEFORE RENDERING)
-        ========================================================= */
-
-        const filteredItems = datasetItems.filter(station => {
-
-            const priceRaw =
-                station.price_cash ?? station.price_credit;
-
-            const price = parseFloat(priceRaw);
-
-            // Keep stations with missing pricing info (your design choice)
-            if (isNaN(price)) return true;
-
-            // Apply max price filter if active
-            if (maxPriceAllowed !== null && price > maxPriceAllowed) {
-                return false;
-            }
-
-            return true;
-        });
-
-        /* =========================================================
-           RENDER MARKERS (ONLY FILTERED DATA)
-        ========================================================= */
-
-        filteredItems.forEach((station, index) => {
+        datasetItems.forEach((station, index) => {
 
             const angle =
-                index * (360 / filteredItems.length) * (Math.PI / 180);
+                index * (360 / datasetItems.length) * (Math.PI / 180);
 
+            // 1. Set the maximum radius limit (5 miles)
             const maxRadiusMiles = activeRadiusMiles;
+            
+            // 2. Convert that maximum limit to geographic degrees
+            const maxRadiusDegrees = maxRadiusMiles / 69; 
 
-            const maxRadiusDegrees = maxRadiusMiles / 69;
-
-            const radiusOffset =
-                Math.sqrt(Math.random()) * maxRadiusDegrees;
+            // 3. FIX: Randomize the radius for each item so they scatter INSIDE the circle
+            // Using Math.sqrt ensures an even spread across the circle's surface area
+            const radiusOffset = Math.sqrt(Math.random()) * maxRadiusDegrees;
 
             const lat =
                 targetLat + (Math.sin(angle) * radiusOffset);
@@ -3385,11 +3365,12 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
             const lon =
                 targetLon + (Math.cos(angle) * radiusOffset);
 
-            const priceRaw =
-                station.price_cash ?? station.price_credit;
-
             const currentPrice =
-                parseFloat(priceRaw);
+                parseFloat(
+                    station.price_cash ||
+                    station.price_credit ||
+                    'n/a'
+                );
 
             const stationName =
                 station.name || "Gas Station";
@@ -3400,14 +3381,9 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
             const locality =
                 station.address_locality || "";
 
-            const priceDisplay =
-                isNaN(currentPrice)
-                    ? "N/A"
-                    : `$${currentPrice.toFixed(2)}`;
-
             const priceIcon = L.divIcon({
                 className: 'gas-price-marker',
-                html: priceDisplay
+                html: `$${currentPrice.toFixed(2)}`
             });
 
             const marker = L.marker([lat, lon], {
@@ -3419,12 +3395,15 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
                     <h3>${stationName}</h3>
                     <p>${streetAddress}, ${locality}</p>
                     <div class="price-tag">
-                        Regular: ${priceDisplay}
+                        Regular: $${currentPrice.toFixed(2)}
                     </div>
                 </div>
             `);
 
+            
+
             marker.addTo(map);
+
             markers.push(marker);
         });
 
@@ -3444,6 +3423,7 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
         }
     }
 }
+
 /* ==========================================================================
    ZIP SEARCH
 ========================================================================== */
