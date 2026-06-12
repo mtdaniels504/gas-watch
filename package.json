@@ -1,6 +1,6 @@
 {
   "name": "gas-watch-eight",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Real-time gas watch tracker application securely deployed to Vercel.",
   "main": "server.js",
   "private": true,
