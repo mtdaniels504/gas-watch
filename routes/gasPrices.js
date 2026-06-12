@@ -6,7 +6,9 @@ const gasCache = new NodeCache({ stdTTL: 900, checkperiod: 120 });
 
 router.post('/', async (req, res) => {
     try {
-        const { search, radius, storeName, address, city, state, zip } = req.body;
+        // ⚡ THE FIX: Add "= {}" at the end to prevent native engine crashes if req.body is undefined
+        const { search, radius, storeName, address, city, state, zip } = req.body || {};
+        
         const APIFY_TOKEN = process.env.APIFY_TOKEN; 
         const ACTOR_ID = "johnvc~fuelprices";
         
