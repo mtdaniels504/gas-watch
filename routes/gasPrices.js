@@ -18,6 +18,7 @@ const geocoder = NodeGeocoder({
     }
 });
 
+
 router.post('/', async (req, res) => {
     try {
         const { search, lat, lon, radius, storeName, address, city, state, zip } = req.body;
@@ -104,7 +105,8 @@ router.post('/', async (req, res) => {
         // 🌍 CRASH-PROOF BACKEND LOCATION TRANSLATION
         if (Array.isArray(datasetItems) && datasetItems.length > 0) {
             datasetItems = datasetItems.slice(0, 10); // Cap at 10 items max
-
+            
+            // Map each item to a batch lookup promise
             const geocodePromises = datasetItems.map(async (station) => {
                 const fullAddressStr = `${station.address_line1 || ''}, ${station.address_locality || ''}, ${station.address_region || ''} ${station.address_postalCode || ''}`.trim();
                 
@@ -113,8 +115,8 @@ router.post('/', async (req, res) => {
                 try {
                     const geoRes = await geocoder.geocode(fullAddressStr);
                     
-                    // ✨ FIXED: Check explicitly if latitude numbers exist to block type crashes
-                    if (geoRes && geoRes.length > 0 && geoRes[0].latitude !== undefined) {
+                    // ✨ THE SAFEST INDEX CHECK: Use optional chaining (?.) to prevent fatal array crashes!
+                    if (geoRes && geoRes.length > 0 && geoRes[0]?.latitude !== undefined) {
                         station.latitude = parseFloat(geoRes[0].latitude);
                         station.longitude = parseFloat(geoRes[0].longitude);
                     } else {
@@ -122,13 +124,14 @@ router.post('/', async (req, res) => {
                         const cityFallbackStr = `${station.address_locality || city || 'Denver'}, ${station.address_region || state || ''}`;
                         const cityRes = await geocoder.geocode(cityFallbackStr);
                         
-                        if (cityRes && cityRes.length > 0 && cityRes[0].latitude !== undefined) {
+                        // ✨ Use optional chaining here as well!
+                        if (cityRes && cityRes.length > 0 && cityRes[0]?.latitude !== undefined) {
                             station.latitude = parseFloat(cityRes[0].latitude);
                             station.longitude = parseFloat(cityRes[0].longitude);
                         }
                     }
                 } catch (err) {
-                    console.error("Failed to map item address smoothly:", fullAddressStr, err.message);
+                    console.error("Failed to map item address safely on backend:", fullAddressStr, err.message);
                 }
                 return station;
             });
