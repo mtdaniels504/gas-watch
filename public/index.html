@@ -3159,7 +3159,7 @@ async function applyFilters(event) {
                 markers.push(centerMarker);
 
                 // Immediately fetch initial data to populate the user's screen
-                getPricesNow("80204", lat, lon);
+                getPricesNow("80204");
             }
 
             /* ==========================================================================
@@ -3189,105 +3189,89 @@ async function applyFilters(event) {
             }
 
 
-/* ==========================================================================
-   GAS PRICE FETCH
-========================================================================== */
-async function getPricesNow(filterPayload) {
+async function getPricesNow(searchQuery) {
     if (isSearching) return;
     isSearching = true;
 
-    const searchField = document.getElementById('searchBar');
-    const displayContainer = document.getElementById('gasPricesList');
-
-    if (searchField) searchField.placeholder = "Loading gas prices...";
-    if (displayContainer) displayContainer.innerHTML = '<div class="loading-message">Loading local gas stations...</div>';
-
     const BACKEND_URL = "/api/gas-prices";
+    clearMarkers();
 
     try {
-        const isObjectPayload = filterPayload && typeof filterPayload === 'object';
-        
-        const requestBody = {
-            lat: null, lon: null, // Complete coordinate eradication flag
-            radius: isObjectPayload ? filterPayload.radius : (activeRadiusMiles || 15),
-            storeName: isObjectPayload ? (filterPayload.storeName || null) : null,
-            address:   isObjectPayload ? (filterPayload.address || null) : null,
-            city:      isObjectPayload ? (filterPayload.city || null) : null,
-            state:     isObjectPayload ? (filterPayload.state || null) : null,
-            zip:       isObjectPayload ? (filterPayload.zip || null) : null,
-            search:    !isObjectPayload ? (filterPayload || null) : null,
-            _t: Date.now()
-        };
-
         const response = await fetchWithTimeout(BACKEND_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
-            body: JSON.stringify(requestBody)
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ search: searchQuery })
         });
-
-        if (!response.ok) throw new Error("Backend request failed.");
 
         const datasetItems = await response.json();
+        if (!datasetItems || datasetItems.length === 0) return;
 
-        if (searchField) searchField.placeholder = "Search city or ZIP code...";
-        if (!displayContainer) return;
-
-        // Clear loading screen message
-        displayContainer.innerHTML = "";
-
-        if (!datasetItems || datasetItems.length === 0) {
-            displayContainer.innerHTML = '<div class="no-results-message">No gas stations found in this area.</div>';
-            return;
-        }
-
-        // 📋 INJECT TEXT STATIONS: Loop and display raw address text metrics directly!
-        datasetItems.forEach((station, index) => {
-            const cashPrice = parseFloat(station.price_cash || 0);
-            const creditPrice = parseFloat(station.price_credit || 0);
-            const currentPrice = cashPrice > 0 ? cashPrice : (creditPrice > 0 ? creditPrice : 0);
-
-            const stationName = station.name || "Gas Station";
-            const streetAddress = station.address_line1 || "Address unavailable";
+        // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
+        const geocodePromises = datasetItems.map(async (station, index) => {
+            const name = station.name || "Gas Station";
+            const address = station.address_line1 || "Unknown Address";
             const locality = station.address_locality || "";
             const region = station.address_region || "";
-            const postalCode = station.address_postalCode || "";
-
-            const displayPrice = currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : "N/A";
             
-            // Highlight the absolute cheapest option card at index 0 with a special CSS class tag
-            const cardBadgeClass = index === 0 ? "station-card cheapest-deal" : "station-card";
+            const cash = parseFloat(station.price_cash || 0);
+            const credit = parseFloat(station.price_credit || 0);
+            const finalPrice = cash > 0 ? cash : credit;
+            const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
 
-            // Create and append the clean text-profile item block layout structure
-            const cardHTML = `
-                <div class="${cardBadgeClass}">
-                    <div class="card-left">
-                        <h3 class="station-title">${stationName}</h3>
-                        <p class="station-text-address">${streetAddress}</p>
-                        <p class="station-location-city">${locality}, ${region} ${postalCode}</p>
-                    </div>
-                    <div class="card-right">
-                        <div class="price-badge">${displayPrice}</div>
-                        <span class="fuel-type-label">Regular</span>
-                    </div>
-                </div>
-            `;
-            
-            displayContainer.insertAdjacentHTML('beforeend', cardHTML);
+            const fullTextAddress = `${address}, ${locality}, ${region}`;
+
+            try {
+                // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
+
+                const geoResponse = await fetch(geocodeUrl, {
+                    headers: { "User-Agent": "GasWatchApp" }
+                });
+                const geoData = await geoResponse.json();
+
+                // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
+                if (geoData && geoData.length > 0) {
+                    const lat = parseFloat(geoData[0].lat);
+                    const lon = parseFloat(geoData[0].lon);
+
+                    return { lat, lon, name, address, displayPrice, index };
+                }
+            } catch (geoError) {
+                console.error(`Could not locate address: ${fullTextAddress}`, geoError);
+            }
+            return null; // Return null if the lookup completely failed
         });
 
-    } catch (error) {
-        console.error("Frontend printing block failed:", error);
-        if (displayContainer) {
-            displayContainer.innerHTML = '<div class="error-message">Error retrieving local fuel values.</div>';
+        // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
+        const resolvedStations = await Promise.all(geocodePromises);
+
+        let firstValidCoords = null;
+
+        // 3. Drop all working markers instantly onto your map instance
+        resolvedStations.forEach(station => {
+            if (!station) return; // Skip failed lookups
+
+            // Track coordinates of the cheapest station (index 0 from sorted backend array)
+            if (station.index === 0) {
+                firstValidCoords = [station.lat, station.lon];
+            }
+
+            const marker = L.marker([station.lat, station.lon]).addTo(map);
+            marker.bindPopup(`<b>${station.name}</b><br>${station.address}<br><b>${station.displayPrice}</b>`);
+            markers.push(marker);
+        });
+
+        // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
+        if (firstValidCoords) {
+            map.setView(firstValidCoords, 13);
         }
+
+    } catch (error) {
+        console.error("Fetch failed:", error);
     } finally {
         isSearching = false;
-        if (searchField) searchField.placeholder = "Search city or ZIP code...";
     }
 }
-
-
-
 /* ==========================================================================
    SEARCH HANDLER (Updated: Complete Geocoding Eradication)
 ========================================================================== */
@@ -3350,10 +3334,6 @@ document.addEventListener("DOMContentLoaded", function() {
    FILTER FORM SUBMIT
 ========================================================================== */
 
-const filterForm = document.querySelector('.filterForm');
-if (filterForm) {
-    filterForm.addEventListener('submit', applyFilters);
-}
 
 
 </script>
