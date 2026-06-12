@@ -3212,7 +3212,7 @@ async function getPricesNow(searchQuery) {
         const datasetItems = await response.json();
         if (!datasetItems || datasetItems.length === 0) return;
 
-        // ⚡ Map each station to an independent, parallel promise
+        // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
         const geocodePromises = datasetItems.map(async (station, index) => {
             const name = station.name || "Gas Station";
             const address = station.address_line1 || "Unknown Address";
@@ -3224,55 +3224,59 @@ async function getPricesNow(searchQuery) {
             const finalPrice = cash > 0 ? cash : credit;
             const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
 
+            const fullTextAddress = `${address}, ${locality}, ${region}`;
+
             try {
-                // BULLETPROOF FREE GEOCODER: US Census API
-                const geocodeUrl = `https://census.gov{encodeURIComponent(address)}&city=${encodeURIComponent(locality)}&state=${encodeURIComponent(region)}&benchmark=Public_AR_Current&format=json`;
-                
-                const geoResponse = await fetch(geocodeUrl);
+                // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
+
+                const geoResponse = await fetch(geocodeUrl, {
+                    headers: { "User-Agent": "GasWatchApp" }
+                });
                 const geoData = await geoResponse.json();
 
-                const coordinates = geoData.result?.addressMatches?.[0]?.coordinates;
-
-                if (coordinates) {
-                    const lat = parseFloat(coordinates.y); 
-                    const lon = parseFloat(coordinates.x); 
+                // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
+                if (geoData && geoData.length > 0) {
+                    const lat = parseFloat(geoData[0].lat);
+                    const lon = parseFloat(geoData[0].lon);
 
                     return { lat, lon, name, address, displayPrice, index };
                 }
             } catch (geoError) {
-                console.error(`Could not locate address: ${address}`, geoError);
+                console.error(`Could not locate address: ${fullTextAddress}`, geoError);
             }
-            return null;
+            return null; // Return null if the lookup completely failed
         });
 
+        // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
         const resolvedStations = await Promise.all(geocodePromises);
 
         let firstValidCoords = null;
 
+        // 3. Drop all working markers instantly onto your map instance
         resolvedStations.forEach(station => {
-            if (!station) return; 
+            if (!station) return; // Skip failed lookups
 
+            // Track coordinates of the cheapest station (index 0 from sorted backend array)
             if (station.index === 0) {
                 firstValidCoords = [station.lat, station.lon];
             }
 
-            // ⚡ THE CUSTOM PRICE BADGE ENGINE
-            // Turns your exact CSS class into a raw HTML Leaflet Map Icon
+            // ⚡ Injects your CSS pill style dynamically into Leaflet
             const priceIcon = L.divIcon({
-                className: 'gas-price-marker', // Attaches your exact CSS styles
-                html: station.displayPrice,     // Injects the exact price text (e.g. $3.49)
-                iconSize: null,                // Allows CSS width: auto and padding to size the pill perfectly
-                iconAnchor: [0, 0]             // Prevents Leaflet from breaking your custom CSS transform rules
+                className: 'gas-price-marker', 
+                html: station.displayPrice,     
+                iconSize: null,                
+                iconAnchor: [0, 0]             
             });
 
-            // Drop your custom green price pill icon onto your existing map instance
+            // Creates the marker using your custom green price pill style
             const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
-            
-            // Keeps your complete details perfectly safe inside the standard click popup window
             marker.bindPopup(`<b>${station.name}</b><br>${station.address}<br><b>${station.displayPrice}</b>`);
             markers.push(marker);
         });
 
+        // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
         if (firstValidCoords) {
             map.setView(firstValidCoords, 13);
         }
@@ -3283,7 +3287,6 @@ async function getPricesNow(searchQuery) {
         isSearching = false;
     }
 }
-
 /* ==========================================================================
    SEARCH HANDLER (Updated: Complete Geocoding Eradication)
 ========================================================================== */
