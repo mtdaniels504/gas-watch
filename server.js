@@ -48,8 +48,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 🔌 Mount it instantly onto your server routing path
 app.use('/api/gas-prices', gasPricesRoute);
 
-// 🚀 Safe catch-all fallback route to serve index.html for root navigation traffic
-app.get('*', (req, res) => {
+//   TO THIS NEW EXPRESS v5 PATH ROUTE:
+app.get('/:path*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
