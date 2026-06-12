@@ -2958,16 +2958,18 @@
                 distanceRange.value = 5;
                 distanceValue.value = 5;
 
-                // Sync Slider -> Input (Strictly capping display/slider range to 10 as requested)
-                distanceRange.max = 20; 
+                // Force strict cap of 10 miles on the slider range
+                distanceRange.max = 15; 
+
+                // Sync Slider -> Input
                 distanceRange.addEventListener("input", (e) => {
                     distanceValue.value = e.target.value;
                 });
 
-                // Sync Input -> Slider
+                // Sync Input -> Slider (Corrected validation limit to 10 to match the slider max)
                 distanceValue.addEventListener("input", (e) => {
                     let val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0 && val <= 10) {
+                    if (!isNaN(val) && val >= 0 && val <= 15) {
                         distanceRange.value = val;
                     }
                 });
@@ -2975,144 +2977,114 @@
 
 
             /* ==========================================================================
-            FILTER SEARCH
+            FILTER SEARCH (Updated: Returns structured object instead of flat string)
             ========================================================================== */
 
-            function buildFilterSearchString() {
+            function getFilterPayload() {
+                const storeName = document.getElementById('filterStoreName')?.value.trim();
+                const address   = document.getElementById('filterAddress')?.value.trim();
+                const city      = document.getElementById('filterCity')?.value.trim();
+                const state     = document.getElementById('filterState')?.value.trim();
+                const zip       = document.getElementById('filterZip')?.value.trim();
 
-                const storeName =
-                    document.getElementById('filterStoreName')?.value.trim();
+                // Gather selected distance metrics
+                const distanceInput  = document.getElementById('distanceValue');
+                const distanceSlider = document.getElementById('distanceRange');
+                const selectedRadius = parseFloat(distanceInput?.value || distanceSlider?.value || 5);
 
-                const address =
-                    document.getElementById('filterAddress')?.value.trim();
+                // Build the payload payload object
+                const payload = {
+                    radius: !isNaN(selectedRadius) ? selectedRadius : 5
+                };
 
-                const city =
-                    document.getElementById('filterCity')?.value.trim();
+                // Only add fields if the user actually typed something in them
+                if (storeName) payload.storeName = storeName;
+                if (address)   payload.address   = address;
+                if (city)      payload.city      = city;
+                if (state)     payload.state     = state;
+                if (zip)       payload.zip       = zip;
 
-                const state =
-                    document.getElementById('filterState')?.value.trim();
-
-                const zip =
-                    document.getElementById('filterZip')?.value.trim();
-
-                // Remove empty values automatically
-                const searchParts = [
-                    storeName,
-                    address,
-                    city,
-                    state,
-                    zip
-                ].filter(part => part && part.length > 0);
-
-                // Build clean comma-separated string
-                return searchParts.join(', ');
+                return payload;
             }
 
+
             /* ==========================================================================
-            APPLY FILTERS
+            APPLY FILTERS (Updated: Routes all structured criteria to backend)
             ========================================================================== */
 
-            function applyFilters(event) {
-
+            async function applyFilters(event) {
                 event.preventDefault();
 
                 if (isSearching) return;
 
-                const finalSearchString =
-                    buildFilterSearchString();
+                // 1. Fetch structured filters and radius from our new helper function
+                const filterPayload = getFilterPayload();
 
-                if (!finalSearchString) {
+                // Check if at least one text search/filter field has content
+                const hasTextFilters = filterPayload.storeName || filterPayload.address || 
+                                    filterPayload.city || filterPayload.state || filterPayload.zip;
 
+                if (!hasTextFilters) {
                     alert("Please enter at least one filter field.");
-
                     return;
                 }
 
-                console.log(
-                    "Filter search:",
-                    finalSearchString
-                );
+                // Update global reference for tracking radius state across the app
+                activeRadiusMiles = filterPayload.radius;
+                console.log("Applying filters with active radius:", activeRadiusMiles, "miles");
 
                 clearMarkers();
 
-                // ZIP-only optimization
-                if (/^\d{5}$/.test(finalSearchString)) {
+                try {
+                    let targetLat = null;
+                    let targetLon = null;
+                    let geographicSearchString = "";
 
-                    searchByZipcode(finalSearchString);
-
-                } else {
-
-                    searchByPlaceName(finalSearchString);
-                }
-
-
-
-                const distanceInput =
-                    document.getElementById('distanceValue');
-
-                const distanceSlider =
-                    document.getElementById('distanceRange');
-
-                const selectedDistance =
-                    parseFloat(
-                        distanceInput?.value ||
-                        distanceSlider?.value
-                    );
-
-                if (
-                    !isNaN(selectedDistance) &&
-                    selectedDistance > 0
-                ) {
-
-                    activeRadiusMiles = selectedDistance;
-
-                } else {
-
-                    // fallback default
-                    activeRadiusMiles = 5;
-                }
-
-                console.log(
-                    "ACTIVE RADIUS:",
-                    activeRadiusMiles,
-                    "miles"
-                );
-
-
-                // Price filter
-
-                /*
-
-                const priceMaxInput = document.getElementById('priceValue');
-                const parsedMaxPrice = parseFloat(priceMaxInput?.value);
-
-                if (!isNaN(parsedMaxPrice) && parsedMaxPrice > 0) {
-                    maxPriceAllowed = parsedMaxPrice;
-                } else {
-                    maxPriceAllowed = null;
-                }
-
-                */
-
-  
-
-                const fields = [
-                    'filterStoreName',
-                    'filterAddress',
-                ];
-
-                fields.forEach(id => {
-
-                    const element =
-                        document.getElementById(id);
-
-                    if (element) {
-                        element.value = '';
+                    // 2. GEOLOCATION PREPARATION: Figure out WHERE the user is searching
+                    if (filterPayload.zip) {
+                        geographicSearchString = filterPayload.zip;
+                    } else {
+                        // Combine City, State, or Address to find coordinates via your geocoder
+                        const geoParts = [filterPayload.address, filterPayload.city, filterPayload.state]
+                            .filter(p => p);
+                        geographicSearchString = geoParts.join(", ");
                     }
-                });
 
-                document.getElementById('filterDisplay').style.display = 'none';
+                    // 3. COORDINATE LOOKUP: Resolve text location to lat/lon before querying backend
+                    if (geographicSearchString) {
+                        console.log("Geocoding target area:", geographicSearchString);
+                        
+                        // Reuses your existing geocoding logic (usually fetches from Nominatim/OpenStreetMap)
+                        const coords = await geocodeAddress(geographicSearchString); 
+                        if (coords) {
+                            targetLat = coords.lat;
+                            targetLon = coords.lon;
+                        } else {
+                            alert("Could not locate the specified area. Please check your spelling or ZIP code.");
+                            return;
+                        }
+                    }
 
+                    // 4. BACKEND INTEGRATION: Send the whole package to getPricesNow
+                    // We pass the filter payload object as the first parameter instead of a simple string
+                    await getPricesNow(filterPayload, targetLat, targetLon);
+
+                    // 5. UI CLEANUP: Reset input fields and close filter panel
+                    const fieldsToReset = [
+                        'filterStoreName', 'filterAddress', 'filterCity', 'filterState', 'filterZip'
+                    ];
+                    fieldsToReset.forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element) element.value = '';
+                    });
+
+                    const filterDisplay = document.getElementById('filterDisplay');
+                    if (filterDisplay) filterDisplay.style.display = 'none';
+
+                } catch (error) {
+                    console.error("Filter application failed:", error);
+                    alert("An error occurred while processing your search filters.");
+                }
             }
 
             
@@ -3265,7 +3237,7 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
     }
 
     const BACKEND_URL =
-        "https://gas-watch-server.onrender.com/api/gas-prices";
+        "/api/gas-prices";
 
     try {
 
@@ -3276,8 +3248,11 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
                 "Cache-Control": "no-cache"
             },
             body: JSON.stringify({
-                search: searchQuery,
-                _t: Date.now() // 🔥 cache-buster
+                search: searchQuery || null, // Fallback if text search is empty
+                lat: targetLat || null,      // Precise GPS map targeting
+                lon: targetLon || null,      // Precise GPS map targeting
+                radius: document.getElementById('radiusSlider')?.value || 15, // Dynamic radius synchronization!
+                _t: Date.now() 
             }),
             cache: "no-store"
         });
