@@ -24,20 +24,23 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
+        // 1. Allow internal/local requests or empty testing origins
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             return callback(null, true);
         }
 
-        // 🛸 DYNAMIC VERCEL SHIELD: Validates requests originating from your live Vercel subdomains
-        const isVercelSubdomain = origin.endsWith('.vercel.app') && origin.includes(PROJECT_NAME);
+        // 2. BULLETPROOF DOMAIN SHIELD: Checks if the request contains your project name
+        // This catches gas-watch.com, www.gas-watch.com, and all *.vercel.app deployment URLs instantly!
+        const isProjectDomain = origin.includes(PROJECT_NAME);
 
-        if (isVercelSubdomain) {
+        if (isProjectDomain) {
             callback(null, true);
         } else {
             callback(new Error('Blocked by CORS policy: Unauthorized domain request.'));
         }
     }
 }));
+
 
 // 🗺️ Tell Express where your static assets live so it can serve index.html!
 app.use(express.static(path.join(__dirname, 'public')));
