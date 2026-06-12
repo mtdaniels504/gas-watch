@@ -40,19 +40,30 @@ router.post('/', async (req, res) => {
             "radius": searchRadius
         };
 
-        const apifyUrl = `https://api.apify.com/v2/actors/{ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
+        // ✨ THE FIXED URL ENDPOINT DIRECTORY Endpoints
+        const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
 
-        const apifyResponse = await fetch(apifyUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(inputConfig)
-        });
+        let datasetItems = [];
 
-        if (!apifyResponse.ok) {
-            return res.status(502).json({ error: "Gas price provider is currently unavailable." });
+        // 🛡️ CRASH PROTECTOR: Wrap the raw fetch call inside its own catch loop to prevent server restarts
+        try {
+            console.log(`📡 [Backend Miss] Contacting Apify securely: ${finalSearchParameter}`);
+            const apifyResponse = await fetch(apifyUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(inputConfig)
+            });
+
+            if (!apifyResponse.ok) {
+                console.error(`⚠️ Apify server returned an error status: ${apifyResponse.status}`);
+                return res.status(502).json({ error: "Gas price database provider is currently unavailable." });
+            }
+            
+            datasetItems = await apifyResponse.json();
+        } catch (fetchErr) {
+            console.error("🔴 Fatal Fetch Error: Apify URL connection failed completely.", fetchErr.message);
+            return res.status(502).json({ error: "Failed to connect to the gas price database engine repository." });
         }
-        
-        let datasetItems = await apifyResponse.json();
 
         // Brand Filtering
         if (storeName && Array.isArray(datasetItems)) {
