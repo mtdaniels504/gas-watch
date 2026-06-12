@@ -3253,28 +3253,60 @@ async function getPricesNow(searchQuery) {
 
         let firstValidCoords = null;
 
-        // 3. Drop all working markers instantly onto your map instance
+                // 3. Drop all working markers instantly onto your map instance
         resolvedStations.forEach(station => {
             if (!station) return; // Skip failed lookups
 
-            // Track coordinates of the cheapest station (index 0 from sorted backend array)
+            // Track coordinates of the cheapest station
             if (station.index === 0) {
                 firstValidCoords = [station.lat, station.lon];
             }
 
-            // ⚡ Injects your CSS pill style dynamically into Leaflet
+            // Injects your CSS pill style dynamically into Leaflet
             const priceIcon = L.divIcon({
                 className: 'gas-price-marker', 
                 html: station.displayPrice,     
                 iconSize: null,                
-                iconAnchor: [0, 0]             
+                iconAnchor: null            
             });
+
+            // 🕒 EXTRACT & CLEAN THE TIME FIELD NATIVELY
+            // Grabs the raw data or defaults to a safe string if unavailable
+            const rawTime = station.rawStationData?.postedTime || "Recently"; 
+            let displayTime = "Date unknown";
+
+            if (rawTime && rawTime !== "Recently") {
+                try {
+                    // Turn it into a beautiful, localized text string (e.g. "June 12, 4:44 PM")
+                    const dateObj = new Date(rawTime);
+                    displayTime = dateObj.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch(e) {
+                    displayTime = rawTime; // Fallback to raw string if formatting slips
+                }
+            } else {
+                displayTime = "Updated recently";
+            }
 
             // Creates the marker using your custom green price pill style
             const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
-            marker.bindPopup(`<b>${station.name}</b><br>${station.address}<br><b>${station.displayPrice}</b>`);
+            
+            // ✅ INJECTED: Added a clean, muted time badge at the very bottom of the click popup
+            marker.bindPopup(`
+                <b>${station.name}</b><br>
+                ${station.address}<br>
+                <b>${station.displayPrice}</b><br>
+                <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+                    🕒 ${displayTime}
+                </div>
+            `);
             markers.push(marker);
         });
+
 
         // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
         if (firstValidCoords) {
