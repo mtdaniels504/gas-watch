@@ -3008,84 +3008,55 @@
             }
 
 
-            /* ==========================================================================
-            APPLY FILTERS (Updated: Routes all structured criteria to backend)
-            ========================================================================== */
+/* ==========================================================================
+APPLY FILTERS (Updated: Complete Geocoding Eradication)
+========================================================================== */
 
-            async function applyFilters(event) {
-                event.preventDefault();
+async function applyFilters(event) {
+    event.preventDefault();
 
-                if (isSearching) return;
+    if (isSearching) return;
 
-                // 1. Fetch structured filters and radius from our new helper function
-                const filterPayload = getFilterPayload();
+    // 1. Fetch structured filters and radius from our helper function
+    const filterPayload = getFilterPayload();
 
-                // Check if at least one text search/filter field has content
-                const hasTextFilters = filterPayload.storeName || filterPayload.address || 
-                                    filterPayload.city || filterPayload.state || filterPayload.zip;
+    // Check if at least one search/filter field has content
+    const hasTextFilters = filterPayload.storeName || filterPayload.address || 
+                           filterPayload.city || filterPayload.state || filterPayload.zip;
 
-                if (!hasTextFilters) {
-                    alert("Please enter at least one filter field.");
-                    return;
-                }
+    if (!hasTextFilters) {
+        alert("Please enter at least one filter field.");
+        return;
+    }
 
-                // Update global reference for tracking radius state across the app
-                activeRadiusMiles = filterPayload.radius;
-                console.log("Applying filters with active radius:", activeRadiusMiles, "miles");
+    // Update global reference for tracking radius state across the app
+    activeRadiusMiles = filterPayload.radius;
+    console.log("Applying filters with active radius:", activeRadiusMiles, "miles");
 
-                clearMarkers();
+    try {
+        // 2. BACKEND INTEGRATION: Send the text payloads directly to getPricesNow
+        // We completely pass null for lat and lon because the backend will handle the translation.
+        await getPricesNow(filterPayload, null, null);
 
-                try {
-                    let targetLat = null;
-                    let targetLon = null;
-                    let geographicSearchString = "";
+        // 3. UI CLEANUP: Reset input fields and close filter panel
+        const fieldsToReset = [
+            'filterStoreName', 'filterAddress', 'filterCity', 'filterState', 'filterZip'
+        ];
+        fieldsToReset.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.value = '';
+        });
 
-                    // 2. GEOLOCATION PREPARATION: Figure out WHERE the user is searching
-                    if (filterPayload.zip) {
-                        geographicSearchString = filterPayload.zip;
-                    } else {
-                        // Combine City, State, or Address to find coordinates via your geocoder
-                        const geoParts = [filterPayload.address, filterPayload.city, filterPayload.state]
-                            .filter(p => p);
-                        geographicSearchString = geoParts.join(", ");
-                    }
+        const filterDisplay = document.getElementById('filterDisplay');
+        if (filterDisplay) filterDisplay.style.display = 'none';
 
-                    // 3. COORDINATE LOOKUP: Resolve text location to lat/lon before querying backend
-                    if (geographicSearchString) {
-                        console.log("Geocoding target area:", geographicSearchString);
-                        
-                        // Reuses your existing geocoding logic (usually fetches from Nominatim/OpenStreetMap)
-                        const coords = await geocodeAddress(geographicSearchString); 
-                        if (coords) {
-                            targetLat = coords.lat;
-                            targetLon = coords.lon;
-                        } else {
-                            alert("Could not locate the specified area. Please check your spelling or ZIP code.");
-                            return;
-                        }
-                    }
+    } catch (error) {
+        console.error("Filter application failed:", error);
+        alert("An error occurred while processing your search filters.");
+    }
+}
 
-                    // 4. BACKEND INTEGRATION: Send the whole package to getPricesNow
-                    // We pass the filter payload object as the first parameter instead of a simple string
-                    await getPricesNow(filterPayload, targetLat, targetLon);
 
-                    // 5. UI CLEANUP: Reset input fields and close filter panel
-                    const fieldsToReset = [
-                        'filterStoreName', 'filterAddress', 'filterCity', 'filterState', 'filterZip'
-                    ];
-                    fieldsToReset.forEach(id => {
-                        const element = document.getElementById(id);
-                        if (element) element.value = '';
-                    });
-
-                    const filterDisplay = document.getElementById('filterDisplay');
-                    if (filterDisplay) filterDisplay.style.display = 'none';
-
-                } catch (error) {
-                    console.error("Filter application failed:", error);
-                    alert("An error occurred while processing your search filters.");
-                }
-            }
 
             
         </script>
@@ -3221,14 +3192,17 @@
 /* ==========================================================================
    GAS PRICE FETCH
 ========================================================================== */
+// Updated signature: 'filterPayload' is now an object containing structured keys
+async function getPricesNow(filterPayload, targetLat, targetLon) {
 
-async function getPricesNow(searchQuery, targetLat, targetLon) {
-
-    if (isSearching) return;
+    if (isSearching) {
+        console.warn("⚠️ [getPricesNow] Blocked: A search is already currently running.");
+        return;
+    }
 
     isSearching = true;
 
-    console.log("Fetching gas prices...");
+    console.log("🚀 [getPricesNow] Starting fetch routine with payload input:", filterPayload);
 
     const searchField = document.getElementById('searchBar');
 
@@ -3236,36 +3210,63 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
         searchField.placeholder = "Loading gas prices...";
     }
 
-    const BACKEND_URL =
-        "/api/gas-prices";
+    const BACKEND_URL = "/api/gas-prices";
 
     try {
+        console.log("🧹 [getPricesNow] Clearing old map markers...");
+        clearMarkers();
+
+        // Fallback safety if filterPayload is missing or comes from a standard text search bar
+        const isObjectPayload = filterPayload && typeof filterPayload === 'object';
+        console.log(`📋 [getPricesNow] Is payload an advanced filter object? -> ${isObjectPayload}`);
+        
+        const requestBody = {
+            lat: targetLat || null,      // Precise target coordinate
+            lon: targetLon || null,      // Precise target coordinate
+            // Use radius from filter object, fallback to global activeRadiusMiles, fallback to 15
+            radius: isObjectPayload ? filterPayload.radius : (activeRadiusMiles || 15),
+            
+            // Explicitly map independent fields to the backend payload
+            storeName: isObjectPayload ? (filterPayload.storeName || null) : null,
+            address:   isObjectPayload ? (filterPayload.address || null) : null,
+            city:      isObjectPayload ? (filterPayload.city || null) : null,
+            state:     isObjectPayload ? (filterPayload.state || null) : null,
+            zip:       isObjectPayload ? (filterPayload.zip || null) : null,
+            
+            // Legacy/Standard search fallback if a string was passed from standard search bar instead of filters
+            search:    !isObjectPayload ? (filterPayload || null) : null,
+            _t: Date.now() // 🛑 ANTI-CACHE BREAK: Forces Vercel / Cloudflare edge networks to skip cached versions
+        };
+
+        console.log("📤 [getPricesNow] Sending this JSON body to backend:", JSON.stringify(requestBody, null, 2));
 
         const response = await fetchWithTimeout(BACKEND_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Cache-Control": "no-cache"
+                "Cache-Control": "no-cache, no-store, must-revalidate", // Strict browser cache bypass directives
+                "Pragma": "no-cache",
+                "Expires": "0"
             },
-            body: JSON.stringify({
-                search: searchQuery || null, // Fallback if text search is empty
-                lat: targetLat || null,      // Precise GPS map targeting
-                lon: targetLon || null,      // Precise GPS map targeting
-                radius: document.getElementById('radiusSlider')?.value || 15, // Dynamic radius synchronization!
-                _t: Date.now() 
-            }),
+            body: JSON.stringify(requestBody),
             cache: "no-store"
         });
 
+        console.log(`📥 [getPricesNow] Server responded with HTTP status code: ${response.status} (${response.statusText})`);
+
         if (!response.ok) {
-            throw new Error("Backend request failed.");
+            let errorText = "";
+            try { errorText = await response.text(); } catch(e) {}
+            throw new Error(`Backend request failed with status ${response.status}. Details: ${errorText}`);
         }
 
         const datasetItems = await response.json();
+        console.log("📊 [getPricesNow] Parsed data array successfully received from backend. Item count:", 
+            Array.isArray(datasetItems) ? datasetItems.length : "Not an Array", datasetItems);
+
 
         if (searchField) {
-            searchField.placeholder =
-                "Search city or ZIP code...";
+            searchField.placeholder = "Search city or ZIP code...";
         }
 
         if (datasetItems.error) {
@@ -3274,196 +3275,124 @@ async function getPricesNow(searchQuery, targetLat, targetLon) {
 
         if (!datasetItems || datasetItems.length === 0) {
             alert("No gas stations found.");
+            isSearching = false; 
+            if (searchField) {
+                searchField.placeholder = "Search city or ZIP code...";
+            }
             return;
         }
 
-        clearMarkers();
-
-        datasetItems.forEach((station, index) => {
-
-            const angle =
-                index * (360 / datasetItems.length) * (Math.PI / 180);
-
-            // 1. Set the maximum radius limit (5 miles)
-            const maxRadiusMiles = activeRadiusMiles;
+                datasetItems.forEach((station, index) => {
+            // 🛠️ Extract coordinates smoothly
+            let lat = parseFloat(
+                station.latitude || 
+                station.lat || 
+                station.location?.latitude || 
+                station.location?.lat ||
+                station.position?.lat
+            );
             
-            // 2. Convert that maximum limit to geographic degrees
-            const maxRadiusDegrees = maxRadiusMiles / 69; 
+            let lon = parseFloat(
+                station.longitude || 
+                station.lng || 
+                station.lon || 
+                station.location?.longitude || 
+                station.location?.lng ||
+                station.position?.lng
+            );
 
-            // 3. FIX: Randomize the radius for each item so they scatter INSIDE the circle
-            // Using Math.sqrt ensures an even spread across the circle's surface area
-            const radiusOffset = Math.sqrt(Math.random()) * maxRadiusDegrees;
+            if (isNaN(lat) || isNaN(lon)) {
+                console.warn(`❌ [getPricesNow] Marker dropped for "${station.name || 'Unknown'}" due to unreadable coordinates. Keys:`, Object.keys(station));
+                return; 
+            }
 
-            const lat =
-                targetLat + (Math.sin(angle) * radiusOffset);
+            // ⚡ THE FIX: Prevent overlapping pins if they share a city-center fallback coordinate
+            // We use the index to jitter duplicate coordinates by a tiny fraction of a degree
+            const trackingOverlap = markers.some(m => m.getLatLng().lat === lat && m.getLatLng().lng === lon);
+            if (trackingOverlap) {
+                const angle = index * 0.5;
+                const tinyRadius = 0.00015; // Just enough separation to look clean without moving the station blocks away
+                lat += Math.sin(angle) * tinyRadius;
+                lon += Math.cos(angle) * tinyRadius;
+            }
 
-            const lon =
-                targetLon + (Math.cos(angle) * radiusOffset);
+            // Cinematic flyTo animation focusing view context on the target query region matching first returned pin
+            if (index === 0) {
+                console.log(`✈️ [getPricesNow] Sliding map viewport onto coordinates center: [${lat}, ${lon}]`);
+                moveMapSafely(lat, lon);
+            }
 
-            const currentPrice =
-                parseFloat(
-                    station.price_cash ||
-                    station.price_credit ||
-                    'n/a'
-                );
+            // Fallback safe defaults for stations reporting missing price values
+            const cashPrice = parseFloat(station.price_cash || 0);
+            const creditPrice = parseFloat(station.price_credit || 0);
+            const currentPrice = cashPrice > 0 ? cashPrice : (creditPrice > 0 ? creditPrice : 0);
 
-            const stationName =
-                station.name || "Gas Station";
+            const stationName = station.name || "Gas Station";
+            const streetAddress = station.address_line1 || "Address unavailable";
+            const locality = station.address_locality || "";
 
-            const streetAddress =
-                station.address_line1 || "Address unavailable";
-
-            const locality =
-                station.address_locality || "";
+            const displayPrice = currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : "N/A";
 
             const priceIcon = L.divIcon({
                 className: 'gas-price-marker',
-                html: `$${currentPrice.toFixed(2)}`
+                html: displayPrice
             });
 
-            const marker = L.marker([lat, lon], {
-                icon: priceIcon
-            });
+            const marker = L.marker([lat, lon], { icon: priceIcon });
+
+            const popupPrice = currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : "Unavailable";
 
             marker.bindPopup(`
                 <div class="custom-popup">
                     <h3>${stationName}</h3>
-                    <p>${streetAddress}, ${locality}</p>
+                    <p>${streetAddress}${locality ? ', ' + locality : ''}</p>
                     <div class="price-tag">
-                        Regular: $${currentPrice.toFixed(2)}
+                        Regular: ${popupPrice}
                     </div>
                 </div>
             `);
 
-            
-
             marker.addTo(map);
-
             markers.push(marker);
         });
 
+        console.log(`✅ [getPricesNow] Marker routine complete. Map active count: ${markers.length} pins plotted.`);
+
     } catch (error) {
-
-        console.error(error);
-
+        console.error("Data tracking failure:", error);
         alert("Error fetching gas prices.");
 
     } finally {
-
         isSearching = false;
 
         if (searchField) {
-            searchField.placeholder =
-                "Search city or ZIP code...";
+            searchField.placeholder = "Search city or ZIP code...";
         }
     }
 }
 
-/* ==========================================================================
-   ZIP SEARCH
-========================================================================== */
 
-async function searchByZipcode(zipcode) {
 
-    try {
-
-        const response =
-            await fetchWithTimeout(
-                `https://api.zippopotam.us/us/${zipcode}`
-            );
-
-        if (!response.ok) {
-            throw new Error("ZIP code not found.");
-        }
-
-        const data = await response.json();
-
-        const latitude =
-            parseFloat(data.places[0]["latitude"]);
-
-        const longitude =
-            parseFloat(data.places[0]["longitude"]);
-
-        moveMapSafely(latitude, longitude);
-
-        getPricesNow(zipcode, latitude, longitude);
-
-    } catch (error) {
-
-        alert(error.message);
-    }
-}
 
 /* ==========================================================================
-   PLACE SEARCH
-========================================================================== */
-
-async function searchByPlaceName(placeName) {
-
-    try {
-
-        const url =
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeName)}&format=json&limit=1`;
-
-        const response =
-            await fetchWithTimeout(url);
-
-        if (!response.ok) {
-            throw new Error("Location search failed.");
-        }
-
-        const data = await response.json();
-
-        if (!data.length) {
-            throw new Error("Location not found.");
-        }
-
-        const latitude = parseFloat(data[0].lat);
-        const longitude = parseFloat(data[0].lon);
-
-        moveMapSafely(latitude, longitude);
-
-        getPricesNow(placeName, latitude, longitude);
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(error.message);
-    }
-}
-
-/* ==========================================================================
-   SEARCH HANDLER
+   SEARCH HANDLER (Updated: Complete Geocoding Eradication)
 ========================================================================== */
 
 function searchLocation() {
-
     if (isSearching) return;
 
-    const searchBar =
-        document.getElementById('searchBar');
-
+    const searchBar = document.getElementById('searchBar');
     if (!searchBar) return;
 
-    const input =
-        searchBar.value.trim();
-
+    const input = searchBar.value.trim();
     if (!input) return;
 
     // Dismiss mobile keyboard
     searchBar.blur();
 
-    clearMarkers();
-
-    if (/^\d{5}$/.test(input)) {
-
-        searchByZipcode(input);
-
-    } else {
-
-        searchByPlaceName(input);
-    }
+    // 🚀 DIRECT HAND-OFF: Skip all frontend lookup APIs entirely!
+    // We send the raw text query directly down the single pipeline to the backend.
+    getPricesNow(input, null, null);
 }
 
 /* ==========================================================================
@@ -3507,16 +3436,11 @@ document.addEventListener("DOMContentLoaded", function() {
    FILTER FORM SUBMIT
 ========================================================================== */
 
-const filterForm =
-    document.querySelector('.filterForm');
-
+const filterForm = document.querySelector('.filterForm');
 if (filterForm) {
-
-    filterForm.addEventListener(
-        'submit',
-        applyFilters
-    );
+    filterForm.addEventListener('submit', applyFilters);
 }
+
 
 </script>
 
