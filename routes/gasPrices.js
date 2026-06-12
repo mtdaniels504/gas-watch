@@ -61,6 +61,8 @@ router.post('/', async (req, res) => {
             return res.json(cachedData);
         }
 
+        console.log(`📡 [Backend Cache Miss] Querying Apify for: ${finalSearchParameter}`);
+
         // Fetch from Apify
         const inputConfig = {
             "search": finalSearchParameter, 
@@ -70,19 +72,28 @@ router.post('/', async (req, res) => {
             "radius": searchRadius
         };
 
-        const apifyUrl = `https://apify.com{ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
+        const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
 
-        const apifyResponse = await fetch(apifyUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(inputConfig)
-        });
+        let datasetItems = [];
 
-        if (!apifyResponse.ok) {
-            throw new Error(`Apify request failed with status code: ${apifyResponse.status}`);
+        // 🛡️ CRITICAL ENDPOINT SHIELD: Wrap the Apify network block to completely protect Node from crashing
+        try {
+            const apifyResponse = await fetch(apifyUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(inputConfig)
+            });
+
+            if (!apifyResponse.ok) {
+                console.error(`⚠️ Apify server returned an error status: ${apifyResponse.status}`);
+                return res.status(502).json({ error: "Gas price provider is currently unavailable." });
+            }
+            
+            datasetItems = await apifyResponse.json();
+        } catch (fetchErr) {
+            console.error("🔴 Network call failed: Apify endpoint unreachable.", fetchErr.message);
+            return res.status(502).json({ error: "Failed to connect to the gas price engine repository." });
         }
-        
-        let datasetItems = await apifyResponse.json();
 
         // Brand Filtering
         if (storeName && Array.isArray(datasetItems)) {
@@ -91,7 +102,7 @@ router.post('/', async (req, res) => {
         }
         
         // 🌍 CRASH-PROOF BACKEND LOCATION TRANSLATION
-        if (Array.isArray(datasetItems)) {
+        if (Array.isArray(datasetItems) && datasetItems.length > 0) {
             datasetItems = datasetItems.slice(0, 10); // Cap at 10 items max
 
             const geocodePromises = datasetItems.map(async (station) => {
@@ -101,21 +112,23 @@ router.post('/', async (req, res) => {
 
                 try {
                     const geoRes = await geocoder.geocode(fullAddressStr);
-                    // ✨ FIXED: Added array wrapper index [0] checking to prevent undefined variable failures
-                    if (geoRes && geoRes.length > 0 && geoRes[0].latitude) {
+                    
+                    // ✨ FIXED: Check explicitly if latitude numbers exist to block type crashes
+                    if (geoRes && geoRes.length > 0 && geoRes[0].latitude !== undefined) {
                         station.latitude = parseFloat(geoRes[0].latitude);
                         station.longitude = parseFloat(geoRes[0].longitude);
                     } else {
-                        // ✨ FIXED: Added optional chaining (?.) so a failing fallback lookup never crashes your server
+                        // Safe Fallback to city center if specific street numbers fail
                         const cityFallbackStr = `${station.address_locality || city || 'Denver'}, ${station.address_region || state || ''}`;
                         const cityRes = await geocoder.geocode(cityFallbackStr);
-                        if (cityRes && cityRes.length > 0 && cityRes[0].latitude) {
+                        
+                        if (cityRes && cityRes.length > 0 && cityRes[0].latitude !== undefined) {
                             station.latitude = parseFloat(cityRes[0].latitude);
                             station.longitude = parseFloat(cityRes[0].longitude);
                         }
                     }
                 } catch (err) {
-                    console.error("Failed to map item address:", fullAddressStr, err.message);
+                    console.error("Failed to map item address smoothly:", fullAddressStr, err.message);
                 }
                 return station;
             });
@@ -126,7 +139,11 @@ router.post('/', async (req, res) => {
             datasetItems = datasetItems.filter(station => station.latitude && station.longitude);
         }
         
-        gasCache.set(cacheKey, datasetItems);
+        // Only set cache footprint if valid geocoded objects exist
+        if (Array.isArray(datasetItems) && datasetItems.length > 0) {
+            gasCache.set(cacheKey, datasetItems);
+        }
+        
         res.json(datasetItems);
 
     } catch (error) {
