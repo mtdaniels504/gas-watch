@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
         };
 
         // ✨ THE FIXED URL ENDPOINT DIRECTORY Endpoints
-        const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
+        const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=8`;
 
         let datasetItems = [];
 
