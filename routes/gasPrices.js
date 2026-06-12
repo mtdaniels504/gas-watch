@@ -6,9 +6,18 @@ const NodeGeocoder = require('node-geocoder'); // ⚡ Efficient, production-read
 const gasCache = new NodeCache({ stdTTL: 900, checkperiod: 120 });
 
 // Configure the backend lookup settings using official OpenStreetMap rules
+// 🛡️ CRITICAL FIX: Added a unique User-Agent header so OpenStreetMap doesn't block the request!
 const geocoder = NodeGeocoder({
     provider: 'openstreetmap',
-    formatter: null
+    apiKey: null, // OpenStreetMap does not require an API key
+    fetch: async (url, options = {}) => {
+        // Enforce safe headers natively across Vercel serverless nodes
+        options.headers = {
+            ...options.headers,
+            'User-Agent': 'GasWatchAppVercelBackend/2.0 (contact: mtdaniels504@gas-watch.com)'
+        };
+        return fetch(url, options);
+    }
 });
 
 router.post('/', async (req, res) => {
@@ -18,6 +27,7 @@ router.post('/', async (req, res) => {
         const ACTOR_ID = "johnvc~fuelprices";
         
         if (!APIFY_TOKEN) {
+            console.error("❌ Critical: APIFY_TOKEN is missing from environment variables.");
             return res.status(500).json({ error: "Server configuration missing API key." });
         }
 
@@ -66,8 +76,7 @@ router.post('/', async (req, res) => {
             "radius": searchRadius
         };
 
-        // ✨ FIXED: Corrected full template string placeholder and directory endpoints
-        const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
+        const apifyUrl = `https://apify.com{ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`;
 
         const apifyResponse = await fetch(apifyUrl, {
             method: "POST",
@@ -89,20 +98,22 @@ router.post('/', async (req, res) => {
         
         // 🌍 EFFICIENT BACKEND LOCATION TRANSLATION
         if (Array.isArray(datasetItems)) {
-            // Cap at 10 items max to prevent network throttling and keep fetches under 2 seconds!
+            // Cap at 10 items max to prevent network throttling and keep fetches under 2 seconds
             datasetItems = datasetItems.slice(0, 10); 
 
             // Map each item to a batch lookup promise
             const geocodePromises = datasetItems.map(async (station) => {
-                const fullAddressStr = `${station.address_line1}, ${station.address_locality}, ${station.address_region} ${station.address_postalCode}`;
+                const fullAddressStr = `${station.address_line1 || ''}, ${station.address_locality || ''}, ${station.address_region || ''} ${station.address_postalCode || ''}`.trim();
+                
+                if (!fullAddressStr || fullAddressStr === ', ,') return station; // Skip empty profiles gracefully
+
                 try {
                     const geoRes = await geocoder.geocode(fullAddressStr);
                     if (geoRes && geoRes.length > 0) {
-                        // Map directly to full names to align beautifully with your frontend search loops
                         station.latitude = parseFloat(geoRes[0].latitude);
                         station.longitude = parseFloat(geoRes[0].longitude);
                     } else {
-                        // ⚡ SAFE FALLBACK: If specific street address geocoding fails, fallback to general city center
+                        // ⚡ SAFE FALLBACK: Fallback to general city center if street numbers fail
                         const cityFallbackStr = `${station.address_locality || city || 'Denver'}, ${station.address_region || state || ''}`;
                         const cityRes = await geocoder.geocode(cityFallbackStr);
                         if (cityRes && cityRes.length > 0) {
@@ -111,12 +122,12 @@ router.post('/', async (req, res) => {
                         }
                     }
                 } catch (err) {
-                    console.error("Failed to map item address on backend:", fullAddressStr, err.message);
+                    console.error("⚠️ Failed to map item address on backend:", fullAddressStr, err.message);
                 }
                 return station;
             });
 
-            // Run all lookups simultaneously across the network rather than waiting one by one!
+            // Run all lookups simultaneously across the network
             datasetItems = await Promise.all(geocodePromises);
             
             // Filter out any entries that completely failed to translate anywhere on the globe
@@ -127,7 +138,7 @@ router.post('/', async (req, res) => {
         res.json(datasetItems);
 
     } catch (error) {
-        console.error("Backend error loop tripped:", error.message);
+        console.error("🔴 Backend error loop tripped:", error.message);
         res.status(500).json({ error: "Failed to fetch fuel prices securely." });
     }
 });
