@@ -1,17 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const NodeCache = require('node-cache');
-const NodeGeocoder = require('node-geocoder'); // ⚡ Efficient, production-ready lookup engine
+const NodeGeocoder = require('node-geocoder');
 
 const gasCache = new NodeCache({ stdTTL: 900, checkperiod: 120 });
 
 // Configure the backend lookup settings using official OpenStreetMap rules
-// 🛡️ CRITICAL FIX: Added a unique User-Agent header so OpenStreetMap doesn't block the request!
 const geocoder = NodeGeocoder({
     provider: 'openstreetmap',
-    apiKey: null, // OpenStreetMap does not require an API key
+    apiKey: null,
     fetch: async (url, options = {}) => {
-        // Enforce safe headers natively across Vercel serverless nodes
         options.headers = {
             ...options.headers,
             'User-Agent': 'GasWatchAppVercelBackend/2.0 (contact: mtdaniels504@gas-watch.com)'
@@ -27,11 +25,10 @@ router.post('/', async (req, res) => {
         const ACTOR_ID = "johnvc~fuelprices";
         
         if (!APIFY_TOKEN) {
-            console.error("❌ Critical: APIFY_TOKEN is missing from environment variables.");
+            console.error("Critical: APIFY_TOKEN is missing from environment vault.");
             return res.status(500).json({ error: "Server configuration missing API key." });
         }
 
-        // Build the query parameter for Apify
         let finalSearchParameter = "";
         let cacheKeyParts = [];
 
@@ -61,11 +58,8 @@ router.post('/', async (req, res) => {
         // Cache Check
         const cachedData = gasCache.get(cacheKey);
         if (cachedData) {
-            console.log(`🚀 [Backend Cache Hit] Serving data for: [${cacheKey}]`);
             return res.json(cachedData);
         }
-
-        console.log(`📡 [Backend Cache Miss] Querying Apify for: ${finalSearchParameter}`);
 
         // Fetch from Apify
         const inputConfig = {
@@ -96,38 +90,36 @@ router.post('/', async (req, res) => {
             datasetItems = datasetItems.filter(station => (station.name || '').toLowerCase().includes(cleanTargetBrand));
         }
         
-        // 🌍 EFFICIENT BACKEND LOCATION TRANSLATION
+        // 🌍 CRASH-PROOF BACKEND LOCATION TRANSLATION
         if (Array.isArray(datasetItems)) {
-            // Cap at 10 items max to prevent network throttling and keep fetches under 2 seconds
-            datasetItems = datasetItems.slice(0, 10); 
+            datasetItems = datasetItems.slice(0, 10); // Cap at 10 items max
 
-            // Map each item to a batch lookup promise
             const geocodePromises = datasetItems.map(async (station) => {
                 const fullAddressStr = `${station.address_line1 || ''}, ${station.address_locality || ''}, ${station.address_region || ''} ${station.address_postalCode || ''}`.trim();
                 
-                if (!fullAddressStr || fullAddressStr === ', ,') return station; // Skip empty profiles gracefully
+                if (!fullAddressStr || fullAddressStr === ', ,') return station;
 
                 try {
                     const geoRes = await geocoder.geocode(fullAddressStr);
-                    if (geoRes && geoRes.length > 0) {
+                    // ✨ FIXED: Added array wrapper index [0] checking to prevent undefined variable failures
+                    if (geoRes && geoRes.length > 0 && geoRes[0].latitude) {
                         station.latitude = parseFloat(geoRes[0].latitude);
                         station.longitude = parseFloat(geoRes[0].longitude);
                     } else {
-                        // ⚡ SAFE FALLBACK: Fallback to general city center if street numbers fail
+                        // ✨ FIXED: Added optional chaining (?.) so a failing fallback lookup never crashes your server
                         const cityFallbackStr = `${station.address_locality || city || 'Denver'}, ${station.address_region || state || ''}`;
                         const cityRes = await geocoder.geocode(cityFallbackStr);
-                        if (cityRes && cityRes.length > 0) {
+                        if (cityRes && cityRes.length > 0 && cityRes[0].latitude) {
                             station.latitude = parseFloat(cityRes[0].latitude);
                             station.longitude = parseFloat(cityRes[0].longitude);
                         }
                     }
                 } catch (err) {
-                    console.error("⚠️ Failed to map item address on backend:", fullAddressStr, err.message);
+                    console.error("Failed to map item address:", fullAddressStr, err.message);
                 }
                 return station;
             });
 
-            // Run all lookups simultaneously across the network
             datasetItems = await Promise.all(geocodePromises);
             
             // Filter out any entries that completely failed to translate anywhere on the globe
