@@ -1,37 +1,34 @@
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression'); 
-const path = require('path'); // ⚡ Standard library for safe path joining
+const path = require('path'); 
 require('dotenv').config(); 
 
-// 📦 DYNAMIC ENGINE: Automatically reads your exact project name from your package.json file!
-const pjson = require('./package.json');
-const PROJECT_NAME = pjson.name || 'default-app'; 
+// 🛡️ BARE BONES ROUTING PROFILE: Replace 'gas-watch' with your exact Vercel project dashboard name prefix
+const PROJECT_NAME = 'gas-watch'; 
 
 // 🛸 Pull in your independent route file
 const gasPricesRoute = require('./routes/gasPrices');
 
 const app = express();
-//hope
+
 app.use(compression()); 
 app.use(express.json()); 
 
 // 🛡️ SECURITY SCHEMA (UNIVERSAL SKELETON)
 const allowedOrigins = [
-    'https://gas-watch.com', // 💡 Just swap this single line for your new live brand domain name in future apps
+    'https://gas-watch.com', 
     'http://localhost:5500',        
     'http://localhost:3000'         
 ]; 
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Safe pass if running locally or matching your exact production custom brand domain
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             return callback(null, true);
         }
 
-        // 🛸 DYNAMIC VERCEL SHIELD: Completely automated!
-        // Checks that the domain ends in .vercel.app AND automatically injects your true project name variable!
+        // 🛸 DYNAMIC VERCEL SHIELD: Validates requests originating from your live Vercel subdomains
         const isVercelSubdomain = origin.endsWith('.vercel.app') && origin.includes(PROJECT_NAME);
 
         if (isVercelSubdomain) {
@@ -42,19 +39,18 @@ app.use(cors({
     }
 }));
 
-// 🗺️ ✨ THE CRITICAL FIX: Tell Express where your static assets live so it can serve index.html!
+// 🗺️ Tell Express where your static assets live so it can serve index.html!
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 🔌 Mount it instantly onto your server routing path
 app.use('/api/gas-prices', gasPricesRoute);
 
-//   TO THIS NEW EXPRESS v5 PATH ROUTE:
+// Express v5 Modern Catch-all Fallback
 app.get('/:path*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ⚡ VERCEL ADAPTATION: Local environments use port 3000, while Vercel's serverless pipeline 
-// natively manages the module export architecture automatically in production.
+// local server port configuration
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => console.log(`Secure gateway running locally on port ${PORT}`));
