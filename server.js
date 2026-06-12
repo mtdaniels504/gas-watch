@@ -45,8 +45,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 🔌 Mount it instantly onto your server routing path
 app.use('/api/gas-prices', gasPricesRoute);
 
-// Express v5 Modern Catch-all Fallback
-app.get('/:path*', (req, res) => {
+// ✅ PASTE THIS BULLETPROOF REGEX LINE INSTEAD:
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
