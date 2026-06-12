@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>Gas Watch by The World Motor Market</title>
+        <title>Gas Watch by TWMM</title>
         <meta name="description" content="Find the cheapest gas prices in your area instantly. Search by city, zip code, or address on our interactive live fuel map to save money on gas today.">
 
 
@@ -3192,56 +3192,137 @@ async function applyFilters(event) {
 /* ==========================================================================
    GAS PRICE FETCH
 ========================================================================== */
-async function getPricesNow(filterPayload) {
-    if (isSearching) return;
+// Updated signature: 'filterPayload' is now an object containing structured keys
+async function getPricesNow(filterPayload, targetLat, targetLon) {
+
+    if (isSearching) {
+        console.warn("⚠️ [getPricesNow] Blocked: A search is already currently running.");
+        return;
+    }
+
     isSearching = true;
 
-    const searchField = document.getElementById('searchBar');
-    const displayContainer = document.getElementById('gasPricesList');
+    console.log("🚀 [getPricesNow] Starting fetch routine with payload input:", filterPayload);
 
-    if (searchField) searchField.placeholder = "Loading gas prices...";
-    if (displayContainer) displayContainer.innerHTML = '<div class="loading-message">Loading local gas stations...</div>';
+    const searchField = document.getElementById('searchBar');
+
+    if (searchField) {
+        searchField.placeholder = "Loading gas prices...";
+    }
 
     const BACKEND_URL = "/api/gas-prices";
 
     try {
+        console.log("🧹 [getPricesNow] Clearing old map markers...");
+        clearMarkers();
+
+        // Fallback safety if filterPayload is missing or comes from a standard text search bar
         const isObjectPayload = filterPayload && typeof filterPayload === 'object';
+        console.log(`📋 [getPricesNow] Is payload an advanced filter object? -> ${isObjectPayload}`);
         
         const requestBody = {
-            lat: null, lon: null, // Complete coordinate eradication flag
+            lat: targetLat || null,      // Precise target coordinate
+            lon: targetLon || null,      // Precise target coordinate
+            // Use radius from filter object, fallback to global activeRadiusMiles, fallback to 15
             radius: isObjectPayload ? filterPayload.radius : (activeRadiusMiles || 15),
+            
+            // Explicitly map independent fields to the backend payload
             storeName: isObjectPayload ? (filterPayload.storeName || null) : null,
             address:   isObjectPayload ? (filterPayload.address || null) : null,
             city:      isObjectPayload ? (filterPayload.city || null) : null,
             state:     isObjectPayload ? (filterPayload.state || null) : null,
             zip:       isObjectPayload ? (filterPayload.zip || null) : null,
+            
+            // Legacy/Standard search fallback if a string was passed from standard search bar instead of filters
             search:    !isObjectPayload ? (filterPayload || null) : null,
-            _t: Date.now()
+            _t: Date.now() // 🛑 ANTI-CACHE BREAK: Forces Vercel / Cloudflare edge networks to skip cached versions
         };
+
+        console.log("📤 [getPricesNow] Sending this JSON body to backend:", JSON.stringify(requestBody, null, 2));
 
         const response = await fetchWithTimeout(BACKEND_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
-            body: JSON.stringify(requestBody)
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache, no-store, must-revalidate", // Strict browser cache bypass directives
+                "Pragma": "no-cache",
+                "Expires": "0"
+            },
+            body: JSON.stringify(requestBody),
+            cache: "no-store"
         });
 
-        if (!response.ok) throw new Error("Backend request failed.");
+        console.log(`📥 [getPricesNow] Server responded with HTTP status code: ${response.status} (${response.statusText})`);
+
+        if (!response.ok) {
+            let errorText = "";
+            try { errorText = await response.text(); } catch(e) {}
+            throw new Error(`Backend request failed with status ${response.status}. Details: ${errorText}`);
+        }
 
         const datasetItems = await response.json();
+        console.log("📊 [getPricesNow] Parsed data array successfully received from backend. Item count:", 
+            Array.isArray(datasetItems) ? datasetItems.length : "Not an Array", datasetItems);
 
-        if (searchField) searchField.placeholder = "Search city or ZIP code...";
-        if (!displayContainer) return;
 
-        // Clear loading screen message
-        displayContainer.innerHTML = "";
+        if (searchField) {
+            searchField.placeholder = "Search city or ZIP code...";
+        }
+
+        if (datasetItems.error) {
+            throw new Error(datasetItems.error);
+        }
 
         if (!datasetItems || datasetItems.length === 0) {
-            displayContainer.innerHTML = '<div class="no-results-message">No gas stations found in this area.</div>';
+            alert("No gas stations found.");
+            isSearching = false; 
+            if (searchField) {
+                searchField.placeholder = "Search city or ZIP code...";
+            }
             return;
         }
 
-        // 📋 INJECT TEXT STATIONS: Loop and display raw address text metrics directly!
-        datasetItems.forEach((station, index) => {
+                datasetItems.forEach((station, index) => {
+            // 🛠️ Extract coordinates smoothly
+            let lat = parseFloat(
+                station.latitude || 
+                station.lat || 
+                station.location?.latitude || 
+                station.location?.lat ||
+                station.position?.lat
+            );
+            
+            let lon = parseFloat(
+                station.longitude || 
+                station.lng || 
+                station.lon || 
+                station.location?.longitude || 
+                station.location?.lng ||
+                station.position?.lng
+            );
+
+            if (isNaN(lat) || isNaN(lon)) {
+                console.warn(`❌ [getPricesNow] Marker dropped for "${station.name || 'Unknown'}" due to unreadable coordinates. Keys:`, Object.keys(station));
+                return; 
+            }
+
+            // ⚡ THE FIX: Prevent overlapping pins if they share a city-center fallback coordinate
+            // We use the index to jitter duplicate coordinates by a tiny fraction of a degree
+            const trackingOverlap = markers.some(m => m.getLatLng().lat === lat && m.getLatLng().lng === lon);
+            if (trackingOverlap) {
+                const angle = index * 0.5;
+                const tinyRadius = 0.00015; // Just enough separation to look clean without moving the station blocks away
+                lat += Math.sin(angle) * tinyRadius;
+                lon += Math.cos(angle) * tinyRadius;
+            }
+
+            // Cinematic flyTo animation focusing view context on the target query region matching first returned pin
+            if (index === 0) {
+                console.log(`✈️ [getPricesNow] Sliding map viewport onto coordinates center: [${lat}, ${lon}]`);
+                moveMapSafely(lat, lon);
+            }
+
+            // Fallback safe defaults for stations reporting missing price values
             const cashPrice = parseFloat(station.price_cash || 0);
             const creditPrice = parseFloat(station.price_credit || 0);
             const currentPrice = cashPrice > 0 ? cashPrice : (creditPrice > 0 ? creditPrice : 0);
@@ -3249,43 +3330,46 @@ async function getPricesNow(filterPayload) {
             const stationName = station.name || "Gas Station";
             const streetAddress = station.address_line1 || "Address unavailable";
             const locality = station.address_locality || "";
-            const region = station.address_region || "";
-            const postalCode = station.address_postalCode || "";
 
             const displayPrice = currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : "N/A";
-            
-            // Highlight the absolute cheapest option card at index 0 with a special CSS class tag
-            const cardBadgeClass = index === 0 ? "station-card cheapest-deal" : "station-card";
 
-            // Create and append the clean text-profile item block layout structure
-            const cardHTML = `
-                <div class="${cardBadgeClass}">
-                    <div class="card-left">
-                        <h3 class="station-title">${stationName}</h3>
-                        <p class="station-text-address">${streetAddress}</p>
-                        <p class="station-location-city">${locality}, ${region} ${postalCode}</p>
-                    </div>
-                    <div class="card-right">
-                        <div class="price-badge">${displayPrice}</div>
-                        <span class="fuel-type-label">Regular</span>
+            const priceIcon = L.divIcon({
+                className: 'gas-price-marker',
+                html: displayPrice
+            });
+
+            const marker = L.marker([lat, lon], { icon: priceIcon });
+
+            const popupPrice = currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : "Unavailable";
+
+            marker.bindPopup(`
+                <div class="custom-popup">
+                    <h3>${stationName}</h3>
+                    <p>${streetAddress}${locality ? ', ' + locality : ''}</p>
+                    <div class="price-tag">
+                        Regular: ${popupPrice}
                     </div>
                 </div>
-            `;
-            
-            displayContainer.insertAdjacentHTML('beforeend', cardHTML);
+            `);
+
+            marker.addTo(map);
+            markers.push(marker);
         });
 
+        console.log(`✅ [getPricesNow] Marker routine complete. Map active count: ${markers.length} pins plotted.`);
+
     } catch (error) {
-        console.error("Frontend printing block failed:", error);
-        if (displayContainer) {
-            displayContainer.innerHTML = '<div class="error-message">Error retrieving local fuel values.</div>';
-        }
+        console.error("Data tracking failure:", error);
+        alert("Error fetching gas prices.");
+
     } finally {
         isSearching = false;
-        if (searchField) searchField.placeholder = "Search city or ZIP code...";
+
+        if (searchField) {
+            searchField.placeholder = "Search city or ZIP code...";
+        }
     }
 }
-
 
 
 
