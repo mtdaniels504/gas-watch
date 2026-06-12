@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression'); 
+const path = require('path'); // ⚡ Standard library for safe path joining
 require('dotenv').config(); 
 
 // 📦 DYNAMIC ENGINE: Automatically reads your exact project name from your package.json file!
@@ -9,7 +10,6 @@ const PROJECT_NAME = pjson.name || 'default-app';
 
 // 🛸 Pull in your independent route file
 const gasPricesRoute = require('./routes/gasPrices');
-
 
 const app = express();
 
@@ -42,8 +42,16 @@ app.use(cors({
     }
 }));
 
+// 🗺️ ✨ THE CRITICAL FIX: Tell Express where your static assets live so it can serve index.html!
+app.use(express.static(path.join(__dirname, 'public')));
+
 // 🔌 Mount it instantly onto your server routing path
 app.use('/api/gas-prices', gasPricesRoute);
+
+// 🚀 Safe catch-all fallback route to serve index.html for root navigation traffic
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ⚡ VERCEL ADAPTATION: Local environments use port 3000, while Vercel's serverless pipeline 
 // natively manages the module export architecture automatically in production.
