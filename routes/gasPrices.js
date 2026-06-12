@@ -18,7 +18,6 @@ const geocoder = NodeGeocoder({
     }
 });
 
-
 router.post('/', async (req, res) => {
     try {
         const { search, lat, lon, radius, storeName, address, city, state, zip } = req.body;
@@ -113,21 +112,24 @@ router.post('/', async (req, res) => {
                 if (!fullAddressStr || fullAddressStr === ', ,') return station;
 
                 try {
-                    const geoRes = await geocoder.geocode(fullAddressStr);
+                    // ⚡ FORCE CATCH rejections at the individual call level to stop parent thread crashes
+                    const geoRes = await geocoder.geocode(fullAddressStr).catch(() => null);
                     
-                    // ✨ THE SAFEST INDEX CHECK: Use optional chaining (?.) to prevent fatal array crashes!
-                    if (geoRes && geoRes.length > 0 && geoRes[0]?.latitude !== undefined) {
-                        station.latitude = parseFloat(geoRes[0].latitude);
-                        station.longitude = parseFloat(geoRes[0].longitude);
+                    // Defensively read matching properties from index 0 using optional chaining
+                    const firstMatch = geoRes && geoRes.length > 0 ? geoRes[0] : null;
+                    
+                    if (firstMatch && (firstMatch.latitude || firstMatch.lat)) {
+                        station.latitude = parseFloat(firstMatch.latitude || firstMatch.lat);
+                        station.longitude = parseFloat(firstMatch.longitude || firstMatch.lng);
                     } else {
                         // Safe Fallback to city center if specific street numbers fail
                         const cityFallbackStr = `${station.address_locality || city || 'Denver'}, ${station.address_region || state || ''}`;
-                        const cityRes = await geocoder.geocode(cityFallbackStr);
+                        const cityRes = await geocoder.geocode(cityFallbackStr).catch(() => null);
+                        const cityMatch = cityRes && cityRes.length > 0 ? cityRes[0] : null;
                         
-                        // ✨ Use optional chaining here as well!
-                        if (cityRes && cityRes.length > 0 && cityRes[0]?.latitude !== undefined) {
-                            station.latitude = parseFloat(cityRes[0].latitude);
-                            station.longitude = parseFloat(cityRes[0].longitude);
+                        if (cityMatch && (cityMatch.latitude || cityMatch.lat)) {
+                            station.latitude = parseFloat(cityMatch.latitude || cityMatch.lat);
+                            station.longitude = parseFloat(cityMatch.longitude || cityMatch.lng);
                         }
                     }
                 } catch (err) {
@@ -136,6 +138,7 @@ router.post('/', async (req, res) => {
                 return station;
             });
 
+            // Run all lookups simultaneously across the network safely
             datasetItems = await Promise.all(geocodePromises);
             
             // Filter out any entries that completely failed to translate anywhere on the globe
