@@ -11,7 +11,7 @@ router.post('/', async (req, res) => {
         const ACTOR_ID = "johnvc~fuelprices";
         
         if (!APIFY_TOKEN) {
-            console.error("Critical: APIFY_TOKEN is missing from environment vault.");
+            console.error("Critical: APIFY_TOKEN is missing from environment variables.");
             return res.status(500).json({ error: "Server configuration missing API key." });
         }
 
@@ -30,6 +30,8 @@ router.post('/', async (req, res) => {
         if (cachedData) {
             return res.json(cachedData);
         }
+
+        console.log(`📡 [Backend Cache Miss] Querying Apify for: ${finalSearchParameter}`);
 
         // Fetch from Apify
         const inputConfig = {
@@ -60,16 +62,7 @@ router.post('/', async (req, res) => {
             datasetItems = datasetItems.filter(station => (station.name || '').toLowerCase().includes(cleanTargetBrand));
         }
 
-        // ✨ PRODUCTION SORTING: Sort by Cheapest Cash/Credit Price First
-        if (Array.isArray(datasetItems)) {
-            datasetItems.sort((a, b) => {
-                const priceA = parseFloat(a.price_cash || a.price_credit || Infinity);
-                const priceB = parseFloat(b.price_cash || b.price_credit || Infinity);
-                return priceA - priceB;
-            });
-        }
-
-        // Send the raw dataset straight back
+        // Send the raw dataset straight to the frontend immediately! 
         gasCache.set(cacheKey, datasetItems);
         res.json(datasetItems);
 
