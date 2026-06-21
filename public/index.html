@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>Gas Watch by TWMM</title>
+        <title>Gas Watch by The World Motor Market</title>
         <meta name="description" content="Find the cheapest gas prices in your area instantly. Search by city, zip code, or address on our interactive live fuel map to save money on gas today.">
 
 
@@ -986,12 +986,35 @@
 
             .subNav {
                 position: absolute;
-                width: calc(200px + 5dvw);
+                width: calc(150px + 15dvw);
                 height: auto;
-                gap: 1px;
                 z-index: 999;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
                 top: 60px;
-                left: 0;
+                left: 3px;
+                height: calc(100dvh - 62px);
+                max-height: 100%;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            
+            .subNav a, .sideBar a, .subNavGroup {
+                width: 100%;
+            }
+            
+            .subNav a, .sideBar a, .subNavGroup {
+                width: 100%;
+            }
+
+            .subNavGroup1 {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 4px;
             }
 
             .subNavRow, .subNavRow2 {
@@ -1000,10 +1023,38 @@
                 align-items: center;
                 cursor: pointer;
                 padding: 4px;
+                max-width: 100%;
+            }
+
+            .subNavRow3 {
+                gap: 5px;
+            }
+
+            .subNavRowImg {
+                min-width: unset;
+                width: auto;
+                max-width: unset;
+                min-height: unset;
+                height: auto;
+                max-height: 10px;
+            }         
+            
+            .subNavRowP2 {
+                margin-left: auto;
+                margin-right: 10px;
+            }
+
+
+
+            .applyFiltersButton {
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
             }
 
             .subNavRow2 {
-                margin-left: 10px;
+                max-width: calc(100% - 8px);
+                margin-left: 8px;
             }
 
             .subNavMore {
@@ -1030,6 +1081,11 @@
             .subNavButton {
                 line-height: 1;
                 cursor: pointer;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             .subPlusButton {
@@ -1040,7 +1096,28 @@
             .subMoreToggle {
                 transform: rotate(-90deg);
                 margin-right: 1px;
+                margin-top: 2px;
             }
+
+            /* SubNav Styles */      
+                
+            .subNav {
+                width: 57.5dvw;
+            }
+
+            .sideBar {
+                width: 67.5dvw;
+            }
+
+            .sideBarTab {
+                padding: 5px 5px 0px 5px;
+                height: 18px;
+            } 
+                            
+            .subNavRow3 {
+                gap: 3px;
+            }
+
 
 
             /* -- FilterDisplay -- */
@@ -2020,13 +2097,13 @@
                 <!--subNavHome-->
                 <div class="subNavRow">
                     <span class="subNavItem">Home</span>
-                    <i class="subNavButton subHomeButton fa-solid fa-home"></i>
+                    <i class="IconC subNavButton subHomeButton fa-solid fa-home"></i>
                 </div>
 
                 <!--subNavHelp-->
                 <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
                     <span class="subNavItem">Help</span>
-                    <i class="subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
+                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
                 </div>
                 <!--subNavMore-->
                 <div class="subNavMore" id="subNav-help" style="display: none;">
@@ -2034,7 +2111,7 @@
                     <div class="subNavMoreBox">
                         <div class="subNavRow2">
                             <span class="subNavItem">FAQs</span>
-                            <i class="subNavButton subPlusButton">+</i>
+                            <i class="IconC subNavButton subPlusButton">+</i>
                         </div>
                     </div>
                 </div>         
@@ -2042,27 +2119,101 @@
                 <!--subNavSettings-->
                 <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
                     <span class="subNavItem">Settings</span>
-                    <i class="subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-settings"></i>
+                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-settings"></i>
                 </div>
                 <!--subNavMore-->
                 <div class="subNavMore" id="subNav-settings" style="display: none;">
                     <hr class="subNavHr">
                     <div class="subNavMoreBox">
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Accessibility</span>
-                            <i class="subNavButton subPlusButton">+</i>
-                        </div>
-                        <div class="subNavRow2">
+                        <!-- ==========================================================================
+                            SUBNAV PREFERENCES ACCORDION
+                            ========================================================================== -->
+                        <div class="subNavRow subNavRow2" data-target="#subNav-preferences" data-slug="#subMore-preferences">
                             <span class="subNavItem">Preferences</span>
-                            <i class="subNavButton subPlusButton">+</i>
+                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-preferences"></i>
                         </div>
+
+                        <div class="subNavMore" id="subNav-preferences" style="display: none;">
+                            <hr class="subNavHr">
+                            <div class="subNavMoreBox">
+                                
+                                <!-- Feature 1: Persistent Fuel Type Choice -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Default Grade</span>
+                                    <select class="lesserP" id="prefDefaultFuel" class="subSmallSelect">
+                                        <option value="regular">Regular</option>
+                                        <option value="midgrade">Midgrade</option>
+                                        <option value="premium">Premium</option>
+                                        <option value="diesel">Diesel</option>
+                                    </select>
+                                </div>
+
+                                <!-- Feature 2: Default Search Radius Boundary -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Search Radius</span>
+                                    <select class="lesserP" id="prefDefaultRadius" class="subSmallSelect">
+                                        <option value="5">5 Miles</option>
+                                        <option value="10">10 Miles</option>
+                                        <option value="15">15 Miles</option>
+                                        <option value="20">20 Miles</option>
+                                    </select>
+                                </div>
+
+                                <!-- Feature 3: Sorting Preference Hierarchy -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Primary Sort</span>
+                                    <select class="lesserP" id="prefDefaultSort" class="subSmallSelect">
+                                        <option value="price">Cheapest First</option>
+                                        <option value="distance">Closest First</option>
+                                    </select>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ==========================================================================
+                            SUBNAV ACCESSIBILITY ACCORDION
+                            ========================================================================== -->
+                        <div class="subNavRow subNavRow2" data-target="#subNav-accessibility" data-slug="#subMore-accessibility">
+                            <span class="subNavItem">Accessibility</span>
+                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-accessibility"></i>
+                        </div>
+
+                        <div class="subNavMore" id="subNav-accessibility" style="display: none;">
+                            <hr class="subNavHr">
+                            <div class="subNavMoreBox">
+                                
+                                <!-- Accessibility Dropdown 1: Interactive Map Theme Switcher -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Map Theme</span>
+                                    <select class="lesserP" id="prefMapSkin" class="subSmallSelect">
+                                        <option value="google">Google Light</option>
+                                        <option value="iphone">iPhone iOS (Clean)</option>
+                                        <option value="midnight">Jawg Charcoal (Dark)</option>
+                                        <option value="matrix">Jawg Neon (Matrix)</option>
+                                        <option value="navigation">Waze Nav (Tactical)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Accessibility 2: Text Sizing Magnifier -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Marker Bubble Size</span>
+                                    <select class="lesserP" id="prefTextSize" class="subSmallSelect">
+                                        <option value="normal">Standard</option>
+                                        <option value="large">Large Text</option>
+                                    </select>
+                                </div>
+
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
                 <!--subNavAccount-->
                 <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
                     <span class="subNavItem">Account</span>
-                    <i class="subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-account"></i>
+                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-account"></i>
                 </div>
                 <!--subNavMore-->
                 <div class="subNavMore" id="subNav-account" style="display: none;">
@@ -2070,15 +2221,15 @@
                     <div class="subNavMoreBox">
                         <div class="subNavRow2">
                             <span class="subNavItem">My Account</span>
-                            <i class="subNavButton subPlusButton">+</i>
+                            <i class="IconC subNavButton subPlusButton">+</i>
                         </div>
                         <div class="subNavRow2">
                             <span class="subNavItem">Create Account</span>
-                            <i class="subNavButton subPlusButton">+</i>
+                            <i class="IconC subNavButton subPlusButton">+</i>
                         </div>
                         <div class="subNavRow2">
                             <span class="subNavItem">Sign In</span>
-                            <i class="subNavButton subPlusButton">+</i>
+                            <i class="IconC subNavButton subPlusButton">+</i>
                         </div>
                     </div>
                 </div>
@@ -2157,7 +2308,9 @@
             </div>
 
             </div>
-        </section>
+        </div>
+        </div>
+        </div>
 
         <script>
             function isInAppBrowser() {
@@ -3460,6 +3613,202 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+</script>
+
+<script id="preferences_and_skins_script">
+/* ==========================================================================
+   USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED)
+   ========================================================================== */
+
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // --- 1. LOCAL STORAGE REFERENCE KEYS ---
+    const PREF_KEYS = {
+        fuel: 'gasWatch_prefFuel',
+        radius: 'gasWatch_prefRadius',
+        sort: 'gasWatch_prefSort',
+        skin: 'gasWatch_mapTheme', 
+        text: 'gasWatch_prefText'
+    };
+
+// --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX (JAWG PRESET VARIATION) ---
+    const MAP_THEME_TILES = {
+        google: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        
+        midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
+        matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
+        
+        navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
+    };
+
+    const MAP_THEME_ATTRIBUTIONS = {
+        google: 'Map data © Google',
+        iphone: '© OpenStreetMap contributors, © CARTO',
+        midnight: '© OpenStreetMap contributors, © JawgMaps',
+        matrix: '© OpenStreetMap contributors, © JawgMaps',
+        navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
+    };
+
+    // --- 3. INITIALIZE AND APPLY USER PARAMETERS ON RUNTIME BOOT ---
+    initUserPreferences();
+
+    function initUserPreferences() {
+        // A. Load Persistent Fuel Profile Choice
+        const savedFuel = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
+        const fuelSelect = document.getElementById('prefDefaultFuel');
+        if (fuelSelect) fuelSelect.value = savedFuel;
+        
+        const mainFuelFilter = document.getElementById('fuelType');
+        if (mainFuelFilter) mainFuelFilter.value = savedFuel;
+
+        // B. Load Search Radius Preference
+        const savedRadius = localStorage.getItem(PREF_KEYS.radius) || '5';
+        const radiusSelect = document.getElementById('prefDefaultRadius');
+        if (radiusSelect) radiusSelect.value = savedRadius;
+        
+        const mainRadiusSlider = document.getElementById('distanceRange');
+        const mainRadiusValue = document.getElementById('distanceValue');
+        if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
+        if (mainRadiusValue) mainRadiusValue.value = savedRadius;
+
+        // C. Load List Sort Ordering Metrics
+        const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
+        const sortSelect = document.getElementById('prefDefaultSort');
+        if (sortSelect) sortSelect.value = savedSort;
+
+        // D. Load and Render Selected Map Canvas Skin Theme
+        const savedSkin = localStorage.getItem(PREF_KEYS.skin) || 'google';
+        const skinSelect = document.getElementById('prefMapSkin'); 
+        if (skinSelect) skinSelect.value = savedSkin;
+        
+        // Let the primary map script boot natively first, then modify tile layouts if necessary
+        requestAnimationFrame(() => {
+            if (savedSkin !== 'google') {
+                switchMapTheme(savedSkin);
+            }
+        });
+
+        // E. Load Font Bubble Scaling Settings
+        const savedText = localStorage.getItem(PREF_KEYS.text) || 'normal';
+        const textSelect = document.getElementById('prefTextSize');
+        if (textSelect) textSelect.value = savedText;
+        applyTextScaling(savedText);
+    }
+
+    // --- 4. INTERACTIVE EVENT HANDLER CONNECTIONS ---
+
+    // Grade Dropdown Changes
+    document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.fuel, this.value);
+        const mainFuelFilter = document.getElementById('fuelType');
+        if (mainFuelFilter) mainFuelFilter.value = this.value;
+        triggerMapDataRefresh();
+    });
+
+    // Distance Radius Matrix Changes
+    document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.radius, this.value);
+        const mainRadiusSlider = document.getElementById('distanceRange');
+        const mainRadiusValue = document.getElementById('distanceValue');
+        if (mainRadiusSlider) mainRadiusSlider.value = this.value;
+        if (mainRadiusValue) mainRadiusValue.value = this.value;
+        triggerMapDataRefresh();
+    });
+
+    // Sorting Logic Changes
+    document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.sort, this.value);
+        triggerMapDataRefresh();
+    });
+
+    // Map Theme Skin Changes
+    document.getElementById('prefMapSkin')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.skin, this.value);
+        switchMapTheme(this.value);
+    });
+
+    // Typography Sizing Changes
+    document.getElementById('prefTextSize')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.text, this.value);
+        applyTextScaling(this.value);
+    });
+
+    // --- 5. VISUAL REPAINT TRANSFORM MECHANISMS ---
+
+    /**
+     * 🗺️ switchMapTheme
+     * Modifies the already-initialized global 'map' instance as necessary
+     */
+    function switchMapTheme(themeName) {
+        if (typeof map === 'undefined' || !map) return;
+
+        const activeTheme = themeName || 'google';
+        const selectedUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
+        const selectedAttr = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
+
+        // Strip previous tile layers cleanly from beneath your emerald capsules
+        map.eachLayer(function(layer) {
+            if (layer instanceof L.TileLayer) {
+                map.removeLayer(layer);
+            }
+        });
+
+        // Initialize and bind the fresh graphic backdrop
+        L.tileLayer(selectedUrl, {
+            subdomains: activeTheme === 'google' ? '0123' : 'abc',
+            maxZoom: 20,
+            minZoom: 4,
+            updateWhenIdle: true,
+            attribution: selectedAttr
+        }).addTo(map);
+
+        // Dark Theme Specific Card Adjustments
+        const dynamicStyleId = 'dynamic-dark-popup-override';
+        let popupStyleElement = document.getElementById(dynamicStyleId);
+        
+        if (!popupStyleElement) {
+            popupStyleElement = document.createElement('style');
+            popupStyleElement.id = dynamicStyleId;
+            document.head.appendChild(popupStyleElement);
+        }
+        
+        if (activeTheme === 'midnight') {
+            popupStyleElement.innerHTML = `
+                .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
+                .custom-popup h3 { color: #f5f8ff !important; }
+                .custom-popup p { color: #dee0e3 !important; }
+                .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
+            `;
+        } else {
+            popupStyleElement.innerHTML = ''; // Reverts cleanly to standard white styles
+        }
+    }
+
+    /**
+     * 🔍 applyTextScaling
+     * Controls CSS micro-variables to expand marker sizing variables on the fly
+     */
+    function applyTextScaling(scale) {
+        if (scale === 'large') {
+            document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
+            document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
+        } else {
+            document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
+            document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
+        }
+    }
+
+    /**
+     * ⚡ triggerMapDataRefresh
+     * Safety valve ensuring map displays adapt instantly to sorting choices
+     */
+    function triggerMapDataRefresh() {
+        if (typeof applyClientSideMapFilters === "function") {
+            applyClientSideMapFilters();
+        }
+    }
+});
 </script>
 
     </body>
