@@ -2017,12 +2017,10 @@
 #map {
     z-index: 220;
     flex-grow: 1;
-    width: 100%;
+    width: calc(100% - 2px);
     height: calc(100dvh - 70px);
     max-height: calc(100dvh - 70px);
     border-radius: 16px; /* Smoother, modern pill geometry corners */
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Soft floating atmosphere */
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2642,31 +2640,33 @@
                 },
 
                 intLightNeon: {
+            
                     //General
                     body: {background: `${white2}`, color: `${black2}`},
-                    section: {background: `${white1}`, border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 15px rgba(7, 91, 175, 0.06), inset 0 0 8px ${whiteBlue}`},
-                    'section:hover': {background: `${white1}`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 20px rgba(34, 116, 199, 0.18), inset 0 0 10px ${whiteBlueNeon}`},
-                    div: {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 2px 10px rgba(0, 0, 0, 0.02)`},
+                    // ⚡ POPPING UPGRADE: Intensified double-layered external neon aura with sharp inner frame lines
+                    section: {background: `${white1}`, border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 25px rgba(7, 91, 175, 0.22), 0 0 10px rgba(34, 116, 199, 0.15), inset 0 0 12px ${whiteBlueNeon}`},
+                    'section:hover': {background: `${white1}`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 35px rgba(34, 116, 199, 0.42), 0 0 15px rgba(7, 91, 175, 0.2), inset 0 0 14px ${whiteBlue}`},
+                    div: {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 4px 15px rgba(7, 91, 175, 0.08)`},
                     
                     //Text
-                    h1: {color: `${cobalt2}`, 'text-shadow': `1px 1px 8px rgba(7, 91, 175, 0.15)`},
-                    h2: {color: `${cobalt2}`, 'text-shadow': `1px 1px 6px rgba(7, 91, 175, 0.12)`},
-                    h3: {color: `${cobaltLight}`},
+                    h1: {color: `${cobalt1}`, 'text-shadow': `0 0 12px rgba(7, 91, 175, 0.35)`},
+                    h2: {color: `${cobalt2}`, 'text-shadow': `0 0 10px rgba(7, 91, 175, 0.28)`},
+                    h3: {color: `${cobaltLight}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.2)`},
                     h4: {color: `${cobaltLight}`},
                     h5: {color: `${cobalt2}`},
                     h6: {color: `${cobaltDark}`},
                     
                     //Special
-                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.2)`},
-                    button: {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt1} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.15)`},
-                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 14px rgba(7, 91, 175, 0.3)`},
+                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 12px rgba(34, 116, 199, 0.45)`},
+                    button: {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt1} 100%)`, color: `${white1}`, border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 14px rgba(34, 116, 199, 0.3)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${white1}`, 'box-shadow': `0 0 22px rgba(7, 91, 175, 0.55)`},
                     'button:focus, button.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltLight} 100%)`},
-                    'select, textarea, input': {border: `1.2px solid ${whiteBlueNeon}`, background: `${white1}`},
-                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.15)`},
-                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 10px rgba(7, 91, 175, 0.2)`},
+                    'select, textarea, input': {border: `1.5px solid ${cobalt2}`, background: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.35)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 15px rgba(7, 91, 175, 0.45)`},
 
                     hr: {background: `linear-gradient(90deg, transparent 0%, ${cobaltLight} 50%, transparent 100%)`},
-                    '.shadow': {background: `${cobaltDark}`, opacity: '.12'},
+                    '.shadow': {background: `${cobaltDark}`, opacity: '.15'},
 
                     '::-webkit-scrollbar-track': {background: `${white3}`},
                     '::-webkit-scrollbar-track:hover': {background: `${white2}`},
@@ -2675,38 +2675,38 @@
                     
                     //Icon
                     '#flagReportReason': {background: `${whiteBlue}`},
-                    '.cloudHelpNav': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 10px rgba(7, 91, 175, 0.08)`},
+                    '.cloudHelpNav': {border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 15px rgba(7, 91, 175, 0.2)`},
                     '.cloudHelpSection h5': {color: `${white1}`},
 
                     '.IconA': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
-                    '.IconA:hover, IconA.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.2)`},
+                    '.IconA:hover, IconA.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 14px rgba(34, 116, 199, 0.45)`},
                     '.IconA:focus, .IconC.active': {background: `${whiteBlue}`},
 
-                    '.IconB': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.15)`},
-                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 12px rgba(7, 91, 175, 0.25)`},
+                    '.IconB': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.35)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 18px rgba(7, 91, 175, 0.5)`},
                     'IconB:focus, IconB.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltLight} 100%)`},
 
                     '.IconC': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
-                    '.IconC:hover, .IconC.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.25)`},
                     'IconC:focus, .IconC.active': {background: `${whiteBlue}`},
 
-                    '.IconD': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`},
+                    '.IconD': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`},
                     'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`},
-                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltLight} 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobalt1} 100%)`},
 
                     '.fa-gear': {color: `${cobaltLight}`},
                     '.navArrow': {color: `${white1}`},
                     
                     //Parts
-                    '.logoTitleContN': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlueNeon} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.15)`},
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlueNeon} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 16px rgba(34, 116, 199, 0.35)`},
 
-                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${cobalt2}`},
                     '.headPopUpH2': {color: `${cobaltDark}`},
                     '.headPopUpH2.active': {background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`, color: `${cobalt1}`, border: `1px solid ${cobaltLight}`},
-                    '.headPopUpH2:hover': {background: `${white1}`, color: `${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.1)`},
+                    '.headPopUpH2:hover': {background: `${white1}`, color: `${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.3)`},
 
-                    '.navLinksBox': {opacity: '.95', background: `${white1}`, border: `1px solid ${whiteBlueNeon}`},
-                    '.navLinksBoxShadows': {'border-bottom': `1.5px solid ${whiteBlueNeon}`},
+                    '.navLinksBox': {opacity: '.98', background: `${white1}`, border: `1px solid ${cobalt2}`, 'box-shadow': `0 10px 25px rgba(7, 91, 175, 0.15)`},
+                    '.navLinksBoxShadows': {'border-bottom': `2px solid ${whiteBlueNeon}`},
                                         
                     '.pollDisplayBody': {background: '#001120'},
                     '.chatPage h4': {color: `${cobaltDark}`},
@@ -2719,20 +2719,23 @@
                     '.opinionGTBox:nth-child(even)': {'border-left': `1.5px solid ${whiteBlueNeon}`},
                     '.opinionGTBox:nth-child(n+3)': {'border-top': `1.5px solid ${whiteBlueNeon}`},
                     '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobalt2} 0%, ${cobaltLight} 100%)`, color: `${white1}`},
-                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 10px rgba(7, 91, 175, 0.2)`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 16px rgba(7, 91, 175, 0.4)`},
                     '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`},
                 },
+
+
                 dark: {
-            
+        
                     //General
                     body: {background: `${black1}`, color: `${white2}`},
-                    section: {background: `rgba(255, 255, 255, 0.03)`, border: `1px solid rgba(255, 255, 255, 0.05)`, 'box-shadow': `0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)`},
-                    'section:hover': {background: `rgba(255, 255, 255, 0.05)`, border: `1px solid rgba(255, 255, 255, 0.1)`, 'box-shadow': `0 14px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1)`},
-                    div: {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.00) 100%)`, border: `1px solid rgba(255, 255, 255, 0.03)`, 'box-shadow': `0 4px 12px rgba(0, 0, 0, 0.2)`},
+                    // 🪙 METALLIC LUXURY REFINEMENT: Replaces all blue traces with a clean silver/white alpha ambiance
+                    section: {background: `rgba(18, 20, 24, 0.65)`, border: `1px solid rgba(255, 255, 255, 0.12)`, 'box-shadow': `0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(242, 242, 246, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.05)`},
+                    'section:hover': {background: `rgba(18, 20, 24, 0.75)`, border: `1px solid rgba(255, 255, 255, 0.25)`, 'box-shadow': `0 10px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(242, 242, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)`},
+                    div: {background: `rgba(0, 0, 0, 0.3)`, border: `1px solid rgba(255, 255, 255, 0.05)`, 'box-shadow': `0 2px 8px rgba(0, 0, 0, 0.3)`},
                     
-                    //Text
-                    h1: {color: `${white1}`},
-                    h2: {color: `${white2}`},
+                    //Text - Clean silver/white typography without any color bleeding
+                    h1: {color: `${white1}`, 'text-shadow': `1px 1px 1px rgba(0, 0, 0, 0.5)`},
+                    h2: {color: `${white2}`, 'text-shadow': `1px 1px 1px rgba(0, 0, 0, 0.4)`},
                     h3: {color: `${white3}`},
                     h4: {color: `${grey2}`},
                     h5: {color: `${grey3}`},
@@ -2740,15 +2743,15 @@
                     
                     //Special
                     i: {color: `${white2}`},
-                    button: {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.1)`, 'box-shadow': `0 4px 10px rgba(0, 0, 0, 0.3)`},
-                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, border: `1px solid rgba(255, 255, 255, 0.2)`},
+                    button: {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.15)`, 'box-shadow': `0 4px 12px rgba(0, 0, 0, 0.4)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, border: `1px solid rgba(255, 255, 255, 0.3)`, 'box-shadow': `0 0 15px rgba(255, 255, 255, 0.1)`},
                     'button:focus, button.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
-                    'select, textarea, input': {border: `1px solid rgba(255, 255, 255, 0.1)`, background: `${black2}`, color: `${white1}`},
-                    'input:hover, textarea:hover, select:hover': {border: `1px solid rgba(255, 255, 255, 0.2)`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.05)`},
-                    'input:focus, textarea:focus, select:focus': {border: `1px solid rgba(255, 255, 255, 0.3)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.1)`},
+                    'select, textarea, input': {border: `1px solid rgba(255, 255, 255, 0.18)`, background: `${black2}`, color: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1px solid rgba(255, 255, 255, 0.3)`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.05)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1px solid rgba(255, 255, 255, 0.4)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.15)`},
 
-                    hr: {background: `rgba(255, 255, 255, 0.1)`},
-                    '.shadow': {background: `${black1}`, opacity: '.4'},
+                    hr: {background: `linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)`},
+                    '.shadow': {background: `${black1}`, opacity: '.5'},
 
                     '::-webkit-scrollbar-track': {background: `${black2}`},
                     '::-webkit-scrollbar-track:hover': {background: `${black1}`},
@@ -2756,80 +2759,84 @@
                     '::-webkit-scrollbar-thumb:hover': {background: `${greyDark}`},
                     
                     //Icon
-                    '#flagReportReason': {background: `rgba(255, 255, 255, 0.05)`},
-                    '.cloudHelpNav': {border: `1px solid rgba(255, 255, 255, 0.08)`, 'box-shadow': `0 10px 20px rgba(0,0,0,0.4)`},
+                    '#flagReportReason': {background: `${black3}`},
+                    '.cloudHelpNav': {border: `1px solid rgba(255, 255, 255, 0.15)`, 'box-shadow': `0 0 12px rgba(0, 0, 0, 0.4)`},
                     '.cloudHelpSection h5': {color: `${white1}`},
 
-                    '.IconA': {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)`, border: `1px solid rgba(255, 255, 255, 0.04)`, color: `${white2}`},
-                    '.IconA:hover, IconA.active:hover': {background: `rgba(255, 255, 255, 0.08)`, border: `1px solid rgba(255, 255, 255, 0.15)`},
-                    '.IconA:focus, .IconC.active': {background: `rgba(255, 255, 255, 0.05)`},
+                    '.IconA': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid rgba(255, 255, 255, 0.1)`, color: `${white2}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.25)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.08)`, color: `${white1}`},
+                    '.IconA:focus, .IconC.active': {background: `${black3}`},
 
-                    '.IconB': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.1)`, 'box-shadow': `0 4px 10px rgba(0,0,0,0.3)`},
-                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, border: `1px solid rgba(255, 255, 255, 0.2)`},
+                    '.IconB': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.15)`, 'box-shadow': `0 4px 10px rgba(0, 0, 0, 0.3)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, 'box-shadow': `0 0 14px rgba(255, 255, 255, 0.1)`},
                     'IconB:focus, IconB.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
 
-                    '.IconC': {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)`, border: `1px solid rgba(255, 255, 255, 0.04)`, color: `${grey1}`},
-                    '.IconC:hover, .IconC.active:hover': {background: `rgba(255, 255, 255, 0.08)`, border: `1px solid rgba(255, 255, 255, 0.12)`},
-                    'IconC:focus, .IconC.active': {background: `rgba(255, 255, 255, 0.05)`},
+                    '.IconC': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid rgba(255, 255, 255, 0.08)`, color: `${grey2}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.2)`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.05)`, color: `${white2}`},
+                    'IconC:focus, .IconC.active': {background: `${black3}`},
 
                     '.IconD': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.08)`},
                     'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`},
                     'IconD:focus, IconD.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
 
-                    '.fa-gear': {color: `${grey2}`},
+                    '.fa-gear': {color: `${grey1}`},
                     '.navArrow': {color: `${white1}`},
                     
                     //Parts
-                    '.logoTitleContN': {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.00) 100%)`, border: `1px solid rgba(255, 255, 255, 0.08)`, 'box-shadow': `0 4px 15px rgba(0,0,0,0.4)`},
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${black1} 0%, #222 100%)`, border: `1px solid rgba(255, 255, 255, 0.2)`, 'box-shadow': `0 4px 12px rgba(0, 0, 0, 0.4)`},
 
-                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `rgba(255, 255, 255, 0.04)`, border: `1px solid rgba(255, 255, 255, 0.06)`},
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.1)`},
                     '.headPopUpH2': {color: `${grey1}`},
-                    '.headPopUpH2.active': {background: `linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.12)`},
-                    '.headPopUpH2:hover': {background: `rgba(255, 255, 255, 0.08)`, color: `${white1}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, #222 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.25)`},
+                    '.headPopUpH2:hover': {background: `#222`, color: `${white1}`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.1)`},
 
-                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.08)`},
-                    '.navLinksBoxShadows': {'border-bottom': `1px solid rgba(255, 255, 255, 0.08)`},
+                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.12)`},
+                    '.navLinksBoxShadows': {'border-bottom': `1px solid rgba(255, 255, 255, 0.12)`},
                                         
                     '.pollDisplayBody': {background: '#0d1117'},
                     '.chatPage h4': {color: `${white1}`},
-                    '.chatSort:hover': {background: `rgba(255, 255, 255, 0.04)`},
-                    '.chatSort:focus': {background: `rgba(255, 255, 255, 0.06)`},
-                    '.chatSort.active': {border: `1px solid rgba(255, 255, 255, 0.15)`, background: `rgba(255, 255, 255, 0.08)`, color: `${white1}`},
-                    '.chatSort.active:hover': {background: `rgba(255, 255, 255, 0.1)`},
-                    '.opinionGTBox': {'border-bottom': `1px solid rgba(255, 255, 255, 0.06)`},
-                    '.opinionGTBox:nth-child(odd)': {'border-right': `1px solid rgba(255, 255, 255, 0.06)`},
-                    '.opinionGTBox:nth-child(even)': {'border-left': `1px solid rgba(255, 255, 255, 0.06)`},
-                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1px solid rgba(255, 255, 255, 0.06)`},
-                    '.exitFChat': {border: `1px solid rgba(255, 255, 255, 0.1)`, background: `linear-gradient(180deg, #222 0%, #111 100%)`, color: `${white1}`},
-                    '.exitFChat:hover': {background: `linear-gradient(180deg, #333 0%, #1a1a1a 100%)`},
+                    '.chatSort:hover': {background: `${black3}`},
+                    '.chatSort:focus': {background: `#222`},
+                    '.chatSort.active': {border: `1px solid rgba(255, 255, 255, 0.2)`, background: `linear-gradient(180deg, #222 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.chatSort.active:hover': {background: `${black2}`},
+                    '.opinionGTBox': {'border-bottom': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.exitFChat': {border: `1px solid rgba(255, 255, 255, 0.2)`, background: `linear-gradient(180deg, #222 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, #333 0%, #1a1a1a 100%)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.15)`},
                     '.exitFChat:focus': {background: `linear-gradient(180deg, #111 0%, #222 100%)`},
 
-                    '.subNav, .filterDisplay': {background: `${black1}`, color: `${white2}`},
+                    // 💎 Flawless neutral separation for overlay drawers on standard dark mode
+                    '.subNav, .filterDisplay': {background: 'rgba(18, 20, 24, 0.95)', border: '1px solid rgba(255, 255, 255, 0.15)', 'box-shadow': '0 20px 40px rgba(0, 0, 0, 0.85), 0 0 12px rgba(242, 242, 246, 0.02)', 'backdrop-filter': 'blur(10px)'},
+                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.04)', 'margin-top': '4px', padding: '4px'}
                 },
+
                 darkNeon: {
-                
+            
                     //General
                     body: {background: `${black2}`, color: `${white2}`},
-                    section: {background: `rgba(0, 0, 0, 0.6)`, border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 20px rgba(0, 96, 181, 0.2), inset 0 0 10px rgba(0, 96, 181, 0.1)`},
-                    'section:hover': {background: `rgba(0, 0, 0, 0.7)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 28px rgba(34, 116, 199, 0.45), inset 0 0 12px rgba(34, 116, 199, 0.15)`},
-                    div: {background: `linear-gradient(178deg, rgba(18, 20, 24, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)`, border: `1px solid ${cobaltDark}`, 'box-shadow': `0 4px 15px rgba(0, 0, 0, 0.4)`},
+                    // ⚡ MAXIMUM ILLUMINATION: Intense, double-layered cobalt neon light beams on borders and drop shadows
+                    section: {background: `rgba(0, 0, 0, 0.65)`, border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 25px rgba(0, 96, 181, 0.35), 0 0 10px rgba(34, 116, 199, 0.2), inset 0 0 12px rgba(0, 96, 181, 0.15)`},
+                    'section:hover': {background: `rgba(0, 0, 0, 0.75)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 35px rgba(34, 116, 199, 0.6), 0 0 15px rgba(0, 96, 181, 0.35), inset 0 0 14px rgba(34, 116, 199, 0.25)`},
+                    div: {background: `linear-gradient(178deg, rgba(18, 20, 24, 0.85) 0%, rgba(0, 0, 0, 0.95) 100%)`, border: `1px solid ${cobaltDark}`, 'box-shadow': `0 4px 15px rgba(0, 0, 0, 0.5)`},
                     
-                    //Text
-                    h1: {color: `${white1}`, 'text-shadow': `0 0 10px rgba(0, 96, 181, 0.5)`},
-                    h2: {color: `${white2}`, 'text-shadow': `0 0 8px rgba(0, 96, 181, 0.4)`},
-                    h3: {color: `${whiteBlueNeon}`, 'text-shadow': `0 0 6px rgba(34, 116, 199, 0.3)`},
+                    //Text - Hyper-realistic filament glow effect
+                    h1: {color: `${white1}`, 'text-shadow': `0 0 15px rgba(0, 96, 181, 0.7), 0 0 6px rgba(34, 116, 199, 0.4)`},
+                    h2: {color: `${white2}`, 'text-shadow': `0 0 12px rgba(0, 96, 181, 0.6), 0 0 4px rgba(34, 116, 199, 0.3)`},
+                    h3: {color: `${whiteBlueNeon}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.45)`},
                     h4: {color: `${whiteBlue}`},
                     h5: {color: `${whiteBlueNeon}`},
                     h6: {color: `${grey3}`},
                     
                     //Special
-                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.4)`},
-                    button: {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 0 10px rgba(0, 96, 181, 0.3)`},
-                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 18px rgba(34, 116, 199, 0.6)`},
+                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 12px rgba(34, 116, 199, 0.55)`},
+                    button: {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 12px rgba(0, 96, 181, 0.4)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${white1}`, 'box-shadow': `0 0 22px rgba(34, 116, 199, 0.75)`},
                     'button:focus, button.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobalt1} 100%)`},
-                    'select, textarea, input': {border: `1.2px solid ${cobalt2}`, background: `${black1}`, color: `${white1}`},
-                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.3)`},
-                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 12px rgba(204, 221, 255, 0.4)`},
+                    'select, textarea, input': {border: `1.5px solid ${cobalt1}`, background: `${black1}`, color: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.45)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 16px rgba(204, 221, 255, 0.6)`},
 
                     hr: {background: `linear-gradient(90deg, transparent 0%, ${cobaltLight} 50%, transparent 100%)`},
                     '.shadow': {background: `${black1}`, opacity: '.6'},
@@ -2841,19 +2848,19 @@
                     
                     //Icon
                     '#flagReportReason': {background: `${black3}`},
-                    '.cloudHelpNav': {border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 15px rgba(0, 96, 181, 0.3)`},
+                    '.cloudHelpNav': {border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 18px rgba(0, 96, 181, 0.45)`},
                     '.cloudHelpSection h5': {color: `${white1}`},
 
                     '.IconA': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid ${cobaltDark}`, color: `${white2}`},
-                    '.IconA:hover, IconA.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.45)`, color: `${white1}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 15px rgba(34, 116, 199, 0.6)`, color: `${white1}`},
                     '.IconA:focus, .IconC.active': {background: `${cobaltDark}`},
 
-                    '.IconB': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 0 10px rgba(0, 96, 181, 0.3)`},
-                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 16px rgba(34, 116, 199, 0.5)`},
+                    '.IconB': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 0 12px rgba(0, 96, 181, 0.4)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 20px rgba(34, 116, 199, 0.65)`},
                     'IconB:focus, IconB.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobalt2} 100%)`},
 
                     '.IconC': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid ${cobaltDark}`, color: `${grey2}`},
-                    '.IconC:hover, .IconC.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.35)`, color: `${white2}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.45)`, color: `${white2}`},
                     'IconC:focus, .IconC.active': {background: `${cobaltDark}`},
 
                     '.IconD': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobaltDark}`},
@@ -2863,16 +2870,16 @@
                     '.fa-gear': {color: `${whiteBlueNeon}`},
                     '.navArrow': {color: `${white1}`},
                     
-                    //Parts
-                    '.logoTitleContN': {background: `linear-gradient(178deg, ${black1} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 14px rgba(34, 116, 199, 0.4)`},
+                    // 💎 LOGOCONT UPGRADE: Gorgeous deep-space cobalt neon battery cells look
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${black1} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 22px rgba(34, 116, 199, 0.6), inset 0 0 10px rgba(34, 116, 199, 0.3)`},
 
-                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `${black2}`, border: `1px solid ${cobaltDark}`},
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `${black2}`, border: `1px solid ${cobalt1}`},
                     '.headPopUpH2': {color: `${whiteBlue}`},
                     '.headPopUpH2.active': {background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobaltLight}`},
-                    '.headPopUpH2:hover': {background: `${cobalt1}`, color: `${white1}`, 'box-shadow': `0 0 10px rgba(0, 96, 181, 0.4)`},
+                    '.headPopUpH2:hover': {background: `${cobalt1}`, color: `${white1}`, 'box-shadow': `0 0 14px rgba(0, 96, 181, 0.5)`},
 
-                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid ${cobaltDark}`},
-                    '.navLinksBoxShadows': {'border-bottom': `1.5px solid ${cobaltDark}`},
+                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 12px 30px rgba(0, 96, 181, 0.4)`},
+                    '.navLinksBoxShadows': {'border-bottom': `2px solid ${cobaltDark}`},
                                         
                     '.pollDisplayBody': {background: '#000814'},
                     '.chatPage h4': {color: `${white1}`},
@@ -2880,15 +2887,18 @@
                     '.chatSort:focus': {background: `${cobaltDark}`},
                     '.chatSort.active': {border: `1.5px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`},
                     '.chatSort.active:hover': {background: `${black2}`},
-                    '.opinionGTBox': {'border-bottom': `1px solid ${cobaltDark}`},
-                    '.opinionGTBox:nth-child(odd)': {'border-right': `1px solid ${cobaltDark}`},
-                    '.opinionGTBox:nth-child(even)': {'border-left': `1px solid ${cobaltDark}`},
-                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1px solid ${cobaltDark}`},
+                    '.opinionGTBox': {'border-bottom': `1.5px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1.5px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1.5px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1.5px solid ${cobaltDark}`},
                     '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`},
-                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.5)`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, 'box-shadow': `0 0 16px rgba(34, 116, 199, 0.65)`},
                     '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`},
-                },
 
+                    // High-octane smoked glass overlay panel isolation strings
+                    '.subNav, .filterDisplay': {background: 'rgba(18, 20, 24, 0.5)', border: '1.5px solid ${cobalt1}', 'box-shadow': '0 20px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(7, 91, 175, 0.3)', 'backdrop-filter': 'blur(10px)'},
+                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.45)', border: '1px solid ${cobaltDark}', 'margin-top': '4px', padding: '4px'}
+                },
             };
 
 
