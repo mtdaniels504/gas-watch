@@ -770,8 +770,8 @@
             }
 
             /* Target the third-party elements directly to freeze them in the center */
-            .adBox iframe, .filter-adBox-adAbox iframe
-            .adBox div, .filter-adBox-adAbox div {
+            .adBox iframe, .filter-adBox-adAbox iframe, .subNav-adBox iframe
+            .adBox div, .filter-adBox-adAbox div, .subNav-adBox div  {
                 margin: 0 auto !important;
                 padding: 0 !important;
                 display: block !important;
@@ -786,14 +786,13 @@
                 width: calc(100% - 4px);
                 height: calc(196px + 5dvw);
                 max-height: unset;
-                
                 bottom: 0;
             }
 
             .subNav-adBox {
-                top: 100%;
-                height: auto;
-                aspect-ratio: 1/1;
+                margin-top: 44dvh;
+                bottom: 2px;
+                height: calc(146px + 5dvw);
             }
 
 
@@ -1106,7 +1105,7 @@
 
             /* -- SubNav -- */
 
-            .headNav, .subNavMore, .subNavMoreBox {
+            .headNav, .subNavMore, .subNavMoreBox, .subNavConten {
                 background: transparent;
                 border: none;
                 box-shadow: none;
@@ -2226,8 +2225,6 @@
 
             <div class="Tail">
                 <div class="adBox">
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
-                        crossorigin="anonymous"></script>
                     <!-- Horizontal Body -->
                     <ins class="adsbygoogle"
                         style="display:block"
@@ -2245,285 +2242,285 @@
 
             <div class="subNav" id="subNav" style="display: none;">
 
-                <!--subNavHome-->
-                <div class="subNavRow">
-                    <span class="subNavItem">Home</span>
-                    <i class="IconC subNavButton subHomeButton fa-solid fa-home"></i>
-                </div>
-
-                <!-- ==========================================================================
-                    SUBNAV HELP & ACCORDION FAQ SECTION
-                    ========================================================================== -->
-                <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
-                    <span class="subNavItem">Help</span>
-                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
-                </div>
-
-                <div class="subNavMore" id="subNav-help" style="display: none;">
-                    <hr class="subNavHr">
-                    <div class="subNavMoreBox" class="subNavGroup1">
-                        
-                        <!-- Nested Core FAQ Header Row Toggle Trigger -->
-                        <div class="subNavRow subNavRow2" data-target="#faq-list-container" data-slug="#faq-master-plus">
-                            <span class="subNavItem" style="font-weight: 600;">FAQs</span>
-                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="faq-master-plus"></i>
-                        </div>
-
-                        <!-- Hidden Inner FAQ Sheet Wrapper -->
-                        <div id="faq-list-container" class="column" style="display: none; width: 100%; align-items: flex-start; gap: 4px; padding-left: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
-                            
-                            <!-- Question 1: Data Freshness -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-1" data-slug="#faq-chev-1" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">How fresh are these gas prices?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-1" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-1" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our backend scrapes live pricing feeds. Prices refresh continuously throughout the day, logging a localized timestamp directly inside each marker's information popup.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 2: Inaccurate Pricing Report -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-2" data-slug="#faq-chev-2" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">What if a price on the map is wrong?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-2" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-2" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Gas station owners can change corporate street signs rapidly. Tap any pricing marker bubble to click the built-in "Flag Report" element to ping our queue for verification parameters.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 3: Missing Station Geocodes -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-3" data-slug="#faq-chev-3" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why can't I see a specific station?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-3" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-3" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Check your preferences. It's likely hidden by an active filter parameter—such as your Maximum Price Cap threshold or selected Search Radius boundary settings.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 4: Cash vs Credit Divergence -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-4" data-slug="#faq-chev-4" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are these cash or credit card prices?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-4" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-4" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our engine maps the absolute lowest rate available. If a location carries different parameters, we default explicitly to cash values to secure the best look on the tracking pills.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 5: Browser GPS Blocking -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-5" data-slug="#faq-chev-5" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why isn't the "Near Me" button locating me?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-5" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-5" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Your browser or mobile device might be blocking location permissions. Tap the lock icon in your browser's address bar, enable 'Location access,' and refresh the page to let the map glide to your spot.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 6: Fuel Grade Variations -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-6" data-slug="#faq-chev-6" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does the map show Midgrade and Diesel?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-6" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-6" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Yes! While the map default is Regular, you can open your sliding filter form panel or change your permanent account Preferences to instantly swap all map pins to view Midgrade, Premium, or Diesel prices.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 7: International Data Scope -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-7" data-slug="#faq-chev-7" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does this app work outside the US?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-7" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-7" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Currently, our scraper nodes optimize for the United States and parts of North America. We are steadily expanding our database connectivity to track European and global fuel networks soon.</p>
-                                </div>
-                            </div>
-
-                            <!-- Question 8: EV Charging Point Data Future -->
-                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
-                                <div class="row subNavRow" data-target="#faq-ans-8" data-slug="#faq-chev-8" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
-                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are Electric Vehicle charging rates tracked?</span>
-                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-8" style="font-size: 0.45rem;"></i>
-                                </div>
-                                <div id="faq-ans-8" class="subNavRow2" style="display: none;">
-                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">This feature is on our immediate horizon line! We are actively designing a complementary data layer to let users instantly map local EV charging kilowatt costs alongside combustion fuel nodes.</p>
-                                </div>
-                            </div>
-
-                        </div>
-
+                <div class="subNavContent">
+                    <!--subNavHome-->
+                    <div class="subNavRow">
+                        <span class="subNavItem">Home</span>
+                        <i class="IconC subNavButton subHomeButton fa-solid fa-home"></i>
                     </div>
-                </div>        
-                
-                <!--subNavSettings-->
-                <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
-                    <span class="subNavItem">Settings</span>
-                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-settings"></i>
-                </div>
-                <!--subNavMore-->
-                <div class="subNavMore" id="subNav-settings" style="display: none;">
-                    <hr class="subNavHr">
-                    <div class="subNavMoreBox">
-                        <!-- ==========================================================================
-                            SUBNAV PREFERENCES ACCORDION
-                            ========================================================================== -->
-                        <div class="subNavRow subNavRow2" data-target="#subNav-preferences" data-slug="#subMore-preferences">
-                            <span class="subNavItem">Preferences</span>
-                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-preferences"></i>
+
+                    <!-- ==========================================================================
+                        SUBNAV HELP & ACCORDION FAQ SECTION
+                        ========================================================================== -->
+                    <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
+                        <span class="subNavItem">Help</span>
+                        <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
+                    </div>
+
+                    <div class="subNavMore" id="subNav-help" style="display: none;">
+                        <hr class="subNavHr">
+                        <div class="subNavMoreBox" class="subNavGroup1">
+                            
+                            <!-- Nested Core FAQ Header Row Toggle Trigger -->
+                            <div class="subNavRow subNavRow2" data-target="#faq-list-container" data-slug="#faq-master-plus">
+                                <span class="subNavItem" style="font-weight: 600;">FAQs</span>
+                                <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="faq-master-plus"></i>
+                            </div>
+
+                            <!-- Hidden Inner FAQ Sheet Wrapper -->
+                            <div id="faq-list-container" class="column" style="display: none; width: 100%; align-items: flex-start; gap: 4px; padding-left: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
+                                
+                                <!-- Question 1: Data Freshness -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-1" data-slug="#faq-chev-1" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">How fresh are these gas prices?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-1" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-1" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our backend scrapes live pricing feeds. Prices refresh continuously throughout the day, logging a localized timestamp directly inside each marker's information popup.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 2: Inaccurate Pricing Report -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-2" data-slug="#faq-chev-2" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">What if a price on the map is wrong?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-2" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-2" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Gas station owners can change corporate street signs rapidly. Tap any pricing marker bubble to click the built-in "Flag Report" element to ping our queue for verification parameters.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 3: Missing Station Geocodes -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-3" data-slug="#faq-chev-3" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why can't I see a specific station?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-3" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-3" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Check your preferences. It's likely hidden by an active filter parameter—such as your Maximum Price Cap threshold or selected Search Radius boundary settings.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 4: Cash vs Credit Divergence -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-4" data-slug="#faq-chev-4" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are these cash or credit card prices?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-4" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-4" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our engine maps the absolute lowest rate available. If a location carries different parameters, we default explicitly to cash values to secure the best look on the tracking pills.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 5: Browser GPS Blocking -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-5" data-slug="#faq-chev-5" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why isn't the "Near Me" button locating me?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-5" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-5" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Your browser or mobile device might be blocking location permissions. Tap the lock icon in your browser's address bar, enable 'Location access,' and refresh the page to let the map glide to your spot.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 6: Fuel Grade Variations -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-6" data-slug="#faq-chev-6" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does the map show Midgrade and Diesel?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-6" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-6" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Yes! While the map default is Regular, you can open your sliding filter form panel or change your permanent account Preferences to instantly swap all map pins to view Midgrade, Premium, or Diesel prices.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 7: International Data Scope -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-7" data-slug="#faq-chev-7" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does this app work outside the US?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-7" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-7" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Currently, our scraper nodes optimize for the United States and parts of North America. We are steadily expanding our database connectivity to track European and global fuel networks soon.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 8: EV Charging Point Data Future -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-8" data-slug="#faq-chev-8" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are Electric Vehicle charging rates tracked?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-8" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-8" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">This feature is on our immediate horizon line! We are actively designing a complementary data layer to let users instantly map local EV charging kilowatt costs alongside combustion fuel nodes.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+
                         </div>
+                    </div>        
+                    
+                    <!--subNavSettings-->
+                    <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
+                        <span class="subNavItem">Settings</span>
+                        <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-settings"></i>
+                    </div>
+                    <!--subNavMore-->
+                    <div class="subNavMore" id="subNav-settings" style="display: none;">
+                        <hr class="subNavHr">
+                        <div class="subNavMoreBox">
+                            <!-- ==========================================================================
+                                SUBNAV PREFERENCES ACCORDION
+                                ========================================================================== -->
+                            <div class="subNavRow subNavRow2" data-target="#subNav-preferences" data-slug="#subMore-preferences">
+                                <span class="subNavItem">Preferences</span>
+                                <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-preferences"></i>
+                            </div>
 
-                        <div class="subNavMore" id="subNav-preferences" style="display: none;">
-                            <hr class="subNavHr">
-                            <div class="subNavMoreBox">
-                                
-                                <!-- Feature 1: Persistent Fuel Type Choice -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Default Grade</span>
-                                    <select class="lesserP" id="prefDefaultFuel" class="subSmallSelect">
-                                        <option value="regular">Regular</option>
-                                        <option value="midgrade">Midgrade</option>
-                                        <option value="premium">Premium</option>
-                                        <option value="diesel">Diesel</option>
-                                    </select>
-                                </div>
-
-                                <!-- Feature 2: Default Search Radius Boundary -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Search Radius</span>
-                                    <select class="lesserP" id="prefDefaultRadius" class="subSmallSelect">
-                                        <option value="5">5 Miles</option>
-                                        <option value="10">10 Miles</option>
-                                        <option value="15">15 Miles</option>
-                                        <option value="20">20 Miles</option>
-                                    </select>
-                                </div>
-
-
-                                <!-- Feature 3: Sorting Preference Hierarchy -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Primary Sort</span>
-                                    <select class="lesserP" id="prefDefaultSort" class="subSmallSelect">
-                                        <option value="price">Cheapest First</option>
-                                        <option value="distance">Closest First</option>
-                                    </select>
-                                </div>
-
-                                
-                                <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Max Price Cap</span>
+                            <div class="subNavMore" id="subNav-preferences" style="display: none;">
+                                <hr class="subNavHr">
+                                <div class="subNavMoreBox">
                                     
-                                    <!-- Unified structural row holding the currency sticker anchor -->
-                                    <div style="display: flex; align-items: center;">
-                                        <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
-                                        <input type="number" 
-                                            step="0.01" 
-                                            min="0.00" 
-                                            class="lesserP" 
-                                            id="prefMaxPrice" 
-                                            placeholder="3.50" 
-                                            style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                                    <!-- Feature 1: Persistent Fuel Type Choice -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Default Grade</span>
+                                        <select class="lesserP" id="prefDefaultFuel" class="subSmallSelect">
+                                            <option value="regular">Regular</option>
+                                            <option value="midgrade">Midgrade</option>
+                                            <option value="premium">Premium</option>
+                                            <option value="diesel">Diesel</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Feature 2: Default Search Radius Boundary -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Search Radius</span>
+                                        <select class="lesserP" id="prefDefaultRadius" class="subSmallSelect">
+                                            <option value="5">5 Miles</option>
+                                            <option value="10">10 Miles</option>
+                                            <option value="15">15 Miles</option>
+                                            <option value="20">20 Miles</option>
+                                        </select>
+                                    </div>
+
+
+                                    <!-- Feature 3: Sorting Preference Hierarchy -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Primary Sort</span>
+                                        <select class="lesserP" id="prefDefaultSort" class="subSmallSelect">
+                                            <option value="price">Cheapest First</option>
+                                            <option value="distance">Closest First</option>
+                                        </select>
+                                    </div>
+
+                                    
+                                    <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Max Price Cap</span>
+                                        
+                                        <!-- Unified structural row holding the currency sticker anchor -->
+                                        <div style="display: flex; align-items: center;">
+                                            <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
+                                            <input type="number" 
+                                                step="0.01" 
+                                                min="0.00" 
+                                                class="lesserP" 
+                                                id="prefMaxPrice" 
+                                                placeholder="3.50" 
+                                                style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- ==========================================================================
+                                SUBNAV ACCESSIBILITY ACCORDION
+                                ========================================================================== -->
+                            <div class="subNavRow subNavRow2" data-target="#subNav-accessibility" data-slug="#subMore-accessibility">
+                                <span class="subNavItem">Accessibility</span>
+                                <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-accessibility"></i>
+                            </div>
+
+                            <div class="subNavMore" id="subNav-accessibility" style="display: none;">
+                                <hr class="subNavHr">
+                                <div class="subNavMoreBox">
+                                    
+                                    <!-- Accessibility Dropdown 1: Interactive Map Theme Switcher -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Map Theme</span>
+                                        <select class="lesserP" id="prefMapSkin" class="subSmallSelect">
+                                            <option value="google">Google Light</option>
+                                            <option value="iphone">iPhone iOS (Clean)</option>
+                                            <option value="midnight">Jawg Charcoal (Dark)</option>
+                                            <option value="matrix">Jawg Neon (Matrix)</option>
+                                            <option value="navigation">Waze Nav (Tactical)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Accessibility 4: Live UI Color Theme Switcher -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Color Theme</span>
+                                        <select class="lesserP subSmallSelect" id="prefColorTheme">
+                                            <option value="intLightNorm">Light Standard</option>
+                                            <option value="intLightNeon">Light Neon</option>
+                                            <option value="dark">Dark Standard</option>
+                                            <option value="darkNeon">Dark Neon</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Accessibility 3: Text Sizing Magnifier -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Marker Bubble Size</span>
+                                        <select class="lesserP" id="prefTextSize" class="subSmallSelect">
+                                            <option value="normal">Standard</option>
+                                            <option value="large">Large Text</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- NEW Accessibility 4: Marker Visual Contrast Contrast -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Marker Contrast</span>
+                                        <select class="lesserP subSmallSelect" id="prefMarkerContrast">
+                                            <option value="normal">Standard</option>
+                                            <option value="high">High Opacity / Bold</option>
+                                        </select>
+                                    </div>
+
+                                </div>
+                            </div>
+
                         </div>
+                    </div>
 
-                        <!-- ==========================================================================
-                            SUBNAV ACCESSIBILITY ACCORDION
-                            ========================================================================== -->
-                        <div class="subNavRow subNavRow2" data-target="#subNav-accessibility" data-slug="#subMore-accessibility">
-                            <span class="subNavItem">Accessibility</span>
-                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-accessibility"></i>
-                        </div>
-
-                        <div class="subNavMore" id="subNav-accessibility" style="display: none;">
-                            <hr class="subNavHr">
-                            <div class="subNavMoreBox">
-                                
-                                <!-- Accessibility Dropdown 1: Interactive Map Theme Switcher -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Map Theme</span>
-                                    <select class="lesserP" id="prefMapSkin" class="subSmallSelect">
-                                        <option value="google">Google Light</option>
-                                        <option value="iphone">iPhone iOS (Clean)</option>
-                                        <option value="midnight">Jawg Charcoal (Dark)</option>
-                                        <option value="matrix">Jawg Neon (Matrix)</option>
-                                        <option value="navigation">Waze Nav (Tactical)</option>
-                                    </select>
-                                </div>
-
-                                <!-- Accessibility 4: Live UI Color Theme Switcher -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Color Theme</span>
-                                    <select class="lesserP subSmallSelect" id="prefColorTheme">
-                                        <option value="intLightNorm">Light Standard</option>
-                                        <option value="intLightNeon">Light Neon</option>
-                                        <option value="dark">Dark Standard</option>
-                                        <option value="darkNeon">Dark Neon</option>
-                                    </select>
-                                </div>
-
-                                <!-- Accessibility 3: Text Sizing Magnifier -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Marker Bubble Size</span>
-                                    <select class="lesserP" id="prefTextSize" class="subSmallSelect">
-                                        <option value="normal">Standard</option>
-                                        <option value="large">Large Text</option>
-                                    </select>
-                                </div>
-
-                                <!-- NEW Accessibility 4: Marker Visual Contrast Contrast -->
-                                <div class="subNavRow2" style="width: 100%;">
-                                    <span class="lesserP subNavItem">Marker Contrast</span>
-                                    <select class="lesserP subSmallSelect" id="prefMarkerContrast">
-                                        <option value="normal">Standard</option>
-                                        <option value="high">High Opacity / Bold</option>
-                                    </select>
-                                </div>
-
+                    <!--subNavAccount-->
+                    <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
+                        <span class="subNavItem">Account</span>
+                        <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-account"></i>
+                    </div>
+                    <!--subNavMore-->
+                    <div class="subNavMore" id="subNav-account" style="display: none;">
+                        <hr class="subNavHr">
+                        <div class="subNavMoreBox">
+                            <div class="subNavRow2">
+                                <span class="subNavItem">My Account</span>
+                                <i class="IconC subNavButton subPlusButton">+</i>
+                            </div>
+                            <div class="subNavRow2">
+                                <span class="subNavItem">Create Account</span>
+                                <i class="IconC subNavButton subPlusButton">+</i>
+                            </div>
+                            <div class="subNavRow2">
+                                <span class="subNavItem">Sign In</span>
+                                <i class="IconC subNavButton subPlusButton">+</i>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                <!--subNavAccount-->
-                <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
-                    <span class="subNavItem">Account</span>
-                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-account"></i>
-                </div>
-                <!--subNavMore-->
-                <div class="subNavMore" id="subNav-account" style="display: none;">
-                    <hr class="subNavHr">
-                    <div class="subNavMoreBox">
-                        <div class="subNavRow2">
-                            <span class="subNavItem">My Account</span>
-                            <i class="IconC subNavButton subPlusButton">+</i>
-                        </div>
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Create Account</span>
-                            <i class="IconC subNavButton subPlusButton">+</i>
-                        </div>
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Sign In</span>
-                            <i class="IconC subNavButton subPlusButton">+</i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- <div class="subNav-adBox">
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
-                        crossorigin="anonymous"></script>
+                <div class="subNav-adBox">
                     <ins class="adsbygoogle"
                         style="display:block"
                         data-ad-client="ca-pub-2241743795999309"
@@ -2533,8 +2530,7 @@
                     <script>
                         (adsbygoogle = window.adsbygoogle || []).push({});
                     </script>
-                </div> -->
-
+                </div>
             </div>
 
             <!-- ==========================================================================
@@ -2621,9 +2617,6 @@
                 </form>
                 <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
                 <div class="filter-adBox">
-                    <!-- Ad unit integration codes sit safe and quiet here -->
-                        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
-                        crossorigin="anonymous"></script>
                     <!-- SubNav Ad -->
                     <ins class="adsbygoogle"
                         style="display:block"
