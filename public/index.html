@@ -746,7 +746,7 @@
                 width: 98%;
             }
 
-            .adBox, .subNav-adBox {
+            .adBox, .subNav-adBox, .filter-adBox {
                 /* 1. Alignment & Display Engine */
                 display: flex;
                 justify-content: center;
@@ -769,31 +769,32 @@
             }
 
             /* Target the third-party elements directly to freeze them in the center */
-            .adBox iframe, .subNav-adAbox iframe
-            .adBox div, .subNav-adAbox div {
+            .adBox iframe, .filter-adBox-adAbox iframe
+            .adBox div, .filter-adBox-adAbox div {
                 margin: 0 auto !important;
                 padding: 0 !important;
                 display: block !important;
             }
 
-            .adBox iframe {
-                margin-top: 30px;
-            }
 
-            .subNav-adBox {
+            .subNav-adBox, .filter-adBox {
+                margin-top: auto;
+                display: flex;
+                justify-content: center;
                 align-items: center;
-                min-height: 100%;
-                height: 100%;  
-                max-height: 100%;
-                width: 100%;
-                margin-top: 4px;
+                width: calc(100% - 4px);
+                height: calc(196px + 5dvw);
+                max-height: unset;
+                
                 bottom: 0;
             }
 
-            
-            .subNav-adBox iframe {
-                margin-bottom: 20px;
+            .subNav-adBox {
+                top: 100%;
+                height: auto;
+                aspect-ratio: 1/1;
             }
+
 
 
             .part {
@@ -1260,13 +1261,19 @@
                 position: absolute;
                 width: calc(200px + 5dvw);
                 height: calc(100dvh - 60px);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
                 z-index: 999;
                 top: 60px;
                 right: 0;
             }
 
             .filterForm {
+                flex-grow: 1;
                 width: 100%;
+                height: 100%;
             }
 
             .filterForm input {
@@ -2513,6 +2520,20 @@
                     </div>
                 </div>
 
+                <!-- <div class="subNav-adBox">
+                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
+                        crossorigin="anonymous"></script>
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="ca-pub-2241743795999309"
+                        data-ad-slot="1016744364"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div> -->
+
             </div>
 
             <!-- ==========================================================================
@@ -2596,25 +2617,25 @@
                         <button type="button" id="clearFiltersBtn" class="smallButton" style="flex: 1; background: #999; border: 1px solid #666; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Clear</button>
                         <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
                     </div>
-
-                    <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
-                    <div class="subNav-adBox">
-                        <!-- Ad unit integration codes sit safe and quiet here -->
-                         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
-                            crossorigin="anonymous"></script>
-                        <!-- SubNav Ad -->
-                        <ins class="adsbygoogle"
-                            style="display:block"
-                            data-ad-client="ca-pub-2241743795999309"
-                            data-ad-slot="8240628269"
-                            data-ad-format="auto"
-                            data-full-width-responsive="true"></ins>
-                        <script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
                 </form>
+                <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
+                <div class="filter-adBox">
+                    <!-- Ad unit integration codes sit safe and quiet here -->
+                        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
+                        crossorigin="anonymous"></script>
+                    <!-- SubNav Ad -->
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="ca-pub-2241743795999309"
+                        data-ad-slot="8240628269"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
             </div>
+
 
             </div>
         </div>
@@ -3794,116 +3815,6 @@
             
 
         </script>
-
-        <script id="filter_script">
-
-            document.addEventListener("DOMContentLoaded", () => {
-                // --- DISTANCE FILTER LOGIC ---
-                const distanceRange = document.getElementById("distanceRange");
-                const distanceValue = document.getElementById("distanceValue");
-
-                // Initialize distance at 5 miles
-                distanceRange.value = 5;
-                distanceValue.value = 5;
-
-                // Force strict cap of 10 miles on the slider range
-                distanceRange.max = 15; 
-
-                // Sync Slider -> Input
-                distanceRange.addEventListener("input", (e) => {
-                    distanceValue.value = e.target.value;
-                });
-
-                // Sync Input -> Slider (Corrected validation limit to 10 to match the slider max)
-                distanceValue.addEventListener("input", (e) => {
-                    let val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0 && val <= 15) {
-                        distanceRange.value = val;
-                    }
-                });
-            });
-
-
-            /* ==========================================================================
-            FILTER SEARCH (Updated: Returns structured object instead of flat string)
-            ========================================================================== */
-
-            function getFilterPayload() {
-                const storeName = document.getElementById('filterStoreName')?.value.trim();
-                const address   = document.getElementById('filterAddress')?.value.trim();
-                const city      = document.getElementById('filterCity')?.value.trim();
-                const state     = document.getElementById('filterState')?.value.trim();
-                const zip       = document.getElementById('filterZip')?.value.trim();
-
-                // Gather selected distance metrics
-                const distanceInput  = document.getElementById('distanceValue');
-                const distanceSlider = document.getElementById('distanceRange');
-                const selectedRadius = parseFloat(distanceInput?.value || distanceSlider?.value || 5);
-
-                // Build the payload payload object
-                const payload = {
-                    radius: !isNaN(selectedRadius) ? selectedRadius : 5
-                };
-
-                // Only add fields if the user actually typed something in them
-                if (storeName) payload.storeName = storeName;
-                if (address)   payload.address   = address;
-                if (city)      payload.city      = city;
-                if (state)     payload.state     = state;
-                if (zip)       payload.zip       = zip;
-
-                return payload;
-            }
-
-
-/* ==========================================================================
-APPLY FILTERS (Updated: Complete Geocoding Eradication)
-========================================================================== */
-
-async function applyFilters(event) {
-    event.preventDefault();
-
-    if (isSearching) return;
-
-    // 1. Fetch structured filters and radius from our helper function
-    const filterPayload = getFilterPayload();
-
-    // Check if at least one search/filter field has content
-    const hasTextFilters = filterPayload.storeName || filterPayload.address || 
-                           filterPayload.city || filterPayload.state || filterPayload.zip;
-
-    if (!hasTextFilters) {
-        alert("Please enter at least one filter field.");
-        return;
-    }
-
-    // Update global reference for tracking radius state across the app
-    activeRadiusMiles = filterPayload.radius;
-    console.log("Applying filters with active radius:", activeRadiusMiles, "miles");
-
-    try {
-        // 2. BACKEND INTEGRATION: Send the text payloads directly to getPricesNow
-        // We completely pass null for lat and lon because the backend will handle the translation.
-        await getPricesNow(filterPayload, null, null);
-
-        // 3. UI CLEANUP: Reset input fields and close filter panel
-        const fieldsToReset = [
-            'filterStoreName', 'filterAddress', 'filterCity', 'filterState', 'filterZip'
-        ];
-        fieldsToReset.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) element.value = '';
-        });
-
-        const filterDisplay = document.getElementById('filterDisplay');
-        if (filterDisplay) filterDisplay.style.display = 'none';
-
-    } catch (error) {
-        console.error("Filter application failed:", error);
-        alert("An error occurred while processing your search filters.");
-    }
-}
-
 
 
             
