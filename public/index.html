@@ -603,12 +603,63 @@
             }
 
             .Tail {
+                z-index: 500;
+                position: fixed;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 5px 10px;
+                bottom: 0;
+                width: 100%;
+            }
+
+            .adBox, .subNav-adAbox {
+                /* 1. Alignment & Display Engine */
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                width: 100%;
+                margin: 2px auto;
+                padding: 10px 0;
+                background: #ffffff;
+                
+                /* 2. Strict Boundary Lockdowns */
+                height: 50px;  
+                max-height: 50px;
+                box-sizing: content-box;
+                overflow: contain;
+                
+                /* 3. Subtle Presentation Aesthetics */
+                border-radius: 6px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            /* Target the third-party elements directly to freeze them in the center */
+            .adBox iframe, .subNav-adAbox iframe
+            .adBox div, .subNav-adAbox div {
+                margin: 0 auto !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+
+            .adBox iframe {
+                margin-top: 30px;
+            }
+
+            .subNav-adAbox {
+                align-items: center;
+                height: 300px;  
+                max-height: 300px;
+                margin-top: 4px;
                 bottom: 0;
             }
+
+            
+            .subNav-adBox iframe {
+                height: 300px;  
+                max-height: 300px;
+                margin-bottom: 20px;
+            }
+
 
             .part {
                 width: 100%;
@@ -1952,6 +2003,24 @@
                         <!-- Map will be dynamically populated in script -->
                     </div>
                 </div>
+                
+                <div class="Tail">
+                    <div class="adBox">
+                        <script type="text/javascript">
+                            // Wrap in an IIFE block or use window properties to keep it completely isolated
+                            window.atOptions_320_50 = {
+                                'key': 'ad34b33161875fb9af2021d9c778655b',
+                                'format': 'iframe',
+                                'height': 50,
+                                'width': 320,
+                                'params': {}
+                            };
+                            // Point the global reference to this specific instance before the invocation script runs
+                            var atOptions = window.atOptions_320_50;
+                        </script>
+                        <script src="https://www.highperformanceformat.com/ad34b33161875fb9af2021d9c778655b/invoke.js"></script>
+                    </div>
+                </div>
             </section>
 
             <!-- Extended -->
@@ -1967,7 +2036,7 @@
                 <!--subNavHelp-->
                 <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
                     <span class="subNavItem">Help</span>
-                    <i class="subNavButton subMoreToggle" id="subMore-help">▼</i>
+                    <i class="subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
                 </div>
                 <!--subNavMore-->
                 <div class="subNavMore" id="subNav-help" style="display: none;">
@@ -1983,7 +2052,7 @@
                 <!--subNavSettings-->
                 <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
                     <span class="subNavItem">Settings</span>
-                    <i class="subNavButton subMoreToggle" id="subMore-settings">▼</i>
+                    <i class="subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-settings"></i>
                 </div>
                 <!--subNavMore-->
                 <div class="subNavMore" id="subNav-settings" style="display: none;">
@@ -2003,7 +2072,7 @@
                 <!--subNavAccount-->
                 <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
                     <span class="subNavItem">Account</span>
-                    <i class="subNavButton subMoreToggle" id="subMore-account">▼</i>
+                    <i class="subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-account"></i>
                 </div>
                 <!--subNavMore-->
                 <div class="subNavMore" id="subNav-account" style="display: none;">
@@ -2076,6 +2145,24 @@
                         </select>
                     </div>
                     <button type="submit" class=" fullButton applyFiltersButton">Apply Filters</button>
+
+                    <div class="subNav-adAbox">
+
+
+                        <script type="text/javascript">
+                            // Wrap in an IIFE block or use window properties to keep it completely isolated
+                            window.atOptions_160_300 = {
+                                'key': '85269aed703d5b99c979a7e1b95b3057',
+                                'format': 'iframe',
+                                'height': '300',
+                                'width': '160',
+                                'params': {}
+                            };
+                            // Point the global reference to this specific instance before the invocation script runs
+                            var atOptions = window.atOptions_160_300;
+                        </script>
+                        <script src="https://www.highperformanceformat.com/85269aed703d5b99c979a7e1b95b3057/invoke.js"></script>
+                    </div>
                 </form>
             </div>
 
