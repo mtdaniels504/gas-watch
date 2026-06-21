@@ -2020,7 +2020,7 @@
     width: calc(100% - 2px);
     height: calc(100dvh - 70px);
     max-height: calc(100dvh - 70px);
-    border-radius: 16px; /* Smoother, modern pill geometry corners */
+    border-radius: 2px; /* Smoother, modern pill geometry corners */
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2231,21 +2231,119 @@
                     <i class="IconC subNavButton subHomeButton fa-solid fa-home"></i>
                 </div>
 
-                <!--subNavHelp-->
+                <!-- ==========================================================================
+                    SUBNAV HELP & ACCORDION FAQ SECTION
+                    ========================================================================== -->
                 <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
                     <span class="subNavItem">Help</span>
                     <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
                 </div>
-                <!--subNavMore-->
+
                 <div class="subNavMore" id="subNav-help" style="display: none;">
                     <hr class="subNavHr">
-                    <div class="subNavMoreBox">
-                        <div class="subNavRow2">
-                            <span class="subNavItem">FAQs</span>
-                            <i class="IconC subNavButton subPlusButton">+</i>
+                    <div class="subNavMoreBox" class="subNavGroup1">
+                        
+                        <!-- Nested Core FAQ Header Row Toggle Trigger -->
+                        <div class="subNavRow subNavRow2" data-target="#faq-list-container" data-slug="#faq-master-plus">
+                            <span class="subNavItem" style="font-weight: 600;">FAQs</span>
+                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="faq-master-plus"></i>
                         </div>
+
+                        <!-- Hidden Inner FAQ Sheet Wrapper -->
+                        <div id="faq-list-container" class="column" style="display: none; width: 100%; align-items: flex-start; gap: 4px; padding-left: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
+                            
+                            <!-- Question 1: Data Freshness -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-1" data-slug="#faq-chev-1" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">How fresh are these gas prices?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-1" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-1" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our backend scrapes live pricing feeds. Prices refresh continuously throughout the day, logging a localized timestamp directly inside each marker's information popup.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 2: Inaccurate Pricing Report -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-2" data-slug="#faq-chev-2" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">What if a price on the map is wrong?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-2" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-2" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Gas station owners can change corporate street signs rapidly. Tap any pricing marker bubble to click the built-in "Flag Report" element to ping our queue for verification parameters.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 3: Missing Station Geocodes -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-3" data-slug="#faq-chev-3" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why can't I see a specific station?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-3" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-3" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Check your preferences. It's likely hidden by an active filter parameter—such as your Maximum Price Cap threshold or selected Search Radius boundary settings.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 4: Cash vs Credit Divergence -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-4" data-slug="#faq-chev-4" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are these cash or credit card prices?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-4" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-4" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our engine maps the absolute lowest rate available. If a location carries different parameters, we default explicitly to cash values to secure the best look on the tracking pills.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 5: Browser GPS Blocking -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-5" data-slug="#faq-chev-5" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why isn't the "Near Me" button locating me?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-5" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-5" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Your browser or mobile device might be blocking location permissions. Tap the lock icon in your browser's address bar, enable 'Location access,' and refresh the page to let the map glide to your spot.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 6: Fuel Grade Variations -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-6" data-slug="#faq-chev-6" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does the map show Midgrade and Diesel?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-6" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-6" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Yes! While the map default is Regular, you can open your sliding filter form panel or change your permanent account Preferences to instantly swap all map pins to view Midgrade, Premium, or Diesel prices.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 7: International Data Scope -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-7" data-slug="#faq-chev-7" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does this app work outside the US?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-7" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-7" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Currently, our scraper nodes optimize for the United States and parts of North America. We are steadily expanding our database connectivity to track European and global fuel networks soon.</p>
+                                </div>
+                            </div>
+
+                            <!-- Question 8: EV Charging Point Data Future -->
+                            <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                <div class="row subNavRow" data-target="#faq-ans-8" data-slug="#faq-chev-8" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are Electric Vehicle charging rates tracked?</span>
+                                    <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-8" style="font-size: 0.45rem;"></i>
+                                </div>
+                                <div id="faq-ans-8" class="subNavRow2" style="display: none;">
+                                    <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">This feature is on our immediate horizon line! We are actively designing a complementary data layer to let users instantly map local EV charging kilowatt costs alongside combustion fuel nodes.</p>
+                                </div>
+                            </div>
+
+                        </div>
+
                     </div>
-                </div>         
+                </div>        
                 
                 <!--subNavSettings-->
                 <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
@@ -2405,73 +2503,91 @@
 
             </div>
 
+            <!-- ==========================================================================
+                REFINED FILTER DISPLAY SIDE PANEL
+                ========================================================================== -->
             <div class="filterDisplay" id="filterDisplay" style="display: none;">
                 <form class="filterForm">
+                    
+                    <!-- Geographic Group 1: Absolute Street/Point Target -->
                     <div class="filterRow">
-                        <label for="filterAddress">Address:</label>
-                        <input type="text" id="filterAddress" name="filterAddress" placeholder="Enter Address">
+                        <label class="lesserP" for="filterAddress" style="font-weight: 600; margin-bottom: 2px; display: block;">Address:</label>
+                        <input class="lesserP" type="text" id="filterAddress" name="filterAddress" placeholder="Enter Address">
                     </div>
+                    
+                    <!-- Geographic Group 2: Regional Targeting -->
                     <div class="filterRow">
-                        <label for="filterCity">City:</label>
-                        <input type="text" id="filterCity" name="filterCity" placeholder="Enter City">
+                        <label class="lesserP" for="filterCity" style="font-weight: 600; margin-bottom: 2px; display: block;">City:</label>
+                        <input class="lesserP" type="text" id="filterCity" name="filterCity" placeholder="Enter City">
                     </div>
-                    <div class="filterRowDuo">
-                        <div class="filterRow">
-                            <label for="filterState">State:</label>
-                            <input type="text" id="filterState" name="filterState" placeholder="Enter State">
+                    
+                    <!-- Split Row: State & Zip Coordinates -->
+                    <div class="filterRowDuo" style="display: flex; gap: 6px; width: 100%; justify-content: space-between;">
+                        <div class="filterRow" style="flex: 1; margin: 0;">
+                            <label class="lesserP" for="filterState" style="font-weight: 600; margin-bottom: 2px; display: block;">State:</label>
+                            <input class="lesserP" type="text" id="filterState" name="filterState" placeholder="Enter State">
                         </div>
-                        <div class="filterRow">
-                            <label for="filterZip">Zip Code:</label>
-                            <input type="text" id="filterZip" name="filterZip" placeholder="Enter Zip Code">
-                        </div>
-                    </div>
-                    <div class="filterRow">
-                        <label for="filterStoreName">Store Name or Reference Point:</label>
-                        <input type="text" id="filterStoreName" name="filterStoreName" placeholder="e.g., Shell, Walmart, Main St.">
-                    </div>
-                    <div class="filterRow">
-                        <div class="halfRow">
-                            <label for="distanceRange">Distance (miles):</label>
-                            <input type="text" id="distanceValue" name="distanceValue" placeholder="Enter Radius">
-                            <input type="range" id="distanceRange" name="distanceRange" min="0" max="20" step="1">
+                        <div class="filterRow" style="flex: 1; margin: 0;">
+                            <label class="lesserP" for="filterZip" style="font-weight: 600; margin-bottom: 2px; display: block;">Zip Code:</label>
+                            <input class="lesserP" type="text" id="filterZip" name="filterZip" placeholder="Enter Zip Code">
                         </div>
                     </div>
-                    <div class="filterRow" style="display: none;">
-                        <label for="priceRangeMin">Price Range ($):</label>
-                        <div class="priceRangeInputs">
-                            <input type="text" id="priceMinValue" name="priceMinValue" placeholder="Min">
-                            <span class="priceRangeSeparator">To</span>
-                            <input type="text" id="priceValue" name="priceValue" placeholder="Max">
+                    
+                    <!-- Branding Match Filter Group -->
+                    <div class="filterRow">
+                        <label class="lesserP" for="filterStoreName" style="font-weight: 600; margin-bottom: 2px; display: block;">Store Name or Reference Point:</label>
+                        <input class="lesserP" type="text" id="filterStoreName" name="filterStoreName" placeholder="e.g., Shell, Walmart, Main St.">
+                    </div>
+                    
+                    <!-- Distance Matrix Slider Control Group -->
+                    <div class="filterRow">
+                        <div class="halfRow" style="width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                <label class="lesserP" for="distanceRange" style="font-weight: 600; margin: 0;">Distance (miles):</label>
+                                <!-- Read-only numerical display window syncing to slider tracking shifts -->
+                                <input class="lesserP" type="text" id="distanceValue" name="distanceValue" placeholder="5" readonly style="width: 30px; text-align: center; border: none; background: transparent; box-shadow: none; font-weight: 700; height: auto; min-height: unset; padding: 0;">
+                            </div>
+                            <input type="range" id="distanceRange" name="distanceRange" min="1" max="25" step="1" value="5" style="width: 100%; cursor: pointer; box-shadow: none;">
                         </div>
                     </div>
-                    <div class="filterRow" style="display: none;">
-                        <label for="fuelType">Fuel Type:</label>
-                        <select id="fuelType" name="fuelType">
-                            <option value="">Any</option>
-                            <option value="regular">Regular</option>
-                            <option value="midgrade">Midgrade</option>
-                            <option value="premium">Premium</option>
-                            <option value="diesel">Diesel</option>
+                    
+                    <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
+                    <div class="subNavRow2" style="width: 100%;">
+                        <span class="lesserP subNavItem">Max Price Cap</span>
+                        
+                        <!-- Unified structural row holding the currency sticker anchor -->
+                        <div style="display: flex; align-items: center;">
+                            <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
+                            <input type="number" 
+                                step="0.01" 
+                                min="0.00" 
+                                class="lesserP" 
+                                id="prefMaxPrice" 
+                                placeholder="3.50" 
+                                style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                        </div>
+                    </div>
+                    
+                    <!-- REVEALED: Fuel Grade Specific Dropdown Select Menu -->
+                    <div class="filterRow">
+                        <label class="lesserP" for="fuelType" style="font-weight: 600; margin-bottom: 2px; display: block;">Fuel Type Grade:</label>
+                        <select class="lesserP subSmallSelect" id="fuelType" name="fuelType" style="width: 100%;">
+                            <option value="regular">Regular Unleaded</option>
+                            <option value="midgrade">Midgrade Plus</option>
+                            <option value="premium">Premium Supreme</option>
+                            <option value="diesel">Diesel Fuel</option>
                         </select>
                     </div>
-                    <button type="submit" class=" fullButton applyFiltersButton">Apply Filters</button>
+                    
+                    <!-- Action Row: Dual submission trigger setup split horizontally via flex utility rules -->
+                    <div style="display: flex; gap: 4px; margin-top: 8px; width: 100%; background: transparent; border: none; box-shadow: none; padding: 0;">
+                        <button type="button" id="clearFiltersBtn" class="smallButton" style="flex: 1; background: #999; border: 1px solid #666; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Clear</button>
+                        <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
+                    </div>
 
-                    <div class="subNav-adbox"  style="display: none;">
-
-
-                        <!-- <script type="text/javascript">
-                            // Wrap in an IIFE block or use window properties to keep it completely isolated
-                            window.atOptions_160_300 = {
-                                'key': '85269aed703d5b99c979a7e1b95b3057',
-                                'format': 'iframe',
-                                'height': '300',
-                                'width': '160',
-                                'params': {}
-                            };
-                            // Point the global reference to this specific instance before the invocation script runs
-                            var atOptions = window.atOptions_160_300;
-                        </script>
-                        <script src="https://www.highperformanceformat.com/85269aed703d5b99c979a7e1b95b3057/invoke.js"></script> -->
+                    <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
+                    <div class="subNav-adbox" style="display: none; margin-top: 10px;">
+                        <!-- Ad unit integration codes sit safe and quiet here -->
                     </div>
                 </form>
             </div>
@@ -4333,6 +4449,109 @@ document.addEventListener("DOMContentLoaded", function() {
         if (typeof applyClientSideMapFilters === "function") {
             applyClientSideMapFilters();
         }
+    }
+});
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+    
+    // --- 1. DOM SELECTOR REFERENCES ---
+    const filterForm = document.querySelector(".filterForm");
+    const distanceSlider = document.getElementById("distanceRange");
+    const distanceLabel = document.getElementById("distanceValue");
+    const clearButton = document.getElementById("clearFiltersBtn");
+    const filterDisplayPanel = document.getElementById("filterDisplay");
+
+    // --- 2. LIVE SLIDER COUNT SYNCING ---
+    if (distanceSlider && distanceLabel) {
+        // Force initial state matching on boot frames
+        distanceLabel.value = distanceSlider.value;
+
+        // Redraw numeric text dynamically as the user slides the control knob
+        distanceSlider.addEventListener("input", function() {
+            distanceLabel.value = this.value;
+        });
+    }
+
+    // --- 3. UNIVERSAL INSTANT LOCAL FORM CLEAR ENTRY ---
+    if (clearButton && filterForm) {
+        clearButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Guard against default button behaviors
+
+            // Reset text string inputs cleanly
+            document.getElementById("filterAddress").value = "";
+            document.getElementById("filterCity").value = "";
+            document.getElementById("filterState").value = "";
+            document.getElementById("filterZip").value = "";
+            document.getElementById("filterStoreName").value = "";
+            document.getElementById("prefMaxPrice").value = "";
+
+            // Revert slider variables back to default 5-mile radius baseline marks
+            if (distanceSlider && distanceLabel) {
+                distanceSlider.value = 5;
+                distanceLabel.value = 5;
+            }
+
+            // Revert dropdown index state back to Regular Unleaded option
+            const fuelSelect = document.getElementById("fuelType");
+            if (fuelSelect) fuelSelect.value = "regular";
+
+            console.log("🧼 Map filter inputs cleared cleanly local side.");
+            
+            // OPTIONAL PRO MOVE: Trigger an un-filtered map re-fetch or redraw automatically
+            if (typeof getPricesNow === "function") {
+                getPricesNow(""); // Calls back your master tracker script to dump full area data
+            }
+        });
+    }
+
+    // --- 4. BACKEND CONTEXT PREPPING & FORM SUBMIT HANDOFF ---
+    if (filterForm) {
+        filterForm.addEventListener("submit", function(event) {
+            event.preventDefault(); // Block standard form post reloads to protect map canvas frame layers
+
+            // Assemble all active entry keys tightly into a single structured payload matrix
+            const filterPayload = {
+                address: document.getElementById("filterAddress").value.trim(),
+                city: document.getElementById("filterCity").value.trim(),
+                state: document.getElementById("filterState").value.trim(),
+                zipCode: document.getElementById("filterZip").value.trim(),
+                brandName: document.getElementById("filterStoreName").value.trim(),
+                radiusMiles: parseInt(distanceSlider ? distanceSlider.value : 5),
+                maxPriceLimit: parseFloat(document.getElementById("prefMaxPrice").value) || null,
+                fuelGradeSelection: document.getElementById("fuelType") ? document.getElementById("fuelType").value : "regular"
+            };
+
+            // 🚀 THE READY ENGINE LINE: Data payload is fully staged for server.js!
+            console.log("🛰️ Filters packaged and prepped for backend delivery:", filterPayload);
+
+            /* 
+               ==========================================================================
+               UNIFIED BACKEND FETCH STRING HOOK (READY FOR NEXT STAGE)
+               ==========================================================================
+               This is the exact connection format we will use when linking up server.js:
+
+               fetch("/api/gas-prices/filter", {
+                   method: "POST",
+                   headers: { "Content-Type": "application/json" },
+                   body: JSON.stringify(filterPayload)
+               })
+               .then(response => response.json())
+               .then(filteredData => {
+                   // Clean old indicators and paint fresh filtered search results onto map canvas
+                   if (typeof clearMarkers === "function" && typeof markers !== "undefined") {
+                       clearMarkers();
+                       // (Map renderer call array loops sit here)
+                   }
+               })
+               .catch(err => console.error("Filter connection fault:", err));
+            */
+
+            // Retract the sliding overlay panel display smoothly once values pass through submission triggers
+            if (filterDisplayPanel) {
+                filterDisplayPanel.style.display = "none";
+            }
+        });
     }
 });
 </script>
