@@ -13,6 +13,7 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309" crossorigin="anonymous"></script>
+
         <style id="General">
 
             /* ----- General ----- */
@@ -28,8 +29,8 @@
 
             section {
                 z-index: 200;
-                margin: clamp(2px, 0.5dvw, 5px);
-                padding: clamp(2px, 0.5dvw, 5px);
+                margin: 2px 4px;
+                padding: 2px;
                 width: 100%;
                 border-radius: 4px;
                 box-shadow: 0 0 10px rgba(242, 242, 246, 0.2);
@@ -44,6 +45,19 @@
                 padding: 2px;
                 border-radius: 2px;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+            }
+
+            .row {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .column {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
             }
 
             /* For Specific Use-Case
@@ -72,42 +86,75 @@
 
             h3, h4 {
                 font-weight: 625;
-                font-size: clamp(0.625rem, 0.375rem + 1.06dvw, .9rem);
+                font-size: clamp(0.7rem, 0.375rem + 1.06dvw, .9rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
             }
 
-            button  {
+            button, .ButtonB  {
                 font-size: clamp(0.57rem, 0.5rem + .7dvw, 0.85rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
             }
             
             h5, p, 
-            span, details, a, strong, label,
-            input, textarea, select, option  {
-                font-size: clamp(0.55rem, 0.3rem + .7dvw, 0.75rem);
+            span, details, a, strong, 
+            input, textarea, option, label  {
+                font-size: clamp(0.55rem, 0.3rem + .68dvw, 0.72rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
             }
 
 
-            strong, label {
+            strong, .Bold2 {
                 font-weight: 600;
+            }
+
+            .Bold3 {
+                font-weight: 510; 
+
             }
 
 
             .lesserP, h6 {
-                font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.5rem);
+                font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.55rem);
+            }
+            
+            select {
+                font-size: clamp(0.425rem, 0.3rem + 0.675dvw, 0.525rem);
             }
 
             .fineP {
-                font-size: clamp(0.375rem, 0.25rem + 0.6dvw, 0.45rem);
+                font-size: clamp(0.4rem, 0.28em + 0.61dvw, 0.45rem);
+            }
+
+            .fineLogIn {
+                text-decoration: underline;
             }
 
 
             /* -- Special -- */
 
+            
+            /* WebKit browsers (Chrome, Safari) */
+            ::-webkit-scrollbar {
+                width: 5px; /* width for vertical scrollbar */
+            }
+
+            ::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1); /* light semi-transparent track color */
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background-color: #ccc; /* semi-transparent thumb color *//* roundness */
+                transition: background-color 0.3s ease;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(4, 86, 191, 0.9); /* darker on hover */
+            }
+
             /*Inputs(Textrea)/Selects*/
 
             input, select, textarea {
+                cursor: pointer;
                 outline: none;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             }
@@ -120,32 +167,45 @@
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             }
 
-            input {
-                padding-left: 2.5px;
-            }
-
-            textarea {
-                padding: 2px;
+            input, textarea {
+                border-radius: 2px;
             }
 
             select {
-                padding: 4px;
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
+                border-radius: 1px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                background: #fff;
             }
 
 
-            a{
-                text-decoration: none;
-                color: inherit;
+            input {
+                cursor: auto;
+                padding-left: 2.5px;
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
+            }
+
+            textarea {
+                cursor: auto;
+                padding: 2px;
+            }
+
+            ::placeholder {
+                color: #999;
+                font-style: italic;
             }
 
 
             .userInput {
                 width: 100%;
                 border-radius: 2px 0px 0px 2px;
-                min-height: 18px;
-                height: calc(17px + 0.35vw);
-                max-height: 20px;
             }
+
 
 
             /*Images*/
@@ -163,6 +223,20 @@
 
             /*Hr*/
 
+            .hiddenTextHrBox { 
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+            }
+
             hr {
                 width: 96%;
                 height: 1.5px;
@@ -178,7 +252,7 @@
 
             /* -- Buttons -- */
 
-            button {
+            button, .ButtonB {
                 cursor: pointer;
                 display: flex;
                 justify-content: center;
@@ -216,6 +290,14 @@
                 height: calc(17px + 0.35vw);
                 max-height: 20px;
                 width: auto;
+                padding: 0 5px;
+            }
+
+            .fullSmallButton {
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
+                width: 100%;
                 padding: 0 5px;
             }
 
@@ -317,10 +399,10 @@
             
             /*D(Color/Small)*/
             .IconD {
-                min-width: 16px;
+                min-width: 14px;
                 width: calc(12px + .6dvw);
                 max-width: 20px;
-                min-height: 16px;
+                min-height: 14px;
                 height: calc(12px + .6dvw);
                 max-height: 20px;
                 line-height: 16px;
@@ -338,7 +420,7 @@
 
             /*DisplayIcon(Transparent/Fine)*/
 
-            .displayIcons, .displayIcon {
+            .displayIcons, .displayIcon, .fineIcon {
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -350,6 +432,10 @@
             }
             
             .displayIcon {
+                font-size: clamp(0.5rem, 0.35rem + 0.8dvw, 0.65rem);
+            }
+
+            .fineIcon {
                 font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.55rem);
             }
 
@@ -379,7 +465,7 @@
             /*FA Types*/
 
 
-            .tabToggle, .cloudHelpSection {
+            .bodyTabToggle, .cloudHelpSection {
                 background: transparent;
                 border: none;
                 box-shadow: none;
@@ -387,7 +473,7 @@
                 padding: 0;
             }
                         
-            .tabToggle, .navArrow, .cloudHelpSection {
+            .bodyTabToggle, .navArrow, .cloudHelpSection {
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -397,6 +483,46 @@
                 cursor: grab;
             }
 
+            
+
+            /* Checkbox */
+
+            .checkbox {
+                min-width: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                width: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                max-width: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                min-height: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                height: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                max-height: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: transparent;
+                padding: 2px;
+                border-radius: 2px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+                margin: 0;
+                cursor: pointer;
+            }
+
+                /* Hide the actual HTML checkbox completely */
+            .custom-checkbox input {
+                display: none;
+            }
+
+                /* Hide the FontAwesome icon by default */
+            .custom-checkbox input + .checkbox i {
+                display: none;
+            }
+
+                /* AUTOMATICALLY show the icon when the checkbox is checked */
+            .custom-checkbox input:checked + .checkbox  i {
+                display: flex;
+            }
+
+            .fa-check {
+                margin: 0 0 -1px 0;
+            }
 
             
             /*searchIcon*/
@@ -416,24 +542,30 @@
             }
 
 
+            /* Page Numbers */
 
-            /*tab/contToggle*/
+            .pageNumbers {
+                margin: 5px;
+                gap: 5px;
+            }
+
+            /*bodyTab/contToggle*/
             
-            .tabToggle {
+            .bodyTabToggle {
                 flex-direction: column;
                 margin: 0;
                 gap: .2px;
             }
 
-            .tabToggle i {
+            .bodyTabToggle i {
                 font-size: clamp(0.65rem, 0.15rem + 1vw, 0.8rem);
             }
 
-            .tabToggle > :first-child {
+            .bodyTabToggle > :first-child {
                 margin-bottom: -5px;
             }
 
-            .tabToggle > :nth-child(2) {
+            .bodyTabToggle > :nth-child(2) {
                 margin-bottom: -2px;
             }
 
@@ -441,7 +573,7 @@
             .contSizeToggle {
                 margin: auto;
                 gap: 0px;
-                padding: 1px 0;
+                padding: 2px 0;
                 position: absolute; /* or fixed */
                 touch-action: none; /* REQUIRED: stops browser from scrolling/panning */
                 user-select: none;  /* stops text highlighting while dragging */
@@ -495,7 +627,7 @@
 
 
             .cloud {
-                z-index: 820;
+                z-index: 920;
                 opacity: 0;
                 transition: opacity .9s ease-in-out;
             }
@@ -534,7 +666,7 @@
 
 
             .cloudHelpSection {
-                z-index: 825;
+                z-index: 925;
                 top: calc(1.5rem + 1.5dvw);
                 right: calc(6.75rem + 6.75dvw);
             }
@@ -565,6 +697,7 @@
             }
 
         </style>
+
 
         <style id="Standard">
 
@@ -2085,7 +2218,7 @@
             </section>
 
             <div class="Tail">
-                <div class="adBox">
+                <div class="adBox" style="display: none;">
                     
                 </div>
             </div>
@@ -2159,6 +2292,7 @@
                                     </select>
                                 </div>
 
+
                                 <!-- Feature 3: Sorting Preference Hierarchy -->
                                 <div class="subNavRow2" style="width: 100%;">
                                     <span class="lesserP subNavItem">Primary Sort</span>
@@ -2168,6 +2302,23 @@
                                     </select>
                                 </div>
 
+                                
+                                <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Max Price Cap</span>
+                                    
+                                    <!-- Unified structural row holding the currency sticker anchor -->
+                                    <div style="display: flex; align-items: center;">
+                                        <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
+                                        <input type="number" 
+                                            step="0.01" 
+                                            min="0.00" 
+                                            class="lesserP" 
+                                            id="prefMaxPrice" 
+                                            placeholder="3.50" 
+                                            style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -2195,12 +2346,32 @@
                                     </select>
                                 </div>
 
-                                <!-- Accessibility 2: Text Sizing Magnifier -->
+                                <!-- Accessibility 4: Live UI Color Theme Switcher -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Color Theme</span>
+                                    <select class="lesserP subSmallSelect" id="prefColorTheme">
+                                        <option value="intLightNorm">Light Standard</option>
+                                        <option value="intLightNeon">Light Neon</option>
+                                        <option value="dark">Dark Standard</option>
+                                        <option value="darkNeon">Dark Neon</option>
+                                    </select>
+                                </div>
+
+                                <!-- Accessibility 3: Text Sizing Magnifier -->
                                 <div class="subNavRow2" style="width: 100%;">
                                     <span class="lesserP subNavItem">Marker Bubble Size</span>
                                     <select class="lesserP" id="prefTextSize" class="subSmallSelect">
                                         <option value="normal">Standard</option>
                                         <option value="large">Large Text</option>
+                                    </select>
+                                </div>
+
+                                <!-- NEW Accessibility 4: Marker Visual Contrast Contrast -->
+                                <div class="subNavRow2" style="width: 100%;">
+                                    <span class="lesserP subNavItem">Marker Contrast</span>
+                                    <select class="lesserP subSmallSelect" id="prefMarkerContrast">
+                                        <option value="normal">Standard</option>
+                                        <option value="high">High Opacity / Bold</option>
                                     </select>
                                 </div>
 
@@ -2287,7 +2458,7 @@
                     </div>
                     <button type="submit" class=" fullButton applyFiltersButton">Apply Filters</button>
 
-                    <div class="subNav-adAbox">
+                    <div class="subNav-adbox"  style="display: none;">
 
 
                         <!-- <script type="text/javascript">
@@ -2469,59 +2640,350 @@
                     '.exitFChat:hover': {background: 'linear-gradient(180deg, #0f5999 0%, #1160af 100%)'},
                     '.exitFChat:focus': {background: 'linear-gradient(180deg, #075baf 0%, #1160af 100%)'},
                 },
-                dark: {},
-                custom: {}
+
+                intLightNeon: {
+                    //General
+                    body: {background: `${white2}`, color: `${black2}`},
+                    section: {background: `${white1}`, border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 15px rgba(7, 91, 175, 0.06), inset 0 0 8px ${whiteBlue}`},
+                    'section:hover': {background: `${white1}`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 20px rgba(34, 116, 199, 0.18), inset 0 0 10px ${whiteBlueNeon}`},
+                    div: {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 2px 10px rgba(0, 0, 0, 0.02)`},
+                    
+                    //Text
+                    h1: {color: `${cobalt2}`, 'text-shadow': `1px 1px 8px rgba(7, 91, 175, 0.15)`},
+                    h2: {color: `${cobalt2}`, 'text-shadow': `1px 1px 6px rgba(7, 91, 175, 0.12)`},
+                    h3: {color: `${cobaltLight}`},
+                    h4: {color: `${cobaltLight}`},
+                    h5: {color: `${cobalt2}`},
+                    h6: {color: `${cobaltDark}`},
+                    
+                    //Special
+                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.2)`},
+                    button: {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt1} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.15)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 14px rgba(7, 91, 175, 0.3)`},
+                    'button:focus, button.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltLight} 100%)`},
+                    'select, textarea, input': {border: `1.2px solid ${whiteBlueNeon}`, background: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.15)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 10px rgba(7, 91, 175, 0.2)`},
+
+                    hr: {background: `linear-gradient(90deg, transparent 0%, ${cobaltLight} 50%, transparent 100%)`},
+                    '.shadow': {background: `${cobaltDark}`, opacity: '.12'},
+
+                    '::-webkit-scrollbar-track': {background: `${white3}`},
+                    '::-webkit-scrollbar-track:hover': {background: `${white2}`},
+                    '::-webkit-scrollbar-thumb': {background: `${whiteBlueNeon}`},
+                    '::-webkit-scrollbar-thumb:hover': {background: `${cobaltLight}`},
+                    
+                    //Icon
+                    '#flagReportReason': {background: `${whiteBlue}`},
+                    '.cloudHelpNav': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 10px rgba(7, 91, 175, 0.08)`},
+                    '.cloudHelpSection h5': {color: `${white1}`},
+
+                    '.IconA': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.2)`},
+                    '.IconA:focus, .IconC.active': {background: `${whiteBlue}`},
+
+                    '.IconB': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.15)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 12px rgba(7, 91, 175, 0.25)`},
+                    'IconB:focus, IconB.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltLight} 100%)`},
+
+                    '.IconC': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`},
+                    'IconC:focus, .IconC.active': {background: `${whiteBlue}`},
+
+                    '.IconD': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`},
+                    'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltLight} 100%)`},
+
+                    '.fa-gear': {color: `${cobaltLight}`},
+                    '.navArrow': {color: `${white1}`},
+                    
+                    //Parts
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlueNeon} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.15)`},
+
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
+                    '.headPopUpH2': {color: `${cobaltDark}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`, color: `${cobalt1}`, border: `1px solid ${cobaltLight}`},
+                    '.headPopUpH2:hover': {background: `${white1}`, color: `${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.1)`},
+
+                    '.navLinksBox': {opacity: '.95', background: `${white1}`, border: `1px solid ${whiteBlueNeon}`},
+                    '.navLinksBoxShadows': {'border-bottom': `1.5px solid ${whiteBlueNeon}`},
+                                        
+                    '.pollDisplayBody': {background: '#001120'},
+                    '.chatPage h4': {color: `${cobaltDark}`},
+                    '.chatSort:hover': {background: `linear-gradient(180deg, ${white1} 0%, ${whiteBlue} 100%)`},
+                    '.chatSort:focus': {background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`},
+                    '.chatSort.active': {border: `1.5px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`, color: `${cobaltDark}`},
+                    '.chatSort.active:hover': {background: `${white1}`, color: `${cobalt1}`},
+                    '.opinionGTBox': {'border-bottom': `1.5px solid ${whiteBlueNeon}`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1.5px solid ${whiteBlueNeon}`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1.5px solid ${whiteBlueNeon}`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1.5px solid ${whiteBlueNeon}`},
+                    '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobalt2} 0%, ${cobaltLight} 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 10px rgba(7, 91, 175, 0.2)`},
+                    '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`},
+                },
+                dark: {
+            
+                    //General
+                    body: {background: `${black1}`, color: `${white2}`},
+                    section: {background: `rgba(255, 255, 255, 0.03)`, border: `1px solid rgba(255, 255, 255, 0.05)`, 'box-shadow': `0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)`},
+                    'section:hover': {background: `rgba(255, 255, 255, 0.05)`, border: `1px solid rgba(255, 255, 255, 0.1)`, 'box-shadow': `0 14px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1)`},
+                    div: {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.00) 100%)`, border: `1px solid rgba(255, 255, 255, 0.03)`, 'box-shadow': `0 4px 12px rgba(0, 0, 0, 0.2)`},
+                    
+                    //Text
+                    h1: {color: `${white1}`},
+                    h2: {color: `${white2}`},
+                    h3: {color: `${white3}`},
+                    h4: {color: `${grey2}`},
+                    h5: {color: `${grey3}`},
+                    h6: {color: `${greyDark}`},
+                    
+                    //Special
+                    i: {color: `${white2}`},
+                    button: {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.1)`, 'box-shadow': `0 4px 10px rgba(0, 0, 0, 0.3)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, border: `1px solid rgba(255, 255, 255, 0.2)`},
+                    'button:focus, button.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
+                    'select, textarea, input': {border: `1px solid rgba(255, 255, 255, 0.1)`, background: `${black2}`, color: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1px solid rgba(255, 255, 255, 0.2)`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.05)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1px solid rgba(255, 255, 255, 0.3)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.1)`},
+
+                    hr: {background: `rgba(255, 255, 255, 0.1)`},
+                    '.shadow': {background: `${black1}`, opacity: '.4'},
+
+                    '::-webkit-scrollbar-track': {background: `${black2}`},
+                    '::-webkit-scrollbar-track:hover': {background: `${black1}`},
+                    '::-webkit-scrollbar-thumb': {background: `${black3}`},
+                    '::-webkit-scrollbar-thumb:hover': {background: `${greyDark}`},
+                    
+                    //Icon
+                    '#flagReportReason': {background: `rgba(255, 255, 255, 0.05)`},
+                    '.cloudHelpNav': {border: `1px solid rgba(255, 255, 255, 0.08)`, 'box-shadow': `0 10px 20px rgba(0,0,0,0.4)`},
+                    '.cloudHelpSection h5': {color: `${white1}`},
+
+                    '.IconA': {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)`, border: `1px solid rgba(255, 255, 255, 0.04)`, color: `${white2}`},
+                    '.IconA:hover, IconA.active:hover': {background: `rgba(255, 255, 255, 0.08)`, border: `1px solid rgba(255, 255, 255, 0.15)`},
+                    '.IconA:focus, .IconC.active': {background: `rgba(255, 255, 255, 0.05)`},
+
+                    '.IconB': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.1)`, 'box-shadow': `0 4px 10px rgba(0,0,0,0.3)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, border: `1px solid rgba(255, 255, 255, 0.2)`},
+                    'IconB:focus, IconB.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
+
+                    '.IconC': {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)`, border: `1px solid rgba(255, 255, 255, 0.04)`, color: `${grey1}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `rgba(255, 255, 255, 0.08)`, border: `1px solid rgba(255, 255, 255, 0.12)`},
+                    'IconC:focus, .IconC.active': {background: `rgba(255, 255, 255, 0.05)`},
+
+                    '.IconD': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.08)`},
+                    'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
+
+                    '.fa-gear': {color: `${grey2}`},
+                    '.navArrow': {color: `${white1}`},
+                    
+                    //Parts
+                    '.logoTitleContN': {background: `linear-gradient(178deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.00) 100%)`, border: `1px solid rgba(255, 255, 255, 0.08)`, 'box-shadow': `0 4px 15px rgba(0,0,0,0.4)`},
+
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `rgba(255, 255, 255, 0.04)`, border: `1px solid rgba(255, 255, 255, 0.06)`},
+                    '.headPopUpH2': {color: `${grey1}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.12)`},
+                    '.headPopUpH2:hover': {background: `rgba(255, 255, 255, 0.08)`, color: `${white1}`},
+
+                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.08)`},
+                    '.navLinksBoxShadows': {'border-bottom': `1px solid rgba(255, 255, 255, 0.08)`},
+                                        
+                    '.pollDisplayBody': {background: '#0d1117'},
+                    '.chatPage h4': {color: `${white1}`},
+                    '.chatSort:hover': {background: `rgba(255, 255, 255, 0.04)`},
+                    '.chatSort:focus': {background: `rgba(255, 255, 255, 0.06)`},
+                    '.chatSort.active': {border: `1px solid rgba(255, 255, 255, 0.15)`, background: `rgba(255, 255, 255, 0.08)`, color: `${white1}`},
+                    '.chatSort.active:hover': {background: `rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox': {'border-bottom': `1px solid rgba(255, 255, 255, 0.06)`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1px solid rgba(255, 255, 255, 0.06)`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1px solid rgba(255, 255, 255, 0.06)`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1px solid rgba(255, 255, 255, 0.06)`},
+                    '.exitFChat': {border: `1px solid rgba(255, 255, 255, 0.1)`, background: `linear-gradient(180deg, #222 0%, #111 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, #333 0%, #1a1a1a 100%)`},
+                    '.exitFChat:focus': {background: `linear-gradient(180deg, #111 0%, #222 100%)`},
+
+                    '.subNav, .filterDisplay': {background: `${black1}`, color: `${white2}`},
+                },
+                darkNeon: {
+                
+                    //General
+                    body: {background: `${black2}`, color: `${white2}`},
+                    section: {background: `rgba(0, 0, 0, 0.6)`, border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 20px rgba(0, 96, 181, 0.2), inset 0 0 10px rgba(0, 96, 181, 0.1)`},
+                    'section:hover': {background: `rgba(0, 0, 0, 0.7)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 28px rgba(34, 116, 199, 0.45), inset 0 0 12px rgba(34, 116, 199, 0.15)`},
+                    div: {background: `linear-gradient(178deg, rgba(18, 20, 24, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)`, border: `1px solid ${cobaltDark}`, 'box-shadow': `0 4px 15px rgba(0, 0, 0, 0.4)`},
+                    
+                    //Text
+                    h1: {color: `${white1}`, 'text-shadow': `0 0 10px rgba(0, 96, 181, 0.5)`},
+                    h2: {color: `${white2}`, 'text-shadow': `0 0 8px rgba(0, 96, 181, 0.4)`},
+                    h3: {color: `${whiteBlueNeon}`, 'text-shadow': `0 0 6px rgba(34, 116, 199, 0.3)`},
+                    h4: {color: `${whiteBlue}`},
+                    h5: {color: `${whiteBlueNeon}`},
+                    h6: {color: `${grey3}`},
+                    
+                    //Special
+                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.4)`},
+                    button: {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 0 10px rgba(0, 96, 181, 0.3)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 18px rgba(34, 116, 199, 0.6)`},
+                    'button:focus, button.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobalt1} 100%)`},
+                    'select, textarea, input': {border: `1.2px solid ${cobalt2}`, background: `${black1}`, color: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.3)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 12px rgba(204, 221, 255, 0.4)`},
+
+                    hr: {background: `linear-gradient(90deg, transparent 0%, ${cobaltLight} 50%, transparent 100%)`},
+                    '.shadow': {background: `${black1}`, opacity: '.6'},
+
+                    '::-webkit-scrollbar-track': {background: `${black2}`},
+                    '::-webkit-scrollbar-track:hover': {background: `${black1}`},
+                    '::-webkit-scrollbar-thumb': {background: `${cobaltDark}`},
+                    '::-webkit-scrollbar-thumb:hover': {background: `${cobaltLight}`},
+                    
+                    //Icon
+                    '#flagReportReason': {background: `${black3}`},
+                    '.cloudHelpNav': {border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 15px rgba(0, 96, 181, 0.3)`},
+                    '.cloudHelpSection h5': {color: `${white1}`},
+
+                    '.IconA': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid ${cobaltDark}`, color: `${white2}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.45)`, color: `${white1}`},
+                    '.IconA:focus, .IconC.active': {background: `${cobaltDark}`},
+
+                    '.IconB': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 0 10px rgba(0, 96, 181, 0.3)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 16px rgba(34, 116, 199, 0.5)`},
+                    'IconB:focus, IconB.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobalt2} 100%)`},
+
+                    '.IconC': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid ${cobaltDark}`, color: `${grey2}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.35)`, color: `${white2}`},
+                    'IconC:focus, .IconC.active': {background: `${cobaltDark}`},
+
+                    '.IconD': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobaltDark}`},
+                    'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobalt2} 100%)`},
+
+                    '.fa-gear': {color: `${whiteBlueNeon}`},
+                    '.navArrow': {color: `${white1}`},
+                    
+                    //Parts
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${black1} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 14px rgba(34, 116, 199, 0.4)`},
+
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `${black2}`, border: `1px solid ${cobaltDark}`},
+                    '.headPopUpH2': {color: `${whiteBlue}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobaltLight}`},
+                    '.headPopUpH2:hover': {background: `${cobalt1}`, color: `${white1}`, 'box-shadow': `0 0 10px rgba(0, 96, 181, 0.4)`},
+
+                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid ${cobaltDark}`},
+                    '.navLinksBoxShadows': {'border-bottom': `1.5px solid ${cobaltDark}`},
+                                        
+                    '.pollDisplayBody': {background: '#000814'},
+                    '.chatPage h4': {color: `${white1}`},
+                    '.chatSort:hover': {background: `${black3}`},
+                    '.chatSort:focus': {background: `${cobaltDark}`},
+                    '.chatSort.active': {border: `1.5px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.chatSort.active:hover': {background: `${black2}`},
+                    '.opinionGTBox': {'border-bottom': `1px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1px solid ${cobaltDark}`},
+                    '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.5)`},
+                    '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`},
+                },
+
             };
 
 
-            //Declarations
+            /* ==========================================================================
+            DYNAMIC COLOR SCHEME SWITCH ENGINE (CINEMATIC TRANSITION FIXED)
+            ========================================================================= */
 
+            // Declarations
             let cssString = '';
+            const PALETTE_PREF_KEY = 'gasWatch_prefColorTheme';
 
-            const lightPalette = colorPalettes.intLightNorm;
-            const darkPalette = colorPalettes.dark;
-            const customPalette = colorPalettes.custom;
-
-
-            function customizeColors(scheme) {
-
-
-                //loop through elements and set CSS Structure
-                for (const [element, styles] of Object.entries(scheme)) {
-                    
-                    cssString += `${element} { `; //"body { '
-
-                    //loop through styles(properties) and values
-                    for (const [property, value] of Object.entries(styles)) {
-                        cssString += `${property}: ${value};`; //color: black; ...
-                    }
-
-                    cssString += '} '; //'} "... "section {...}"
-
-                }
-
-
-                //Inject CSS into the #Dynamic Style Element
-                const styleTag = document.getElementById('Dynamic');
-                styleTag.textContent += cssString;
-
-
+            /**
+             * 🎨 customizeColors
+             * Compiles JS token objects into raw CSS code and handles the cover transition animation
+             */
+            function customizeColors(scheme, isInitialLoad = false) {
                 const p2 = document.getElementById('loadScreen1');
                 const p3 = document.getElementById('plane3');
 
-                setTimeout(() => {
+                // HELPER FUNCTION: Performs the actual CSS compilation and injection
+                function executeStyleSwap() {
+                    cssString = ''; // Reset compiler string to prevent rules stacking up
+                    const activeScheme = (scheme && Object.keys(scheme).length > 0) ? scheme : colorPalettes.intLightNorm;
 
-                    p2.style.display = 'none';
+                    for (const [element, styles] of Object.entries(activeScheme)) {
+                        cssString += `${element} { `; 
+                        for (const [property, value] of Object.entries(styles)) {
+                            cssString += `${property}: ${value}; `; 
+                        }
+                        cssString += '} '; 
+                    }
+
+                    const styleTag = document.getElementById('Dynamic');
+                    if (styleTag) styleTag.textContent = cssString; // Paint everything instantly under the cover screen
+                }
+
+                // --- EXECUTION MATRIX BASED ON LIFECYCLE ---
+                if (isInitialLoad) {
+                    // State A: Page Boot. The curtain (p2) is already visible. Just swap styles and lift it.
+                    executeStyleSwap();
                     
                     setTimeout(() => {
-                        p3.style.opacity = '1';
-                    }, 150);
+                        if (p2) p2.style.display = 'none';
+                        setTimeout(() => {
+                            if (p3) p3.style.opacity = '1';
+                        }, 150);
+                    }, 650);
 
-                }, 650);
+                } else {
+                    // State B: Active Theme Shift. Bring down the curtain, swap styles, and lift it back up.
+                    if (p3) p3.style.opacity = '0'; // Immediately hide main site content cleanly
+
+                    setTimeout(() => {
+                        if (p2) p2.style.display = 'flex'; // Bring back the loading screen assets
+                        
+                        // Wait for loading curtain to settle before swapping styles behind it
+                        setTimeout(() => {
+                            executeStyleSwap();
+                            
+                            // Lift the curtain back up smoothly over the new theme layout
+                            setTimeout(() => {
+                                if (p2) p2.style.display = 'none';
+                                setTimeout(() => {
+                                    if (p3) p3.style.opacity = '1';
+                                }, 150);
+                            }, 650);
+                        }, 100);
+                    }, 300); // Matches your universal 0.3s ease transition time
+                }
             }
 
-            window.addEventListener('DOMContentLoaded', customizeColors(lightPalette));
-            
+            /**
+             * ⚡ initializeAndBindColorThemes
+             * Handles boot configuration values and registers active change event frameworks
+             */
+            document.addEventListener("DOMContentLoaded", function() {
+                const themeDropdown = document.getElementById('prefColorTheme');
+                const savedThemeSelection = localStorage.getItem(PALETTE_PREF_KEY) || 'intLightNorm';
+                
+                if (themeDropdown) themeDropdown.value = savedThemeSelection;
+
+                // Trigger initial app boot sequence (Marked explicitly true for initial load state)
+                const targetPaletteProfile = colorPalettes[savedThemeSelection];
+                customizeColors(targetPaletteProfile, true);
+
+                // Bind change handler for interactive mid-session transitions
+                themeDropdown?.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    localStorage.setItem(PALETTE_PREF_KEY, selectedValue);
+                    
+                    const freshPaletteProfile = colorPalettes[selectedValue];
+                    customizeColors(freshPaletteProfile, false); // Triggers full cinematic cover cycle
+                });
+            });
+
         </script>
 
         <script id="generalElements_script">
@@ -3425,191 +3887,191 @@ async function applyFilters(event) {
             }
 
 
-async function getPricesNow(searchQuery) {
-    if (isSearching) return;
-    isSearching = true;
+            async function getPricesNow(searchQuery) {
+                if (isSearching) return;
+                isSearching = true;
 
-    const BACKEND_URL = "/api/gas-prices";
-    clearMarkers();
+                const BACKEND_URL = "/api/gas-prices";
+                clearMarkers();
 
-    try {
-        const response = await fetchWithTimeout(BACKEND_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ search: searchQuery })
-        });
+                try {
+                    const response = await fetchWithTimeout(BACKEND_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ search: searchQuery })
+                    });
 
-        const datasetItems = await response.json();
-        if (!datasetItems || datasetItems.length === 0) return;
+                    const datasetItems = await response.json();
+                    if (!datasetItems || datasetItems.length === 0) return;
 
-        // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
-        const geocodePromises = datasetItems.map(async (station, index) => {
-            const name = station.name || "Gas Station";
-            const address = station.address_line1 || "Unknown Address";
-            const locality = station.address_locality || "";
-            const region = station.address_region || "";
-            
-            const cash = parseFloat(station.price_cash || 0);
-            const credit = parseFloat(station.price_credit || 0);
-            const finalPrice = cash > 0 ? cash : credit;
-            const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
+                    // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
+                    const geocodePromises = datasetItems.map(async (station, index) => {
+                        const name = station.name || "Gas Station";
+                        const address = station.address_line1 || "Unknown Address";
+                        const locality = station.address_locality || "";
+                        const region = station.address_region || "";
+                        
+                        const cash = parseFloat(station.price_cash || 0);
+                        const credit = parseFloat(station.price_credit || 0);
+                        const finalPrice = cash > 0 ? cash : credit;
+                        const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
 
-            const fullTextAddress = `${address}, ${locality}, ${region}`;
+                        const fullTextAddress = `${address}, ${locality}, ${region}`;
 
-            try {
-                // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
-                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
+                        try {
+                            // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
+                            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
 
-                const geoResponse = await fetch(geocodeUrl, {
-                    headers: { "User-Agent": "GasWatchApp" }
-                });
-                const geoData = await geoResponse.json();
+                            const geoResponse = await fetch(geocodeUrl, {
+                                headers: { "User-Agent": "GasWatchApp" }
+                            });
+                            const geoData = await geoResponse.json();
 
-                // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
-                if (geoData && geoData.length > 0) {
-                    const lat = parseFloat(geoData[0].lat);
-                    const lon = parseFloat(geoData[0].lon);
+                            // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
+                            if (geoData && geoData.length > 0) {
+                                const lat = parseFloat(geoData[0].lat);
+                                const lon = parseFloat(geoData[0].lon);
 
-                    return { lat, lon, name, address, displayPrice, index };
+                                return { lat, lon, name, address, displayPrice, index };
+                            }
+                        } catch (geoError) {
+                            console.error(`Could not locate address: ${fullTextAddress}`, geoError);
+                        }
+                        return null; // Return null if the lookup completely failed
+                    });
+
+                    // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
+                    const resolvedStations = await Promise.all(geocodePromises);
+
+                    let firstValidCoords = null;
+
+                            // 3. Drop all working markers instantly onto your map instance
+                    resolvedStations.forEach(station => {
+                        if (!station) return; // Skip failed lookups
+
+                        // Track coordinates of the cheapest station
+                        if (station.index === 0) {
+                            firstValidCoords = [station.lat, station.lon];
+                        }
+
+                        // Injects your CSS pill style dynamically into Leaflet
+                        const priceIcon = L.divIcon({
+                            className: 'gas-price-marker', 
+                            html: station.displayPrice,     
+                            iconSize: null,                
+                            iconAnchor: null            
+                        });
+
+                        // 🕒 EXTRACT & CLEAN THE TIME FIELD NATIVELY
+                        // Grabs the raw data or defaults to a safe string if unavailable
+                        const rawTime = station.rawStationData?.postedTime || "Recently"; 
+                        let displayTime = "Date unknown";
+
+                        if (rawTime && rawTime !== "Recently") {
+                            try {
+                                // Turn it into a beautiful, localized text string (e.g. "June 12, 4:44 PM")
+                                const dateObj = new Date(rawTime);
+                                displayTime = dateObj.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                            } catch(e) {
+                                displayTime = rawTime; // Fallback to raw string if formatting slips
+                            }
+                        } else {
+                            displayTime = "Updated recently";
+                        }
+
+                        // Creates the marker using your custom green price pill style
+                        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
+                        
+                        // ✅ INJECTED: Added a clean, muted time badge at the very bottom of the click popup
+                        marker.bindPopup(`
+                            <b>${station.name}</b><br>
+                            ${station.address}<br>
+                            <b>${station.displayPrice}</b><br>
+                            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+                                🕒 ${displayTime}
+                            </div>
+                        `);
+                        markers.push(marker);
+                    });
+
+
+                    // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
+                    if (firstValidCoords) {
+                        map.setView(firstValidCoords, 13);
+                    }
+
+                } catch (error) {
+                    console.error("Fetch failed:", error);
+                } finally {
+                    isSearching = false;
                 }
-            } catch (geoError) {
-                console.error(`Could not locate address: ${fullTextAddress}`, geoError);
             }
-            return null; // Return null if the lookup completely failed
-        });
+            /* ==========================================================================
+            SEARCH HANDLER (Updated: Complete Geocoding Eradication)
+            ========================================================================== */
 
-        // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
-        const resolvedStations = await Promise.all(geocodePromises);
+            function searchLocation() {
+                if (isSearching) return;
 
-        let firstValidCoords = null;
+                const searchBar = document.getElementById('searchBar');
+                if (!searchBar) return;
 
-                // 3. Drop all working markers instantly onto your map instance
-        resolvedStations.forEach(station => {
-            if (!station) return; // Skip failed lookups
+                const input = searchBar.value.trim();
+                if (!input) return;
 
-            // Track coordinates of the cheapest station
-            if (station.index === 0) {
-                firstValidCoords = [station.lat, station.lon];
+                // Dismiss mobile keyboard
+                searchBar.blur();
+
+                // 🚀 DIRECT HAND-OFF: Skip all frontend lookup APIs entirely!
+                // We send the raw text query directly down the single pipeline to the backend.
+                getPricesNow(input, null, null);
             }
 
-            // Injects your CSS pill style dynamically into Leaflet
-            const priceIcon = L.divIcon({
-                className: 'gas-price-marker', 
-                html: station.displayPrice,     
-                iconSize: null,                
-                iconAnchor: null            
+            /* ==========================================================================
+            DOM READY
+            ========================================================================== */
+
+            document.addEventListener("DOMContentLoaded", function() {
+
+                // 🎯 Uses your exact HTML ID hooks for ultra-precise element matching
+                const bar = document.getElementById("searchBar");
+                const icon = document.getElementById("extSearchIcon");
+
+                // iOS & Mobile Safe Enter Key Handling
+                if (bar) {
+                    bar.addEventListener("keydown", function(event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            bar.blur(); // 📱 Pulls down mobile keyboards so users can instantly see the Leaflet map!
+                            searchLocation();
+                        }
+                    });
+                }
+
+                // Universal Mobile/Desktop Click Handler (Completely safe from scroll-drag glitches)
+                if (icon) {
+                    icon.addEventListener("click", function(event) {
+                        event.preventDefault();
+                        if (bar) bar.blur(); // 📱 Retracts keyboard if they choose to tap the glass icon instead
+                        searchLocation();
+                    });
+                }
+
+                // ⚡ INSTANT ENGINE BOOT: Renders your '#map' layout container seamlessly
+                requestAnimationFrame(() => {
+                    map.invalidateSize(true);
+                    initApp(); 
+                });
             });
 
-            // 🕒 EXTRACT & CLEAN THE TIME FIELD NATIVELY
-            // Grabs the raw data or defaults to a safe string if unavailable
-            const rawTime = station.rawStationData?.postedTime || "Recently"; 
-            let displayTime = "Date unknown";
-
-            if (rawTime && rawTime !== "Recently") {
-                try {
-                    // Turn it into a beautiful, localized text string (e.g. "June 12, 4:44 PM")
-                    const dateObj = new Date(rawTime);
-                    displayTime = dateObj.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                } catch(e) {
-                    displayTime = rawTime; // Fallback to raw string if formatting slips
-                }
-            } else {
-                displayTime = "Updated recently";
-            }
-
-            // Creates the marker using your custom green price pill style
-            const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
-            
-            // ✅ INJECTED: Added a clean, muted time badge at the very bottom of the click popup
-            marker.bindPopup(`
-                <b>${station.name}</b><br>
-                ${station.address}<br>
-                <b>${station.displayPrice}</b><br>
-                <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
-                    🕒 ${displayTime}
-                </div>
-            `);
-            markers.push(marker);
-        });
-
-
-        // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
-        if (firstValidCoords) {
-            map.setView(firstValidCoords, 13);
-        }
-
-    } catch (error) {
-        console.error("Fetch failed:", error);
-    } finally {
-        isSearching = false;
-    }
-}
-/* ==========================================================================
-   SEARCH HANDLER (Updated: Complete Geocoding Eradication)
-========================================================================== */
-
-function searchLocation() {
-    if (isSearching) return;
-
-    const searchBar = document.getElementById('searchBar');
-    if (!searchBar) return;
-
-    const input = searchBar.value.trim();
-    if (!input) return;
-
-    // Dismiss mobile keyboard
-    searchBar.blur();
-
-    // 🚀 DIRECT HAND-OFF: Skip all frontend lookup APIs entirely!
-    // We send the raw text query directly down the single pipeline to the backend.
-    getPricesNow(input, null, null);
-}
-
-/* ==========================================================================
-   DOM READY
-========================================================================== */
-
-document.addEventListener("DOMContentLoaded", function() {
-
-    // 🎯 Uses your exact HTML ID hooks for ultra-precise element matching
-    const bar = document.getElementById("searchBar");
-    const icon = document.getElementById("extSearchIcon");
-
-    // iOS & Mobile Safe Enter Key Handling
-    if (bar) {
-        bar.addEventListener("keydown", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                bar.blur(); // 📱 Pulls down mobile keyboards so users can instantly see the Leaflet map!
-                searchLocation();
-            }
-        });
-    }
-
-    // Universal Mobile/Desktop Click Handler (Completely safe from scroll-drag glitches)
-    if (icon) {
-        icon.addEventListener("click", function(event) {
-            event.preventDefault();
-            if (bar) bar.blur(); // 📱 Retracts keyboard if they choose to tap the glass icon instead
-            searchLocation();
-        });
-    }
-
-    // ⚡ INSTANT ENGINE BOOT: Renders your '#map' layout container seamlessly
-    requestAnimationFrame(() => {
-        map.invalidateSize(true);
-        initApp(); 
-    });
-});
-
-/* ==========================================================================
-   FILTER FORM SUBMIT
-========================================================================== */
+            /* ==========================================================================
+            FILTER FORM SUBMIT
+            ========================================================================== */
 
 
 
@@ -3626,9 +4088,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const PREF_KEYS = {
         fuel: 'gasWatch_prefFuel',
         radius: 'gasWatch_prefRadius',
+        maxPrice: 'gasWatch_prefMaxPrice',
         sort: 'gasWatch_prefSort',
         skin: 'gasWatch_mapTheme', 
-        text: 'gasWatch_prefText'
+        text: 'gasWatch_prefText',
+        contrast: 'gasWatch_prefMarkerContrast'
     };
 
 // --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX (JAWG PRESET VARIATION) ---
@@ -3672,6 +4136,15 @@ document.addEventListener("DOMContentLoaded", function() {
         if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
         if (mainRadiusValue) mainRadiusValue.value = savedRadius;
 
+        const savedMaxPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
+        const maxPriceInput = document.getElementById('prefMaxPrice');
+        if (maxPriceInput) maxPriceInput.value = savedMaxPrice;
+
+        // Sync it straight into your primary filter panel input field if it exists
+        const mainPriceFilter = document.getElementById('priceValue');
+        if (mainPriceFilter) mainPriceFilter.value = savedMaxPrice;
+
+
         // C. Load List Sort Ordering Metrics
         const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
         const sortSelect = document.getElementById('prefDefaultSort');
@@ -3682,6 +4155,13 @@ document.addEventListener("DOMContentLoaded", function() {
         const skinSelect = document.getElementById('prefMapSkin'); 
         if (skinSelect) skinSelect.value = savedSkin;
         
+        // Load Marker Contrast Preference
+        const savedContrast = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
+        const contrastSelect = document.getElementById('prefMarkerContrast');
+        if (contrastSelect) contrastSelect.value = savedContrast;
+        applyMarkerContrast(savedContrast);
+
+
         // Let the primary map script boot natively first, then modify tile layouts if necessary
         requestAnimationFrame(() => {
             if (savedSkin !== 'google') {
@@ -3715,6 +4195,19 @@ document.addEventListener("DOMContentLoaded", function() {
         if (mainRadiusValue) mainRadiusValue.value = this.value;
         triggerMapDataRefresh();
     });
+
+    document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
+        const freshValue = this.value.trim();
+        localStorage.setItem(PREF_KEYS.maxPrice, freshValue);
+        
+        // Sync to the primary sidebar filter form variable array natively
+        const mainPriceFilter = document.getElementById('priceValue');
+        if (mainPriceFilter) mainPriceFilter.value = freshValue;
+        
+        // Trigger immediate map repaint frames as they edit the threshold
+        triggerMapDataRefresh();
+    });
+
 
     // Sorting Logic Changes
     document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
@@ -3799,6 +4292,29 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    function applyMarkerContrast(mode) {
+        const contrastStyleId = 'dynamic-marker-contrast-override';
+        let styleEl = document.getElementById(contrastStyleId);
+        
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = contrastStyleId;
+            document.head.appendChild(styleEl);
+        }
+        
+        if (mode === 'high') {
+            styleEl.innerHTML = `
+                .gas-price-marker { 
+                    box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
+                    font-weight: 800 !important;
+                    border: 2px solid #000 !important; /* Harsh black contrast border */
+                }
+            `;
+        } else {
+            styleEl.innerHTML = ''; // Restores your pristine emerald glow configuration layout
+        }
+    }
+
     /**
      * ⚡ triggerMapDataRefresh
      * Safety valve ensuring map displays adapt instantly to sorting choices
@@ -3810,6 +4326,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
+
 
     </body>
 </html>
