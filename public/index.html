@@ -609,7 +609,8 @@
                 justify-content: space-between;
                 align-items: center;
                 bottom: 0;
-                width: 100%;
+                left: 1%;
+                width: 98%;
             }
 
             .adBox, .subNav-adAbox {
@@ -2003,25 +2004,37 @@
                         <!-- Map will be dynamically populated in script -->
                     </div>
                 </div>
-                
-                <div class="Tail">
-                    <div class="adBox">
-                        <!-- <script type="text/javascript">
-                            // Wrap in an IIFE block or use window properties to keep it completely isolated
-                            window.atOptions_320_50 = {
-                                'key': 'ad34b33161875fb9af2021d9c778655b',
-                                'format': 'iframe',
-                                'height': 50,
-                                'width': 320,
-                                'params': {}
-                            };
-                            // Point the global reference to this specific instance before the invocation script runs
-                            var atOptions = window.atOptions_320_50;
-                        </script>
-                        <script src="https://www.highperformanceformat.com/ad34b33161875fb9af2021d9c778655b/invoke.js"></script> -->
-                    </div>
-                </div>
+            
             </section>
+
+            <div class="Tail">
+                <div class="adBox">
+                    <iframe 
+                        srcdoc="
+                            <html>
+                            <head>
+                                <style>body { margin: 0; padding: 0; overflow: hidden; }</style>
+                            </head>
+                            <body>
+                                <script>
+                                    window.atOptions = {
+                                        'key': 'ad34b33161875fb9af2021d9c778655b',
+                                        'format': 'iframe',
+                                        'height': 50,
+                                        'width': 320,
+                                        'params': {}
+                                    };
+                                </script>
+                                <script src='https://www.highperformanceformat.com/ad34b33161875fb9af2021d9c778655b/invoke.js'></script>
+                            </body>
+                            </html>"
+                        sandbox="allow-scripts allow-forms"
+                        width="320" 
+                        height="50" 
+                        style="border:none; overflow:hidden;">
+                    </iframe>
+                </div>
+            </div>
 
             <!-- Extended -->
 
