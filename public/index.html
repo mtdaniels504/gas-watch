@@ -7,15 +7,12 @@
 
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            
-        <meta name="google-adsense-account" content="ca-pub-2241743795999309">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
-            crossorigin="anonymous"></script>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309" crossorigin="anonymous"></script>
 
         <style id="General">
 
@@ -708,7 +705,7 @@
 
             /* -- General Page -- */
 
-            .container {
+            .extContainer {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -1903,7 +1900,7 @@
             /* ----- Ext Section ----- */
 
             #Extended {
-                z-index: 800;
+                z-index: 975;
                 position: fixed;
                 min-width: calc(100% - 4px);
                 width: 99.5dvw;
@@ -1929,7 +1926,6 @@
                 padding: 0;
             }
 
-
             /*extNavSearch*/       
 
             .extHeadPopUp {
@@ -1950,6 +1946,16 @@
                 justify-content: flex-start;
                 align-items: center;
                 width: 95%;
+            }
+
+            .extPageContent {
+                flex-grow: 1;
+                justify-content: flex-start;
+                width: 100%;
+                height: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+                gap: 2px;
             }
 
             #extPageTail {
@@ -2204,7 +2210,9 @@
                 <!-- NavIcons (left(A)) -->
                 <div class="IconAs">
                     <div class="IconA">
-                        <i class="fa-solid fa-sort"></i>
+                        <i class="nav-trigger fa-solid fa-earth-africa"
+                            data-sub="Extended" data-section="plane2"
+                        ></i>
                     </div>
                     <div class="IconA">
                         <i class="fa-solid fa-filter" data-target="filterDisplay"></i>
@@ -2229,10 +2237,10 @@
                 <div class="adBox">
                     <!-- Horizontal Body -->
                     <ins class="adsbygoogle"
-                        style="display:block"
+                        style="display:block;"
                         data-ad-client="ca-pub-2241743795999309"
                         data-ad-slot="5685627432"
-                        data-ad-format="auto"
+                        data-ad-format="horizontal"
                         data-full-width-responsive="true"></ins>
                     <script>
                         (adsbygoogle = window.adsbygoogle || []).push({});
@@ -2241,6 +2249,334 @@
             </div>
 
             <!-- Extended -->
+
+            <section id="Extended" style="display: none;">
+                <div class="extContainer">
+
+                    <!-- Extended Nav -->
+                    
+                    <div class="Nav part" id="extNav">
+                        <!-- Ext Logo -->
+                        <div class="logoTitleCont logoTitleContN">
+                            <div class="logoTitleBox">
+                                <img class="logoTitle" src="TWMM_LogoTitle.png">
+                            </div>
+                        </div>
+                        <div class="navExitCont">
+                        <!-- Ext Nav Links -->
+                        <div class="navLinksBox">
+                            <div class="navLinks">
+                                <button class="navLink">Map</button>
+                                <div class="navLinksShadows">
+                                    <hr class="vertHr shadow navLinksHr">
+                                </div>
+                                <button class="navLink">World</button>
+                                <div class="navLinksShadows">
+                                    <hr class="vertHr shadow navLinksHr">
+                                </div>
+                                <button class="navLink">Watch</button>
+                                <div class="navLinksShadows">
+                                    <hr class="vertHr shadow navLinksHr">
+                                </div>
+                                <button class="navLink">Help</button>
+                            </div>
+                            <div class="navLinksBoxShadows">
+                            <hr class="navLinksBoxShadow shadow">
+                            <hr class="navLinksBoxShadow shadow">
+                            <hr class="navLinksBoxShadow shadow">
+                            <hr class="navLinksBoxShadow shadow">
+                            </div>
+                        </div>
+                        <!-- Ext Exit -->
+                        <i class="exitButton IconD fa-solid fa-xmark" data-cont="Extended"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Extended Head -->
+
+                    <div class="Head part">
+                        <!-- Ext Head Nav -->
+                        <div class="headNav part">
+
+                            <!-- NavIcons (left(A)) -->
+                            <div class="IconAs navIcons">
+                                <i class="nav-trigger IconA fa-solid fa-bars"
+                                    data-sub="extSubNav" data-section="Extended"
+                                ></i>
+
+                                <!--extSubNav(Head)-->
+                                <div class="subNav" id="extSubNav" style="display: none;">
+
+                                    <!--subNavHome-->
+                                    <div class="subNavRow">
+                                        <span class="subNavItem">Home</span>
+                                        <i class="subNavButton subHomeButton fa-solid fa-home"></i>
+                                    </div>
+
+                                    <!--subNavFriends-->
+                                    <div class="subNavRow" data-target="#extSubNav-friends" data-slug="#extSubMore-friends">
+                                        <span class="subNavItem">Friends</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-friends"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-friends" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Find Friends</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Follows</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!--subNavHelp-->
+                                    <div class="subNavRow" data-target="#extSubNav-help" data-slug="#extSubMore-help">
+                                        <span class="subNavItem">Help</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-help"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-help" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">FAQs</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>         
+                                    
+                                    <!--subNavSettings-->
+                                    <div class="subNavRow" data-target="#extSubNav-settings" data-slug="#extSubMore-settings">
+                                        <span class="subNavItem">Settings</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-settings"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-settings" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Accessibility</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Preferences</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!--subNavAccount-->
+                                    <div class="subNavRow" data-target="#extSubNav-account" data-slug="#extSubMore-account">
+                                        <span class="subNavItem">Account</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-account"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-account" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">My Account</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Create Account</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Sign In</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- extTitle -->
+                            <div class="sectionHead extSectionHead">
+                                <h2 class="sectionHeadH2" id="extSectionHeadH2" data-section="Extended">Extended Page</h2>
+                            </div>
+
+                            <!-- extSearchBar -->
+                            <div class="search">
+                                <input class="userInput" id="extSearchBar" placeholder="Search Extended Section Here!"
+                                    data-function="extSearchFunction" data-self="extSearchBar" data-searchListener="true"
+                                >
+                                <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
+                            </div>
+
+                            <!-- extNavIcons (right) -->
+                            <div class="IconAs" id="extNavSI" style="display: none;">
+                                <div class="IconA">
+                                    <i class="fa-solid fa-filter" data-target="filterDisplay"></i>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="part navTabs" id="extNavTabs" style="display: none;">
+                            <button class="navTab extNavTab" 
+                                data-section="Extended" data-target="extPage-member"
+                                data-h2="extSectionHeadH2" data-h="My Account">
+                                Member
+                            </button>
+                            <hr class="vertHr shadow">
+                            <button class="navTab extNavTab active" 
+                                data-section="Extended" data-target="extPage-full"
+                                data-h2="extSectionHeadH2" data-h="Extended Page">
+                                Full
+                            </button>
+                            <hr class="vertHr shadow">
+                            <button class="navTab extNavTab" id="extNavTab-search" 
+                                data-section="Extended" data-target="extPage-search"
+                                data-h2="extSectionHeadH2" data-h="Search Results">
+                                Search
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- Extended Body -->
+                    <div class="Body part" id="extBody">
+                        <div class="page" id="extPage-full" data-slug="Extended">
+                            <!-- ==========================================================================
+                                EXTENDED MACRO-DATA HUB (AAA FUEL DASHBOARD CHALLENGER)
+                                ========================================================================== -->
+                            <div class="column extPageContent">
+                                
+                                <!-- Hero Block: Top-Line National Averages -->
+                                <section class="part" style="width: 100%; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+                                    <div class="row" style="justify-content: space-between; width: 100%; background: transparent; border: none; box-shadow: none;">
+                                        <h2>Fuel Market Intelligence</h2>
+                                        <span class="fineP Bold2" style="opacity: 0.6;">⚡ Live Feed</span>
+                                    </div>
+                                    <hr>
+                                    <!-- Fluid Data Grid Matrix -->
+                                    <div class="row" style="width: 100%; justify-content: space-evenly; align-items: space-between; gap: 6px; margin: 0 auto; margin-bottom: 4px; background: transparent; border: none; box-shadow: none;">
+                                        <div class="column" style="flex: 1; padding: 6px; text-align: center;">
+                                            <span class="fineP Bold3">Regular</span>
+                                            <h1 style="margin: 2px 0;">$3.95</h1>
+                                            <span class="fineP" style="color: #ef4444; font-weight: 600;">▲ +0.02</span>
+                                        </div>
+                                        <div class="vertHr" style="background: rgba(0,0,0,0.1); height: 35px; align-self: center;"></div>
+                                        <div class="column" style="flex: 1; padding: 6px; text-align: center;">
+                                            <span class="fineP Bold3">Premium</span>
+                                            <h1 style="margin: 2px 0;">$4.42</h1>
+                                            <span class="fineP" style="color: #10b981; font-weight: 600;">▼ -0.01</span>
+                                        </div>
+                                        <div class="vertHr" style="background: rgba(0,0,0,0.1); height: 35px; align-self: center;"></div>
+                                        <div class="column" style="flex: 1; padding: 6px; text-align: center;">
+                                            <span class="fineP Bold3">Diesel</span>
+                                            <h1 style="margin: 2px 0;">$4.15</h1>
+                                            <span class="fineP" style="color: #ef4444; font-weight: 600;">▲ +0.05</span>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <!-- Split Deck Layout Frame: Historical Shifts vs Regional Extremes -->
+                                <div class="row" style="width: 100%; justify-content: space-between; align-items: stretch; gap: 8px; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    
+                                    <!-- Left Sub-Card: Historical Price Shifts Matrix -->
+                                    <section class="part" style="flex: 1; padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+                                        <h3>Historical Comparison</h3>
+                                        <hr style="width: 100%; margin-bottom: 2px;">
+                                        <div class="column" style="width: 100%; gap: 3px; background: transparent; border: none; box-shadow: none;">
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Yesterday's Avg</span>
+                                                <span class="lesserP Bold2">$3.93</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Last Week Avg</span>
+                                                <span class="lesserP Bold2">$3.88</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Last Month Avg</span>
+                                                <span class="lesserP Bold2">$3.75</span>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <!-- Right Sub-Card: Regional Spikes (Highs vs Lows) -->
+                                    <section class="part" style="flex: 1; padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+                                        <h3>Market Extremes</h3>
+                                        <hr style="width: 100%; margin-bottom: 2px;">
+                                        <div class="column" style="width: 100%; gap: 3px; background: transparent; border: none; box-shadow: none;">
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">🟢 Lowest State</span>
+                                                <span class="lesserP Bold2" style="color: #10b981;">TX ($3.32)</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">🔴 Highest State</span>
+                                                <span class="lesserP Bold2" style="color: #ef4444;">CA ($4.89)</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Area Median</span>
+                                                <span class="lesserP Bold2">$3.91</span>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <!-- Editorial Block: Fuel Market Trends & News Ticker -->
+                                <section class="part" style="width: 100%; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                    <h3>Crude Analysis & Trends</h3>
+                                    <hr>
+                                    <div class="column" style="width: 100%; align-items: flex-start; gap: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
+                                        <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; padding: 2px;">
+                                            <span class="lesserP Bold2" style="color: var(--cobalt1, #0060b5);">Refinery Maintenance Squeezes Spring Supplies</span>
+                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; margin-top: 1px;">Seasonal refining transitions and unexpected line checks along the Gulf coast are forcing wholesale terminals to compress localized gas volumes, applying short-term upward cost pressure across midwest transport pipelines.</p>
+                                        </div>
+                                        <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; padding: 2px;">
+                                            <span class="lesserP Bold2" style="color: var(--cobalt1, #0060b5);">Global Crude Volatility Settles Near $78 Barrel</span>
+                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; margin-top: 1px;">International oil metrics balanced out late yesterday as localized production boosts offset shipping lane concerns, suggesting fuel price lines at local neighborhood pumps should begin trading flat over the upcoming week frames.</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                            </div>
+                        </div>
+                        <div class="page" id="extPage-member"  data-slug="Member" style="display: none;">
+                            <div class="extSection">
+                            </div>
+                            <div class="extSection"></div>
+                            <div class="extSection"></div>
+                        </div>
+                        <div class="page" id="extPage-search"  data-slug="Search" data-listener="true" style="display: none;">
+                            <div class="sectionHead extSection extSectionHead">
+                                <div class="searchIcons">
+                                    <div class="IconA searchIcon">
+                                        <i class="fa-solid fa-filter"></i>
+                                    </div>
+                                    <div class="IconA searchIcon">
+                                        <i class="fa-solid fa-sort"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="extSection extSectionBody">
+                                <p id="extSearchResult"></p>
+                            </div>
+                            <div class="extSection">
+                                <div class="IconAs pageNumbers">
+                                    <i class="IconA pageNumber">&lt;&lt;</i>
+                                    <i class="IconA pageNumber fa-solid fa-minus"></i>
+                                    <i class="IconA pageNumber">1</i>
+                                    <i class="IconA pageNumber">2</i>
+                                    <i class="IconA pageNumber">3</i>
+                                    <i class="IconA pageNumber">4</i>
+                                    <i class="IconA pageNumber">5</i>
+                                    <i class="IconA pageNumber fa-solid fa-plus"></i>
+                                    <i class="IconA pageNumber">>></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <div class="subNav" id="subNav" style="display: none;">
 
@@ -2524,10 +2860,10 @@
 
                 <div class="subNav-adBox">
                     <ins class="adsbygoogle"
-                        style="display:block"
+                        style="display:block;"
                         data-ad-client="ca-pub-2241743795999309"
                         data-ad-slot="1016744364"
-                        data-ad-format="auto"
+                        data-ad-format="rectangle"
                         data-full-width-responsive="true"></ins>
                     <script>
                         (adsbygoogle = window.adsbygoogle || []).push({});
@@ -2617,19 +2953,18 @@
                         <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
                     </div>
                 </form>
-                <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
                 <div class="filter-adBox">
-                    <!-- SubNav Ad -->
-                    <ins class="adsbygoogle"
-                        style="display:block"
-                        data-ad-client="ca-pub-2241743795999309"
-                        data-ad-slot="8240628269"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
+                <!-- SubNav Ad -->
+                <ins class="adsbygoogle"
+                    style="display:block;"
+                    data-ad-client="ca-pub-2241743795999309"
+                    data-ad-slot="8240628269"
+                    data-ad-format="rectangle"
+                    data-full-width-responsive="true"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
             </div>
 
 
@@ -3245,6 +3580,60 @@
                 });
             });
 
+                        /* bodySubNav */
+                        
+            document.addEventListener("DOMContentLoaded", function () {
+
+                const bodySubIcons = document.querySelectorAll('.nav-trigger');
+
+                bodySubIcons.forEach(icon => {
+
+                    //icon Dataset (Section, Sub)
+                    const dataSection = document.getElementById(icon.getAttribute('data-section'));
+                    const subNav = document.getElementById(icon.getAttribute('data-sub'));
+                                            
+                    icon.addEventListener('click', () => {
+
+                        if (subNav.style.display === 'none' || subNav.style.display === '') {
+                            subNav.style.display = 'flex';
+                        } else {
+                            subNav.style.display = 'none';
+                        }
+
+                        console.log(subNav.style.display);
+
+                        function blurbodySubNav(event) {
+                            
+                            //If Not Bars or subNav OR toggle: Display None
+                            if (!icon.contains(event.target) && !subNav.contains(event.target)
+                            ) {
+
+                                //subNav
+                                subNav.style.display = 'none';
+                                
+                                //subMore
+                                const subMoreBoxes = document.querySelectorAll('.subNavMore');                
+                                const subMoreToggles = document.querySelectorAll('.subMoreToggle');
+
+                                //Display None More Box, Turn More Icon
+                                subMoreBoxes.forEach(box => {box.style.display = 'none'});
+                                subMoreToggles.forEach(t => {t.style.transform = 'rotate(-90deg)'});
+
+                                document.removeEventListener('click', blurbodySubNav);
+
+                                return;
+                            }
+
+                            return;
+                        }
+
+                        document.addEventListener('click', blurbodySubNav);
+                    });
+                });
+
+            });
+
+
             //SubNav
 
             const subNavRow = document.querySelectorAll('.subNavRow');
@@ -3304,7 +3693,7 @@
                         return;
                     }
 
-                    document.addEventListener('click', blurSubNav);
+                    document.addEventListener('click', blurFilterDisplay);
 
                 });
 
@@ -4486,6 +4875,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
+
+<script type="text/javascript"> var infolinks_pid = 3446312; var infolinks_wsid = 0; </script> <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
 
 
     </body>
