@@ -8,6 +8,14 @@ const NodeCache = require('node-cache');
 // 💾 Cache spatial responses for 15 minutes (900s)
 const gasCache = new NodeCache({ stdTTL: 900, checkperiod: 120 });
 
+// Map incoming frontend fuel grades to the structural integer definitions expected by the Apify scraper
+const FUEL_GRADE_MAP = {
+    'regular': 1,
+    'midgrade': 2,
+    'premium': 3,
+    'diesel': 4
+};
+
 /* ==========================================================================
    SPATIAL CALCULATIONS UTILITY (HAVERSINE GEOMETRY ENGINE)
    ========================================================================== */
@@ -32,8 +40,22 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
    ========================================================================== */
 router.post('/', async (req, res) => {
     try {
-        const { search, radius, storeName, address, city, state, zip } = req.body || {};
+        // ⚡ FIXED: Added fallback extraction matching 'brandName', 'zipCode', and 'fuelGradeSelection' from client payloads
+        const { 
+            search, 
+            radius, 
+            storeName, brandName, 
+            address, 
+            city, 
+            state, 
+            zip, zipCode,
+            fuelGradeSelection 
+        } = req.body || {};
         
+        const targetStore = (storeName || brandName || "").trim();
+        const targetZip = (zip || zipCode || "").trim();
+        const targetFuelGrade = fuelGradeSelection || "regular";
+
         const APIFY_TOKEN = process.env.APIFY_TOKEN; 
         const ACTOR_ID = "johnvc~fuelprices";
         
@@ -43,18 +65,18 @@ router.post('/', async (req, res) => {
         }
 
         // Build a consistent location query
-        let finalSearchParameter = zip || [address, city, state].filter(p => p).join(", ") || search || "Denver";
+        let finalSearchParameter = targetZip || [address, city, state].filter(p => p).join(", ") || search || "Denver";
         finalSearchParameter = finalSearchParameter.trim();
         
         const targetRadius = parseInt(radius, 10) && !isNaN(parseInt(radius, 10)) ? parseInt(radius, 10) : 15;
 
-        // Location-centric caching key layout to optimize hit ratios
-        const locationCacheKey = `loc-${finalSearchParameter.replace(/\s+/g, '-').toLowerCase()}`;
+        // Include the fuel type selection inside the cache signature to prevent cross-grade display leakage
+        const locationCacheKey = `loc-${finalSearchParameter.replace(/\s+/g, '-').toLowerCase()}-${targetFuelGrade}`;
 
         let stationsDataset = gasCache.get(locationCacheKey);
 
         if (!stationsDataset) {
-            console.log(`📡 [Cache Miss] Running sweep on Apify Actor for: "${finalSearchParameter}"`);
+            console.log(`📡 [Cache Miss] Running sweep on Apify Actor for: "${finalSearchParameter}" [Grade: ${targetFuelGrade}]`);
             
             /* ==========================================================================
                PHASE 1: GEOLOCATION ORIGIN ANCHORING
@@ -80,9 +102,12 @@ router.post('/', async (req, res) => {
             /* ==========================================================================
                PHASE 2: LIVE ORIGINAL WORKING SCRAPE
                ========================================================================== */
+            // ⚡ FIXED: Map string fuel preferences directly to the target configuration parameters
+            const apifyFuelId = FUEL_GRADE_MAP[targetFuelGrade.toLowerCase()] || 1;
+
             const inputConfig = {
                 "search": finalSearchParameter, 
-                "fuel": 1,
+                "fuel": apifyFuelId,
                 "maxAge": 0,
                 "lang": "en",
                 "radius": 25 
@@ -116,8 +141,7 @@ router.post('/', async (req, res) => {
                     
                     const computedDistance = station.distance ? parseFloat(station.distance) : 0;
                     
-                    // 🛠️ GEOMETRIC SPATIAL DISTRIBUTION FIX: 
-                    // Convert the actual station distance into relative coordinate displacement offsets distributed evenly in a 360-degree circle
+                    // Convert distances into coordinate displacements distributed evenly around a circle
                     const angle = (index * (360 / Math.max(rawDatasetItems.length, 1))) * (Math.PI / 180);
                     const latOffset = (computedDistance / 69.0) * Math.sin(angle); 
                     const lonOffset = (computedDistance / (69.0 * Math.cos(centerLat * Math.PI / 180))) * Math.cos(angle);
@@ -155,8 +179,9 @@ router.post('/', async (req, res) => {
            ========================================================================== */
         let filteredResponse = stationsDataset.filter(station => station.distance <= targetRadius);
 
-        if (storeName) {
-            const cleanTargetBrand = storeName.toLowerCase().trim();
+        // ⚡ FIXED: Uses structural safe fallbacks for normalized brand string searches
+        if (targetStore) {
+            const cleanTargetBrand = targetStore.toLowerCase();
             filteredResponse = filteredResponse.filter(station => station.name.toLowerCase().includes(cleanTargetBrand));
         }
 
@@ -167,7 +192,7 @@ router.post('/', async (req, res) => {
             return a.price - b.price;
         });
 
-        console.log(`⚡ Output Complete: Returning ${filteredResponse.length} matching localized stations.`);
+        console.log(`⚡ Output Complete: Returning ${filteredResponse.length} matching localized stations for grade [${targetFuelGrade}].`);
         res.json(filteredResponse);
 
     } catch (error) {
