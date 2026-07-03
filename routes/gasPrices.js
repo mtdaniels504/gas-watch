@@ -66,7 +66,7 @@ router.post('/', async (req, res) => {
                 const geoRes = await fetch(geoUrl, { headers: { "User-Agent": "GasWatchAppBackend" } });
                 
                 if (geoRes.ok) {
-                    const geoData = await geoRes.json(); // ✅ FIXED: Removed inline boolean await syntax break
+                    const geoData = await geoRes.json();
                     if (geoData && geoData.length > 0) {
                         centerLat = parseFloat(geoData[0].lat);
                         centerLon = parseFloat(geoData[0].lon);
@@ -78,17 +78,19 @@ router.post('/', async (req, res) => {
             }
 
             /* ==========================================================================
-               PHASE 2: LIVE WIDE-NET DATA SCRAPE
+               PHASE 2: LIVE WIDE-NET DATA SCRAPE WITH MAX ITEMS EXPANSION
                ========================================================================== */
             const inputConfig = {
                 "search": finalSearchParameter, 
                 "fuel": 1,
                 "maxAge": 0,
                 "lang": "en",
-                "radius": 25 
+                "radius": 25,
+                "maxResults": 100, // ⚡ ADDED: Explicit result target limits 
+                "limit": 100       // ⚡ ADDED: Secondary catch-all limit parameters
             };
 
-            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=15`;
+            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=30`;
             let rawDatasetItems = [];
 
             try {
@@ -109,14 +111,15 @@ router.post('/', async (req, res) => {
             }
 
             /* ==========================================================================
-               PHASE 3: TRANSLATION & SPATIAL INJECTION MATRIX
+               PHASE 3: TRANSLATION & SPATIAL INJECTION MATRIX (COORDINATE PARSER FIXED)
                ========================================================================== */
             if (Array.isArray(rawDatasetItems)) {
                 stationsDataset = rawDatasetItems.map((station, index) => {
-                    const sLat = parseFloat(station.latitude || station.lat || (centerLat ? centerLat + (index * 0.0015) : null));
-                    const sLon = parseFloat(station.longitude || station.lng || (centerLon ? centerLon + (index * 0.0015) : null));
+                    // 🛡️ ACCURATE DATA PARSING MAP: Capture data locations from the nested structures
+                    const sLat = parseFloat(station.latitude || station.lat || station.location?.lat || station.coords?.lat || (centerLat ? centerLat + (index * 0.0015) : null));
+                    const sLon = parseFloat(station.longitude || station.lng || station.lon || station.location?.lng || station.coords?.lng || (centerLon ? centerLon + (index * 0.0015) : null));
 
-                    const cash = parseFloat(station.cashPrice || station.price_cash || 0);
+                    const cash = parseFloat(station.cashPrice || station.price_cash || station.price || 0);
                     const credit = parseFloat(station.creditPrice || station.price_credit || 0);
                     const resolvedPrice = cash > 0 ? cash : (credit > 0 ? credit : 0);
 
