@@ -1191,9 +1191,13 @@
                 margin-left: 8px;
             }
 
-            .prefHomeBaseSpan {
-                width: 200px;
+            .prefHomeBaseDiv {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
             }
+
 
             .subNavMore {
                 display: flex;
@@ -2734,7 +2738,7 @@
                                 <div class="subNavMoreBox">
                                     
                                     <!-- 🏠 NEW Feature 0: Persistent Home Base Anchor String -->
-                                    <div class="subNavRow2" style="width: 100%; display: flex; flex-direction: row; align-items: flex-start; gap: 2px;">
+                                    <div class="subNavRow2 prefHomeBaseDiv" style="width: 100%; display: flex; flex-direction: row; align-items: flex-start; gap: 2px;">
                                         <span class="lesserP subNavItem prefHomeBaseSpan" style="font-weight: 600;">Home Base</span>
                                         <input type="text" 
                                             id="prefHomeBase" 
