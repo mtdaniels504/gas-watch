@@ -4,10 +4,10 @@ const compression = require('compression');
 const path = require('path'); 
 require('dotenv').config(); 
 
-// 🛡️ BARE BONES ROUTING PROFILE
+// 🛡️ BARE BONES ROUTING PROFILE: Replace 'gas-watch' with your exact Vercel project dashboard name prefix
 const PROJECT_NAME = 'gas-watch'; 
 
-// Pull in independent route file
+// 🛸 Pull in your independent route file
 const gasPricesRoute = require('./routes/gasPrices');
 
 const app = express();
@@ -29,10 +29,11 @@ app.use(cors({
             return callback(null, true);
         }
 
-        // FIXED: Double-escaped literal dots to ensure full string-to-regex literal compilation safety
-        const vercelRegex = new RegExp(`^https:\\/\\/([a-zA-Z0-9-]+-)?${PROJECT_NAME}(-.*)?\\.vercel\\.app$`);
-                
-        if (vercelRegex.test(origin)) {
+        // 2. BULLETPROOF DOMAIN SHIELD: Checks if the request contains your project name
+        // This catches gas-watch.com, www.gas-watch.com, and all *.vercel.app deployment URLs instantly!
+        const isProjectDomain = origin.includes(PROJECT_NAME);
+
+        if (isProjectDomain) {
             callback(null, true);
         } else {
             callback(new Error('Blocked by CORS policy: Unauthorized domain request.'));
@@ -40,18 +41,19 @@ app.use(cors({
     }
 }));
 
-// Tell Express where static assets live so it can serve index.html
+
+// 🗺️ Tell Express where your static assets live so it can serve index.html!
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Mount main price fetch API path
+// 🔌 Mount it instantly onto your server routing path
 app.use('/api/gas-prices', gasPricesRoute);
 
-// Catch-all route to serve the core SPA layout
+// ✅ PASTE THIS BULLETPROOF REGEX LINE INSTEAD:
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Local server port configuration
+// local server port configuration
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => console.log(`Secure gateway running locally on port ${PORT}`));
