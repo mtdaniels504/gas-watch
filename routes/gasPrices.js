@@ -48,7 +48,7 @@ router.post('/', async (req, res) => {
         
         const targetRadius = parseInt(radius, 10) && !isNaN(parseInt(radius, 10)) ? parseInt(radius, 10) : 15;
 
-        // FIXED: Location-centric caching key layout to optimize hit ratios across varied radius slider passes
+        // Location-centric caching key layout to optimize hit ratios
         const locationCacheKey = `loc-${finalSearchParameter.replace(/\s+/g, '-').toLowerCase()}`;
 
         let stationsDataset = gasCache.get(locationCacheKey);
@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
             console.log(`📡 [Cache Miss] Running wide-net data sweep on Apify Actor for: "${finalSearchParameter}"`);
             
             /* ==========================================================================
-               PHASE 1: GEOLOCATION ORIGIN ANCHORING
+               PHASE 1: GEOLOCATION ORIGIN ANCHORING (FIXED RUNTIME EVALUATION)
                ========================================================================== */
             let centerLat = null;
             let centerLon = null;
@@ -66,7 +66,7 @@ router.post('/', async (req, res) => {
                 const geoRes = await fetch(geoUrl, { headers: { "User-Agent": "GasWatchAppBackend" } });
                 
                 if (geoRes.ok) {
-                    const geoData = await geoRes.ok ? await geoRes.json() : [];
+                    const geoData = await geoRes.json(); // ✅ FIXED: Removed inline boolean await syntax break
                     if (geoData && geoData.length > 0) {
                         centerLat = parseFloat(geoData[0].lat);
                         centerLon = parseFloat(geoData[0].lon);
@@ -77,8 +77,8 @@ router.post('/', async (req, res) => {
                 console.warn("⚠️ Geocoding failed on search origin text query.", geoErr.message);
             }
 
-/* ==========================================================================
-               PHASE 2: LIVE WIDE-NET DATA SCRAPE (ROBUST TWO-STEP ASYNC RUN)
+            /* ==========================================================================
+               PHASE 2: LIVE WIDE-NET DATA SCRAPE
                ========================================================================== */
             const inputConfig = {
                 "search": finalSearchParameter, 
@@ -88,68 +88,28 @@ router.post('/', async (req, res) => {
                 "radius": 25 
             };
 
+            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=15`;
             let rawDatasetItems = [];
 
             try {
-                // Step 1: Start the Actor run asynchronously
-                const runUrl = `https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`;
-                const runResponse = await fetch(runUrl, {
+                const apifyResponse = await fetch(apifyUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(inputConfig)
                 });
 
-                if (!runResponse.ok) {
-                    console.error(`🚨 Apify Run Initialization Failed: ${runResponse.status}`);
-                    return res.status(502).json({ error: "Live gas price repository provider failed to initialize." });
+                if (!apifyResponse.ok) {
+                    console.error(`🚨 Apify responded with status: ${apifyResponse.status}`);
+                    return res.status(502).json({ error: "Live gas price repository provider is temporarily unavailable." });
                 }
-
-                const runData = await runResponse.json();
-                const defaultDatasetId = runData.data?.defaultDatasetId;
-                const runId = runData.data?.id;
-
-                if (!defaultDatasetId) {
-                    return res.status(502).json({ error: "Failed to allocate runtime dataset storage." });
-                }
-
-                // Step 2: Poll/Wait for completion up to the 15-second threshold safely
-                let isFinished = false;
-                const startTime = Date.now();
-                
-                while (!isFinished && (Date.now() - startTime) < 15000) {
-                    const checkUrl = `https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}?token=${APIFY_TOKEN}`;
-                    const checkResponse = await fetch(checkUrl);
-                    if (checkResponse.ok) {
-                        const checkData = await checkResponse.json();
-                        const status = checkData.data?.status;
-                        
-                        if (status === "SUCCEEDED") {
-                            isFinished = true;
-                        } else if (status === "FAILED" || status === "ABORTED" || status === "TIMED-OUT") {
-                            return res.status(502).json({ error: "Data aggregation stream closed unexpectedly." });
-                        }
-                    }
-                    // Wait 1 second between checks
-                    if (!isFinished) await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-
-                // Step 3: Fetch the final items from the dedicated dataset storage
-                const itemsUrl = `https://api.apify.com/v2/datasets/${defaultDatasetId}/items?token=${APIFY_TOKEN}`;
-                const itemsResponse = await fetch(itemsUrl);
-                
-                if (itemsResponse.ok) {
-                    rawDatasetItems = await itemsResponse.json();
-                } else {
-                    return res.status(502).json({ error: "Failed to retrieve compiled datasets." });
-                }
-
+                rawDatasetItems = await apifyResponse.json();
             } catch (fetchErr) {
-                console.error("🔴 Network failure during Apify execution pipeline:", fetchErr.message);
+                console.error("🚨 Apify Fetch Execution Error:", fetchErr.message);
                 return res.status(502).json({ error: "Failed to establish synchronization with data source stream." });
             }
 
             /* ==========================================================================
-               PHASE 3: MOLECULAR TRANSLATION & SPATIAL INJECTION MATRIX
+               PHASE 3: TRANSLATION & SPATIAL INJECTION MATRIX
                ========================================================================== */
             if (Array.isArray(rawDatasetItems)) {
                 stationsDataset = rawDatasetItems.map((station, index) => {
@@ -190,7 +150,6 @@ router.post('/', async (req, res) => {
         /* ==========================================================================
            PHASE 4: LIVE DYNAMIC MEMORY SLICING (RADIUS & BRAND)
            ========================================================================== */
-        // Sift items based on the user's explicit live request values
         let filteredResponse = stationsDataset.filter(station => station.distance <= targetRadius);
 
         if (storeName) {
@@ -209,7 +168,7 @@ router.post('/', async (req, res) => {
         res.json(filteredResponse);
 
     } catch (error) {
-        console.error("🔴 Unhandled route runtime error exception thrown:", error.message);
+        console.error("🔴 Unhandled route runtime error exception thrown:", error.stack || error.message);
         res.status(500).json({ error: "Failed to complete processing operations on live fuel data structures." });
     }
 });
