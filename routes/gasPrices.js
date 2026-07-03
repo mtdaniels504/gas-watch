@@ -77,32 +77,74 @@ router.post('/', async (req, res) => {
                 console.warn("⚠️ Geocoding failed on search origin text query.", geoErr.message);
             }
 
-            /* ==========================================================================
-               PHASE 2: LIVE WIDE-NET DATA SCRAPE (FIXED AT A MAX 25-MILE RADIUS HOVER)
+/* ==========================================================================
+               PHASE 2: LIVE WIDE-NET DATA SCRAPE (ROBUST TWO-STEP ASYNC RUN)
                ========================================================================== */
             const inputConfig = {
                 "search": finalSearchParameter, 
                 "fuel": 1,
                 "maxAge": 0,
                 "lang": "en",
-                "radius": 25 // Request standard wide-net collection to cache nearby stations
+                "radius": 25 
             };
 
-            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=15`;
             let rawDatasetItems = [];
 
             try {
-                const apifyResponse = await fetch(apifyUrl, {
+                // Step 1: Start the Actor run asynchronously
+                const runUrl = `https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`;
+                const runResponse = await fetch(runUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(inputConfig)
                 });
 
-                if (!apifyResponse.ok) {
-                    return res.status(502).json({ error: "Live gas price repository provider is temporarily unavailable." });
+                if (!runResponse.ok) {
+                    console.error(`🚨 Apify Run Initialization Failed: ${runResponse.status}`);
+                    return res.status(502).json({ error: "Live gas price repository provider failed to initialize." });
                 }
-                rawDatasetItems = await apifyResponse.json();
+
+                const runData = await runResponse.json();
+                const defaultDatasetId = runData.data?.defaultDatasetId;
+                const runId = runData.data?.id;
+
+                if (!defaultDatasetId) {
+                    return res.status(502).json({ error: "Failed to allocate runtime dataset storage." });
+                }
+
+                // Step 2: Poll/Wait for completion up to the 15-second threshold safely
+                let isFinished = false;
+                const startTime = Date.now();
+                
+                while (!isFinished && (Date.now() - startTime) < 15000) {
+                    const checkUrl = `https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}?token=${APIFY_TOKEN}`;
+                    const checkResponse = await fetch(checkUrl);
+                    if (checkResponse.ok) {
+                        const checkData = await checkResponse.json();
+                        const status = checkData.data?.status;
+                        
+                        if (status === "SUCCEEDED") {
+                            isFinished = true;
+                        } else if (status === "FAILED" || status === "ABORTED" || status === "TIMED-OUT") {
+                            return res.status(502).json({ error: "Data aggregation stream closed unexpectedly." });
+                        }
+                    }
+                    // Wait 1 second between checks
+                    if (!isFinished) await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                // Step 3: Fetch the final items from the dedicated dataset storage
+                const itemsUrl = `https://api.apify.com/v2/datasets/${defaultDatasetId}/items?token=${APIFY_TOKEN}`;
+                const itemsResponse = await fetch(itemsUrl);
+                
+                if (itemsResponse.ok) {
+                    rawDatasetItems = await itemsResponse.json();
+                } else {
+                    return res.status(502).json({ error: "Failed to retrieve compiled datasets." });
+                }
+
             } catch (fetchErr) {
+                console.error("🔴 Network failure during Apify execution pipeline:", fetchErr.message);
                 return res.status(502).json({ error: "Failed to establish synchronization with data source stream." });
             }
 
