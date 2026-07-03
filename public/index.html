@@ -4236,325 +4236,338 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
         <!-- Include your custom JavaScript code -->
-<script id="map_script">
-    /* ==========================================================================
-    GLOBAL APP STATE & CACHE CONTAINERS
-    ========================================================================== */
-    let map;                         // Global Leaflet map variable
-    let isSearching = false;         // Block concurrent API requests
-    let initialLoadTriggered = false;// Guard against double initialization
-    let markers = [];                // Array tracking currently rendered active station markers
-    let globalRawStations = [];      // 💾 THE DATA ANCHOR: Immutable raw cache from last backend fetch
+        <script id="map_script">
+            /* ==========================================================================
+            GLOBAL APP STATE & CACHE CONTAINERS
+            ========================================================================== */
+            window.map = window.map || null;
+            window.isSearching = false;
+            window.initialLoadTriggered = false;
+            window.markers = [];
+            window.globalRawStations = [];
 
-    // Volatile Runtime Filter Sync States (Hydrated by Preferences / Session)
-    let activeRadiusMiles = 10; 
-    let maxPriceAllowed = null;
-    let activeHomeBaseLocation = "";
+            // Volatile Runtime Filter Sync States (Coordinated globally across all filter layers)
+            window.activeRadiusMiles = window.activeRadiusMiles || 10; 
+            window.maxPriceAllowed = window.maxPriceAllowed || null;
+            window.activeFuelType = window.activeFuelType || 'regular';
+            window.activeHomeBaseLocation = window.activeHomeBaseLocation || "";
 
-    // Baseline Default Coordinates (Denver, CO fallback)
-    const FALLBACK_LAT = 39.7392;
-    const FALLBACK_LON = -104.9903;
-    const FALLBACK_ZIP = "80204";
+            // Baseline Default Coordinates (Denver, CO fallback)
+            const FALLBACK_LAT = 39.7392;
+            const FALLBACK_LON = -104.9903;
+            const FALLBACK_ZIP = "80204";
 
-    /* ==========================================================================
-    MAP INITIALIZATION & DOM LIFECYCLE
-    ========================================================================== */
-    document.addEventListener("DOMContentLoaded", function() {
-        
-        // 1. Initialize the Leaflet map container centered over baseline fallback coordinates
-        map = L.map('map', {
-            zoomControl: true,
-            tap: false 
-        }).setView([FALLBACK_LAT, FALLBACK_LON], 12);
+            /* ==========================================================================
+            MAP INITIALIZATION & DOM LIFECYCLE
+            ========================================================================== */
+            document.addEventListener("DOMContentLoaded", function() {
+                
+                // 1. Initialize the Leaflet map container centered over baseline fallback coordinates
+                window.map = L.map('map', {
+                    zoomControl: true,
+                    tap: false 
+                }).setView([FALLBACK_LAT, FALLBACK_LON], 12);
 
-        // 2. Safely call your external preference setup and style-painting rules
-        if (typeof setupPreferenceEventListeners === "function") setupPreferenceEventListeners();
-        if (typeof initUserPreferences === "function") initUserPreferences();
-
-        // 3. STATE SYNC: Hydrate main engine variables from current Tier 3 (localStorage) Preferences
-        const storedRadius = localStorage.getItem('gasWatch_prefRadius');
-        if (storedRadius) activeRadiusMiles = parseInt(storedRadius, 10) || 10;
-        
-        const storedMaxPrice = localStorage.getItem('gasWatch_prefMaxPrice');
-        if (storedMaxPrice && storedMaxPrice.trim() !== '') {
-            maxPriceAllowed = parseFloat(storedMaxPrice);
-        }
-
-        activeHomeBaseLocation = localStorage.getItem('gasWatch_prefHomeBase') || "";
-
-        // 4. UNIFIED SEARCH UI LISTENERS: Hook up exact HTML ID entry points
-        const bar = document.getElementById("searchBar");
-        const icon = document.getElementById("extSearchIcon");
-
-        if (bar) {
-            bar.addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    searchLocation();
+                // 2. STATE HYDRATION: Ensure engine variables match persistent baseline configurations before running UI initializations
+                const storedRadius = localStorage.getItem('gasWatch_prefRadius');
+                if (storedRadius) window.activeRadiusMiles = parseInt(storedRadius, 10) || 10;
+                
+                const storedMaxPrice = localStorage.getItem('gasWatch_prefMaxPrice');
+                if (storedMaxPrice && storedMaxPrice.trim() !== '') {
+                    window.maxPriceAllowed = parseFloat(storedMaxPrice);
                 }
-            });
-        }
 
-        if (icon) {
-            icon.addEventListener("click", function(event) {
-                event.preventDefault();
-                searchLocation();
-            });
-        }
+                const storedFuel = localStorage.getItem('gasWatch_prefFuel');
+                if (storedFuel) window.activeFuelType = storedFuel;
 
-        // 5. Force map layout rendering stabilization and kick off application data load
-        requestAnimationFrame(() => {
-            map.invalidateSize(true);
-            initApp(); 
-        });
-    });
+                window.activeHomeBaseLocation = localStorage.getItem('gasWatch_prefHomeBase') || "";
 
-    /* ==========================================================================
-    APP INITIALIZATION ROUTER
-    ========================================================================== */
-    function initApp() {
-        loadDefaultLocation();
-    }
+                // 3. Safely coordinate external preference setup and style-painting rules
+                if (typeof setupPreferenceEventListeners === "function") setupPreferenceEventListeners();
+                if (typeof initUserPreferences === "function") initUserPreferences();
 
-    /* ==========================================================================
-    DEFAULT MAIN DATA LOADER (PREFERENCE-AWARE)
-    ========================================================================== */
-    function loadDefaultLocation() {
-        if (initialLoadTriggered) return;
-        initialLoadTriggered = true;
+                // 4. UNIFIED SEARCH UI LISTENERS: Hook up exact HTML ID entry points
+                const bar = document.getElementById("searchBar");
+                const icon = document.getElementById("extSearchIcon");
 
-        if (activeHomeBaseLocation && activeHomeBaseLocation.trim() !== "") {
-            console.log(`🏠 Startup profile Home Base identified: "${activeHomeBaseLocation}". Initializing backend fetch...`);
-            if (typeof getPricesNow === "function") {
-                getPricesNow(activeHomeBaseLocation);
-            }
-        } else {
-            console.log("🌲 No saved Home Base found. Defaulting to Denver baseline environment.");
+                if (bar) {
+                    bar.addEventListener("keydown", function(event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            searchLocation();
+                        }
+                    });
+                }
 
-            const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
-                icon: L.divIcon({ className: 'black-marker-icon' })
-            }).addTo(map);
-            
-            centerMarker.bindPopup(`
-                <div class="custom-popup">
-                    <h3>Hello, Denver!</h3>
-                    <p>Set a persistent "Home Base Location" in Preferences to change this default startup layout view.</p>
-                </div>
-            `).openPopup();
-            
-            markers.push(centerMarker);
+                if (icon) {
+                    icon.addEventListener("click", function(event) {
+                        event.preventDefault();
+                        searchLocation();
+                    });
+                }
 
-            if (typeof getPricesNow === "function") {
-                getPricesNow(FALLBACK_ZIP);
-            }
-        }
-    }
-
-    /* ==========================================================================
-    CLEAR MARKERS
-    ========================================================================== */
-    function clearMarkers() {
-        markers.forEach(marker => map.removeLayer(marker));
-        markers.length = 0; 
-    }
-
-    /* ==========================================================================
-    GET PRICES NOW (FETCH ENGINE - PRO-TIER INSTANT HANDSHAKE)
-    ========================================================================== */
-    async function getPricesNow(searchQuery) {
-        if (isSearching) return;
-        isSearching = true;
-
-        const BACKEND_URL = "/api/gas-prices";
-        clearMarkers();
-        
-        globalRawStations = [];
-
-        try {
-            // Send search data along with your preferences package
-            const response = await fetch(BACKEND_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    search: searchQuery,
-                    radius: activeRadiusMiles
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server returned status code: ${response.status}`);
-            }
-
-            const datasetItems = await response.json();
-            if (!datasetItems || datasetItems.length === 0) {
-                console.warn("⚠️ No station data returned from backend engine.");
-                return;
-            }
-
-            // 🚀 THE FIX: Your backend already computed coordinates and distances!
-            // Map the processed array directly into your data layer with zero client-side delay
-            globalRawStations = datasetItems.map(station => ({
-                lat: parseFloat(station.lat),
-                lon: parseFloat(station.lon),
-                name: station.name,
-                address: station.address,
-                city: station.city,
-                zip: station.zip,
-                price: parseFloat(station.price),
-                displayPrice: station.displayPrice,
-                postedTime: station.postedTime,
-                distance: parseFloat(station.distance || 0)
-            }));
-
-            console.log(`📡 Saved ${globalRawStations.length} map-ready points directly to the client data layer.`);
-
-            // Run your UI filters on the cached data
-            applyClientSideMapFilters();
-
-            // Slide your viewport map focus smoothly to the cheapest result found in the area
-            const firstValid = globalRawStations[0];
-            if (firstValid && typeof moveMapSafely === "function") {
-                moveMapSafely(firstValid.lat, firstValid.lon);
-            } else if (firstValid) {
-                map.setView([firstValid.lat, firstValid.lon], 13);
-            }
-
-        } catch (error) {
-            console.error("🔴 Connection failed completely:", error);
-        } finally {
-            isSearching = false;
-        }
-    }
-
-    /* ==========================================================================
-    STATION MARKER CREATION UTILITY (ISOLATED UI LAYER)
-    ========================================================================== */
-    function renderStationMarker(station) {
-        if (!map || !station || !station.lat || !station.lon) return;
-
-        const priceIcon = L.divIcon({
-            className: 'gas-price-marker', 
-            html: station.displayPrice,     
-            iconSize: null,                
-            iconAnchor: null            
-        });
-
-        let displayTime = "Updated recently";
-        if (station.postedTime) {
-            try {
-                const dateObj = new Date(station.postedTime);
-                displayTime = dateObj.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                // 5. Force map layout rendering stabilization and kick off application data load
+                requestAnimationFrame(() => {
+                    if (window.map) {
+                        window.map.invalidateSize(true);
+                    }
+                    initApp(); 
                 });
-            } catch(e) {
-                displayTime = station.postedTime; 
+            });
+
+            /* ==========================================================================
+            APP INITIALIZATION ROUTER
+            ========================================================================== */
+            function initApp() {
+                loadDefaultLocation();
             }
-        }
 
-        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
-        
-        marker.bindPopup(`
-            <b>${station.name}</b><br>
-            ${station.address}<br>
-            <b>${station.displayPrice}</b><br>
-            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
-                🕒 ${displayTime}
-            </div>
-        `);
+            /* ==========================================================================
+            DEFAULT MAIN DATA LOADER (PREFERENCE-AWARE)
+            ========================================================================== */
+            function loadDefaultLocation() {
+                if (window.initialLoadTriggered || window.isSearching) return;
+                window.initialLoadTriggered = true;
 
-        markers.push(marker);
-    }
+                if (window.activeHomeBaseLocation && window.activeHomeBaseLocation.trim() !== "") {
+                    console.log(`🏠 Startup profile Home Base identified: "${window.activeHomeBaseLocation}". Initializing backend fetch...`);
+                    if (typeof getPricesNow === "function") {
+                        getPricesNow(window.activeHomeBaseLocation);
+                    }
+                } else {
+                    console.log("🌲 No saved Home Base found. Defaulting to Denver baseline environment.");
 
-    /* ==========================================================================
-    SEARCH HANDLER
-    ========================================================================== */
-    function searchLocation() {
-        if (isSearching) return;
+                    const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
+                        icon: L.divIcon({ className: 'black-marker-icon' })
+                    }).addTo(window.map);
+                    
+                    centerMarker.bindPopup(`
+                        <div class="custom-popup">
+                            <h3>Hello, Denver!</h3>
+                            <p>Set a persistent "Home Base Location" in Preferences to change this default startup layout view.</p>
+                        </div>
+                    `).openPopup();
+                    
+                    window.markers.push(centerMarker);
 
-        const searchBar = document.getElementById('searchBar');
-        if (!searchBar) return;
-
-        const input = searchBar.value.trim();
-        if (!input) return;
-
-        searchBar.blur();
-        getPricesNow(input);
-    }
-
-    /* ==========================================================================
-    MASTER CLIENT-SIDE FILTER ENGINE
-    ========================================================================== */
-    function applyClientSideMapFilters() {
-        if (!map) return;
-        
-        console.log("⚙️ Re-filtering active map view elements against cache...");
-
-        const filterAddress   = document.getElementById('filterAddress')?.value.trim().toLowerCase() || '';
-        const filterCity      = document.getElementById('filterCity')?.value.trim().toLowerCase() || '';
-        const filterZip       = document.getElementById('filterZip')?.value.trim() || '';
-        const filterStoreName = document.getElementById('filterStoreName')?.value.trim().toLowerCase() || '';
-
-        clearMarkers();
-
-        const matchingStations = globalRawStations.filter(station => {
-            
-            // A. FILTER: Maximum Price Threshold
-            if (maxPriceAllowed !== null && maxPriceAllowed > 0) {
-                if (station.price && station.price > maxPriceAllowed) {
-                    return false; 
+                    if (typeof getPricesNow === "function") {
+                        getPricesNow(FALLBACK_ZIP);
+                    }
                 }
             }
 
-            // B. FILTER: Search Radius Boundary Check
-            if (station.distance && station.distance > activeRadiusMiles) {
-                return false;
+            /* ==========================================================================
+            CLEAR MARKERS
+            ========================================================================== */
+            function clearMarkers() {
+                window.markers.forEach(marker => {
+                    if (window.map) window.map.removeLayer(marker);
+                });
+                window.markers.length = 0; 
             }
 
-            // C. FILTER: Granular Street Address String Matching
-            if (filterAddress && !station.address?.toLowerCase().includes(filterAddress)) {
-                return false;
+            /* ==========================================================================
+            GET PRICES NOW (FETCH ENGINE - PRO-TIER INSTANT HANDSHAKE)
+            ========================================================================== */
+            async function getPricesNow(searchQuery) {
+                if (window.isSearching) return;
+                window.isSearching = true;
+
+                const BACKEND_URL = "/api/gas-prices";
+                clearMarkers();
+                
+                window.globalRawStations = [];
+
+                try {
+                    // Pack and stream active states down the pipe to backend
+                    const response = await fetch(BACKEND_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            search: searchQuery,
+                            radius: window.activeRadiusMiles,
+                            fuelGrade: window.activeFuelType
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server returned status code: ${response.status}`);
+                    }
+
+                    const datasetItems = await response.json();
+                    if (!datasetItems || datasetItems.length === 0) {
+                        console.warn("⚠️ No station data returned from backend engine.");
+                        applyClientSideMapFilters();
+                        return;
+                    }
+
+                    // Map structural payload accurately down into state tracking array
+                    window.globalRawStations = datasetItems.map(station => ({
+                        lat: parseFloat(station.lat),
+                        lon: parseFloat(station.lon),
+                        name: station.name,
+                        address: station.address,
+                        city: station.city,
+                        zip: station.zip,
+                        price: parseFloat(station.price),
+                        displayPrice: station.displayPrice,
+                        postedTime: station.postedTime,
+                        distance: parseFloat(station.distance || 0)
+                    }));
+
+                    console.log(`📡 Saved ${window.globalRawStations.length} map-ready points directly to the client data layer.`);
+
+                    // Run UI filters on cached data
+                    applyClientSideMapFilters();
+
+                    // Slide viewport map focus smoothly over toward the cheapest location result found
+                    const firstValid = window.globalRawStations[0];
+                    if (firstValid) {
+                        if (typeof moveMapSafely === "function") {
+                            moveMapSafely(firstValid.lat, firstValid.lon);
+                        } else if (window.map) {
+                            window.map.setView([firstValid.lat, firstValid.lon], 13);
+                        }
+                    }
+
+                } catch (error) {
+                    console.error("🔴 Connection failed completely:", error);
+                } finally {
+                    window.isSearching = false;
+                }
             }
 
-            // D. FILTER: Exact City Matching
-            if (filterCity && station.city?.toLowerCase() !== filterCity) {
-                return false;
+            /* ==========================================================================
+            STATION MARKER CREATION UTILITY (ISOLATED UI LAYER)
+            ========================================================================== */
+            function renderStationMarker(station) {
+                if (!window.map || !station || !station.lat || !station.lon) return;
+
+                // FIXED: Explicitly size and center-anchor custom DivIcons to prevent zoom misalignment
+                const priceIcon = L.divIcon({
+                    className: 'gas-price-marker', 
+                    html: station.displayPrice,     
+                    iconSize: [60, 26],         // Standard badge space allocation
+                    iconAnchor: [30, 13]        // Pin exactly to geographic midpoint layout anchor
+                });
+
+                let displayTime = "Updated recently";
+                if (station.postedTime) {
+                    try {
+                        const dateObj = new Date(station.postedTime);
+                        displayTime = dateObj.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    } catch(e) {
+                        displayTime = station.postedTime; 
+                    }
+                }
+
+                const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(window.map);
+                
+                marker.bindPopup(`
+                    <b>${station.name}</b><br>
+                    ${station.address}<br>
+                    <b>${station.displayPrice}</b><br>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+                        🕒 ${displayTime}
+                    </div>
+                `);
+
+                window.markers.push(marker);
             }
 
-            // E. FILTER: Postal Zip Code Matching
-            if (filterZip && !station.zip?.toString().includes(filterZip)) {
-                return false;
+            /* ==========================================================================
+            SEARCH HANDLER
+            ========================================================================== */
+            function searchLocation() {
+                if (window.isSearching) return;
+
+                const searchBar = document.getElementById('searchBar');
+                if (!searchBar) return;
+
+                const input = searchBar.value.trim();
+                if (!input) return;
+
+                searchBar.blur();
+                getPricesNow(input);
             }
 
-            // F. FILTER: Store Brand Name Matching
-            if (filterStoreName && !station.name?.toLowerCase().includes(filterStoreName)) {
-                return false;
+            /* ==========================================================================
+            MASTER CLIENT-SIDE FILTER ENGINE
+            ========================================================================== */
+            function applyClientSideMapFilters() {
+                if (!window.map) return;
+                
+                console.log("⚙️ Re-filtering active map view elements against cache...");
+
+                // Clean inputs directly at retrieval points
+                const filterAddress   = document.getElementById('filterAddress')?.value.trim().toLowerCase() || '';
+                const filterCity      = document.getElementById('filterCity')?.value.trim().toLowerCase() || '';
+                const filterZip       = document.getElementById('filterZip')?.value.trim() || '';
+                const filterStoreName = document.getElementById('filterStoreName')?.value.trim().toLowerCase() || '';
+
+                clearMarkers();
+
+                const matchingStations = window.globalRawStations.filter(station => {
+                    
+                    // A. FILTER: Maximum Price Threshold
+                    if (window.maxPriceAllowed !== null && window.maxPriceAllowed > 0) {
+                        if (station.price && station.price > window.maxPriceAllowed) {
+                            return false; 
+                        }
+                    }
+
+                    // B. FILTER: Search Radius Boundary Check
+                    if (station.distance && station.distance > window.activeRadiusMiles) {
+                        return false;
+                    }
+
+                    // C. FILTER: Granular Street Address String Matching
+                    if (filterAddress && !station.address?.toLowerCase().includes(filterAddress)) {
+                        return false;
+                    }
+
+                    // FIXED: Added defensive trimming to filter checks to avoid unexpected whitespace mismatches
+                    if (filterCity && station.city?.trim().toLowerCase() !== filterCity) {
+                        return false;
+                    }
+
+                    // E. FILTER: Postal Zip Code Matching
+                    if (filterZip && !station.zip?.toString().includes(filterZip)) {
+                        return false;
+                    }
+
+                    // F. FILTER: Store Brand Name Matching
+                    if (filterStoreName && !station.name?.toLowerCase().includes(filterStoreName)) {
+                        return false;
+                    }
+
+                    return true; 
+                });
+
+                // Sort results based on active user preferences
+                const activeSort = localStorage.getItem('gasWatch_prefSort') || 'price';
+                if (activeSort === 'price') {
+                    matchingStations.sort((a, b) => a.price - b.price);
+                } else if (activeSort === 'distance') {
+                    matchingStations.sort((a, b) => a.distance - b.distance);
+                }
+
+                console.log(`🎯 Filter Complete: Displaying ${matchingStations.length} of ${window.globalRawStations.length} stations.`);
+                
+                matchingStations.forEach(station => {
+                    renderStationMarker(station); 
+                });
+
+                if (typeof rebuildSidebarStationList === "function") {
+                    rebuildSidebarStationList(matchingStations);
+                }
             }
-
-            return true; 
-        });
-
-        // Sort results based on active user preferences
-        const activeSort = localStorage.getItem('gasWatch_prefSort') || 'price';
-        if (activeSort === 'price') {
-            matchingStations.sort((a, b) => a.price - b.price);
-        } else if (activeSort === 'distance') {
-            matchingStations.sort((a, b) => a.distance - b.distance);
-        }
-
-        console.log(`🎯 Filter Complete: Displaying ${matchingStations.length} of ${globalRawStations.length} stations.`);
-        
-        matchingStations.forEach(station => {
-            renderStationMarker(station); 
-        });
-
-        if (typeof rebuildSidebarStationList === "function") {
-            rebuildSidebarStationList(matchingStations);
-        }
-    }
-</script>
+        </script>
 
         <script id="preferences_and_skins_script">
             /* ==========================================================================
@@ -4563,7 +4576,7 @@
 
             // --- 1. LOCAL STORAGE REFERENCE KEYS ---
             const PREF_KEYS = {
-                homeBase: 'gasWatch_prefHomeBase', // 🏠 New Home Base String Anchor Key
+                homeBase: 'gasWatch_prefHomeBase', // 🏠 Home Base String Anchor Key
                 fuel: 'gasWatch_prefFuel',
                 radius: 'gasWatch_prefRadius',
                 maxPrice: 'gasWatch_prefMaxPrice',
@@ -4599,10 +4612,7 @@
                 const homeBaseInput = document.getElementById('prefHomeBase');
                 if (homeBaseInput) homeBaseInput.value = savedHomeBase;
                 
-                // Expose to global context if code execution depends on structural profile setups
-                if (typeof activeHomeBaseLocation !== 'undefined') {
-                    activeHomeBaseLocation = savedHomeBase;
-                }
+                window.activeHomeBaseLocation = savedHomeBase;
 
                 // A. Load Persistent Fuel Profile Choice
                 const savedFuel = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
@@ -4611,6 +4621,8 @@
                 
                 const mainFuelFilter = document.getElementById('fuelType');
                 if (mainFuelFilter) mainFuelFilter.value = savedFuel;
+
+                window.activeFuelType = savedFuel;
 
                 // B. Load Search Radius Preference
                 const savedRadius = localStorage.getItem(PREF_KEYS.radius) || '10';
@@ -4623,27 +4635,26 @@
                 if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
                 if (mainRadiusValue) mainRadiusValue.value = savedRadius;
 
-                if (typeof activeRadiusMiles !== 'undefined') {
-                    activeRadiusMiles = parseInt(savedRadius, 10) || 10;
-                }
+                window.activeRadiusMiles = parseInt(savedRadius, 10) || 10;
 
                 // C. Load Maximum Price Thresholds
                 const savedMaxPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
                 const maxPriceInput = document.getElementById('prefMaxPrice');
                 if (maxPriceInput) maxPriceInput.value = savedMaxPrice;
 
-                // 🔄 CROSS-POLLINATION: Safely map value to the newly targeted quick filter input container
+                // 🔄 CROSS-POLLINATION: Safely map value to the quick filter input container
                 const mainPriceFilter = document.getElementById('filterMaxPrice');
                 if (mainPriceFilter) mainPriceFilter.value = savedMaxPrice;
                 
-                if (typeof maxPriceAllowed !== 'undefined') {
-                    maxPriceAllowed = savedMaxPrice !== '' ? parseFloat(savedMaxPrice) : null;
-                }
+                window.maxPriceAllowed = savedMaxPrice !== '' ? parseFloat(savedMaxPrice) : null;
 
                 // D. Load List Sort Ordering Metrics
                 const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
                 const sortSelect = document.getElementById('prefDefaultSort');
                 if (sortSelect) sortSelect.value = savedSort;
+                
+                // 🔄 CROSS-POLLINATION: Ensure global filter context matches sorting profile on initialization
+                window.activeSortPreference = savedSort;
 
                 // E. Load and Render Selected Map Canvas Skin Theme
                 const savedSkin = localStorage.getItem(PREF_KEYS.skin) || 'google';
@@ -4662,7 +4673,12 @@
                 if (textSelect) textSelect.value = savedText;
                 applyTextScaling(savedText);
 
-                switchMapTheme(savedSkin);
+                // Defer skin loading safely if Leaflet context has not built its frame yet
+                if (window.map) {
+                    switchMapTheme(savedSkin);
+                } else {
+                    requestAnimationFrame(() => switchMapTheme(savedSkin));
+                }
             }
 
             // --- 4. INTERACTIVE EVENT HANDLER CONNECTIONS ---
@@ -4672,12 +4688,9 @@
                     const freshHomeBase = this.value.trim();
                     localStorage.setItem(PREF_KEYS.homeBase, freshHomeBase);
                     
-                    if (typeof activeHomeBaseLocation !== 'undefined') {
-                        activeHomeBaseLocation = freshHomeBase;
-                    }
+                    window.activeHomeBaseLocation = freshHomeBase;
                     console.log("🏠 Permanent profile Home Base updated to:", freshHomeBase);
                     
-                    // Note: Changing your core home base profile triggers a fresh data layer fetch
                     if (typeof getPricesNow === "function") {
                         getPricesNow(freshHomeBase);
                     }
@@ -4686,26 +4699,25 @@
                 // Grade Dropdown Changes
                 document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
                     localStorage.setItem(PREF_KEYS.fuel, this.value);
+                    
                     const mainFuelFilter = document.getElementById('fuelType');
                     if (mainFuelFilter) mainFuelFilter.value = this.value;
-                    triggerMapDataRefresh();
+                    
+                    window.activeFuelType = this.value;
+                    triggerNetworkOrClientRefresh();
                 });
 
                 // Distance Radius Matrix Changes
                 document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
                     localStorage.setItem(PREF_KEYS.radius, this.value);
                     
-                    // 🔄 LIVE CROSS-POLLINATION: Force the quick-filter side to respond to preference updates
                     const mainRadiusSlider = document.getElementById('distanceRange');
                     const mainRadiusValue = document.getElementById('distanceValue');
                     if (mainRadiusSlider) mainRadiusSlider.value = this.value;
                     if (mainRadiusValue) mainRadiusValue.value = this.value;
 
-                    if (typeof activeRadiusMiles !== 'undefined') {
-                        activeRadiusMiles = parseInt(this.value, 10) || 10;
-                    }
-
-                    triggerMapDataRefresh();
+                    window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+                    triggerNetworkOrClientRefresh();
                 });
 
                 // Max Price Input Monitoring
@@ -4713,20 +4725,17 @@
                     const freshValue = this.value.trim();
                     localStorage.setItem(PREF_KEYS.maxPrice, freshValue);
                     
-                    // 🔄 LIVE CROSS-POLLINATION: Send value directly to the quick-filter form input tag
                     const mainPriceFilter = document.getElementById('filterMaxPrice');
                     if (mainPriceFilter) mainPriceFilter.value = freshValue;
 
-                    if (typeof maxPriceAllowed !== 'undefined') {
-                        maxPriceAllowed = freshValue !== '' ? parseFloat(freshValue) : null;
-                    }
-                    
+                    window.maxPriceAllowed = freshValue !== '' ? parseFloat(freshValue) : null;
                     triggerMapDataRefresh();
                 });
 
                 // Sorting Logic Changes
                 document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
                     localStorage.setItem(PREF_KEYS.sort, this.value);
+                    window.activeSortPreference = this.value;
                     triggerMapDataRefresh();
                 });
 
@@ -4751,14 +4760,14 @@
 
             // --- 5. VISUAL REPAINT TRANSFORM MECHANISMS ---
             function switchMapTheme(themeName) {
-                if (typeof map === 'undefined' || !map) return;
+                if (typeof map === 'undefined' || !window.map) return;
 
                 const activeTheme = themeName || 'google';
                 const selectedUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
                 const selectedAttr = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
 
-                if (activeBaseLayer) {
-                    map.removeLayer(activeBaseLayer);
+                if (activeBaseLayer && window.map.hasLayer(activeBaseLayer)) {
+                    window.map.removeLayer(activeBaseLayer);
                 }
 
                 activeBaseLayer = L.tileLayer(selectedUrl, {
@@ -4767,7 +4776,7 @@
                     minZoom: 4,
                     updateWhenIdle: true,
                     attribution: selectedAttr
-                }).addTo(map);
+                }).addTo(window.map);
 
                 const dynamicStyleId = 'dynamic-dark-popup-override';
                 let popupStyleElement = document.getElementById(dynamicStyleId);
@@ -4828,6 +4837,18 @@
                     applyClientSideMapFilters();
                 }
             }
+
+            function triggerNetworkOrClientRefresh() {
+                const bar = document.getElementById("searchBar");
+                const currentSearch = bar ? bar.value.trim() : "";
+                const targetQuery = currentSearch || window.activeHomeBaseLocation || "80204";
+                
+                if (typeof getPricesNow === "function") {
+                    getPricesNow(targetQuery);
+                } else {
+                    triggerMapDataRefresh();
+                }
+            }
         </script>
 
         <script id="main_filter_interface_script">
@@ -4839,81 +4860,101 @@
                 const distanceLabel = document.getElementById("distanceValue");
                 const clearButton = document.getElementById("clearFiltersBtn");
                 const filterDisplayPanel = document.getElementById("filterDisplay");
+                const fuelSelect = document.getElementById("fuelType");
+                const priceFilterInput = document.getElementById("filterMaxPrice");
+
+                // Debounce utility to prevent layout thrashing on fast typers
+                function debounce(func, delay = 250) {
+                    let timeoutId;
+                    return function(...args) {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => func.apply(this, args), delay);
+                    };
+                }
+                const debouncedClientFilter = debounce(() => {
+                    if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
+                }, 200);
 
                 // --- 2. SESSION LIFECYCLE RECOVERY (STICKY RUNTIME) ---
-                // Pre-populate fields on boot up using local session cache, falling back to global preferences
                 const activeRadius = sessionStorage.getItem('gasWatch_sessRadius') || localStorage.getItem('gasWatch_prefRadius') || '10';
                 const activeFuel = sessionStorage.getItem('gasWatch_sessFuel') || localStorage.getItem('gasWatch_prefFuel') || 'regular';
                 const activeMaxPrice = sessionStorage.getItem('gasWatch_sessMaxPrice') !== null ? sessionStorage.getItem('gasWatch_sessMaxPrice') : (localStorage.getItem('gasWatch_prefMaxPrice') || '');
 
-                // Populate granular location history fields if they exist in this session cache
-                document.getElementById("filterAddress").value = sessionStorage.getItem('gasWatch_sessAddress') || "";
-                document.getElementById("filterCity").value = sessionStorage.getItem('gasWatch_sessCity') || "";
-                document.getElementById("filterState").value = sessionStorage.getItem('gasWatch_sessState') || "";
-                document.getElementById("filterZip").value = sessionStorage.getItem('gasWatch_sessZip') || "";
-                document.getElementById("filterStoreName").value = sessionStorage.getItem('gasWatch_sessStoreName') || "";
+                if(document.getElementById("filterAddress")) document.getElementById("filterAddress").value = sessionStorage.getItem('gasWatch_sessAddress') || "";
+                if(document.getElementById("filterCity")) document.getElementById("filterCity").value = sessionStorage.getItem('gasWatch_sessCity') || "";
+                if(document.getElementById("filterState")) document.getElementById("filterState").value = sessionStorage.getItem('gasWatch_sessState') || "";
+                if(document.getElementById("filterZip")) document.getElementById("filterZip").value = sessionStorage.getItem('gasWatch_sessZip') || "";
+                if(document.getElementById("filterStoreName")) document.getElementById("filterStoreName").value = sessionStorage.getItem('gasWatch_sessStoreName') || "";
 
-                // Sync slider & dropdown state markers
                 if (distanceSlider && distanceLabel) {
                     distanceSlider.value = activeRadius;
                     distanceLabel.value = activeRadius;
                 }
-                const fuelSelect = document.getElementById("fuelType");
                 if (fuelSelect) fuelSelect.value = activeFuel;
-
-                const priceFilterInput = document.getElementById("filterMaxPrice");
                 if (priceFilterInput) priceFilterInput.value = activeMaxPrice;
 
-                // --- 3. LIVE SLIDER COUNT SYNCING ---
+                window.activeRadiusMiles = parseInt(activeRadius, 10) || 10;
+                window.activeFuelType = activeFuel;
+                window.maxPriceAllowed = activeMaxPrice !== '' ? parseFloat(activeMaxPrice) : null;
+
+                // --- 3. LIVE INPUT CHANGES & RE-CROSS POLLINATION ---
                 if (distanceSlider && distanceLabel) {
                     distanceSlider.addEventListener("input", function() {
                         distanceLabel.value = this.value;
-                        
-                        if (typeof activeRadiusMiles !== 'undefined') {
-                            activeRadiusMiles = parseInt(this.value, 10);
-                        }
+                        window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+                        if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
                     });
                 }
+
+                fuelSelect?.addEventListener("change", function() {
+                    window.activeFuelType = this.value;
+                    if (typeof getPricesNow === "function") {
+                        const searchBar = document.getElementById("searchBar");
+                        const currentSearch = searchBar ? searchBar.value.trim() : "";
+                        const targetQuery = currentSearch || window.activeHomeBaseLocation || "80204";
+                        getPricesNow(targetQuery);
+                    } else if (typeof applyClientSideMapFilters === "function") {
+                        applyClientSideMapFilters();
+                    }
+                });
+
+                priceFilterInput?.addEventListener("input", function() {
+                    const parsedVal = this.value.trim();
+                    window.maxPriceAllowed = parsedVal !== "" ? parseFloat(parsedVal) : null;
+                    if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
+                });
+
+                // Safe typing observation via debouncing
+                ['filterAddress', 'filterCity', 'filterZip', 'filterStoreName'].forEach(fieldId => {
+                    document.getElementById(fieldId)?.addEventListener("input", debouncedClientFilter);
+                });
 
                 // --- 4. UNIVERSAL INSTANT LOCAL FORM CLEAR ENTRY ---
                 if (clearButton && filterForm) {
                     clearButton.addEventListener("click", function(event) {
                         event.preventDefault(); 
 
-                        // Reset text string inputs cleanly
-                        document.getElementById("filterAddress").value = "";
-                        document.getElementById("filterCity").value = "";
-                        document.getElementById("filterState").value = "";
-                        document.getElementById("filterZip").value = "";
-                        document.getElementById("filterStoreName").value = "";
+                        if(document.getElementById("filterAddress")) document.getElementById("filterAddress").value = "";
+                        if(document.getElementById("filterCity")) document.getElementById("filterCity").value = "";
+                        if(document.getElementById("filterState")) document.getElementById("filterState").value = "";
+                        if(document.getElementById("filterZip")) document.getElementById("filterZip").value = "";
+                        if(document.getElementById("filterStoreName")) document.getElementById("filterStoreName").value = "";
                         if (priceFilterInput) priceFilterInput.value = "";
 
-                        // Wipe any temporary runtime session items
-                        sessionStorage.removeItem('gasWatch_sessAddress');
-                        sessionStorage.removeItem('gasWatch_sessCity');
-                        sessionStorage.removeItem('gasWatch_sessState');
-                        sessionStorage.removeItem('gasWatch_sessZip');
-                        sessionStorage.removeItem('gasWatch_sessStoreName');
-                        sessionStorage.removeItem('gasWatch_sessRadius');
-                        sessionStorage.removeItem('gasWatch_sessFuel');
-                        sessionStorage.removeItem('gasWatch_sessMaxPrice');
+                        sessionStorage.clear(); // Safe clean wipe of temp states
 
-                        // Revert slider back to persistent global user preference or 10-mile fallback
                         const preferredRadius = localStorage.getItem('gasWatch_prefRadius') || '10';
                         if (distanceSlider && distanceLabel) {
                             distanceSlider.value = preferredRadius;
                             distanceLabel.value = preferredRadius;
                         }
 
-                        if (typeof activeRadiusMiles !== 'undefined') {
-                            activeRadiusMiles = parseInt(preferredRadius, 10);
-                        }
-                        if (typeof maxPriceAllowed !== 'undefined') {
-                            maxPriceAllowed = null;
-                        }
+                        window.activeRadiusMiles = parseInt(preferredRadius, 10) || 10;
+                        window.maxPriceAllowed = null;
 
                         const preferredFuel = localStorage.getItem('gasWatch_prefFuel') || 'regular';
                         if (fuelSelect) fuelSelect.value = preferredFuel;
+                        window.activeFuelType = preferredFuel;
 
                         const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
                         if (saveCheckbox) saveCheckbox.checked = false;
@@ -4921,7 +4962,8 @@
                         console.log("🧼 Map filter inputs cleared. Synced back to baseline preferences.");
                         
                         if (typeof getPricesNow === "function") {
-                            getPricesNow(""); 
+                            const baselineLocation = localStorage.getItem('gasWatch_prefHomeBase') || document.getElementById("searchBar")?.value.trim() || "80204";
+                            getPricesNow(baselineLocation); 
                         }
                     });
                 }
@@ -4936,13 +4978,12 @@
                         const finalMaxPrice = rawPriceValue !== "" ? parseFloat(rawPriceValue) : null;
                         const finalFuel = fuelSelect ? fuelSelect.value : "regular";
 
-                        const rawAddress = document.getElementById("filterAddress").value.trim();
-                        const rawCity = document.getElementById("filterCity").value.trim();
-                        const rawState = document.getElementById("filterState").value.trim();
-                        const rawZip = document.getElementById("filterZip").value.trim();
-                        const rawStore = document.getElementById("filterStoreName").value.trim();
+                        const rawAddress = document.getElementById("filterAddress")?.value.trim() || "";
+                        const rawCity = document.getElementById("filterCity")?.value.trim() || "";
+                        const rawState = document.getElementById("filterState")?.value.trim() || "";
+                        const rawZip = document.getElementById("filterZip")?.value.trim() || "";
+                        const rawStore = document.getElementById("filterStoreName")?.value.trim() || "";
 
-                        // 🔄 MEMORIZE IN SESSION STORAGE (Keeps form sticky if closed and reopened)
                         sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
                         sessionStorage.setItem('gasWatch_sessCity', rawCity);
                         sessionStorage.setItem('gasWatch_sessState', rawState);
@@ -4952,10 +4993,10 @@
                         sessionStorage.setItem('gasWatch_sessFuel', finalFuel);
                         sessionStorage.setItem('gasWatch_sessMaxPrice', rawPriceValue);
 
-                        if (typeof activeRadiusMiles !== 'undefined') activeRadiusMiles = finalRadius;
-                        if (typeof maxPriceAllowed !== 'undefined') maxPriceAllowed = finalMaxPrice;
+                        window.activeRadiusMiles = finalRadius;
+                        window.maxPriceAllowed = finalMaxPrice;
+                        window.activeFuelType = finalFuel;
 
-                        // 🎯 EVALUATE EXPLICIT PREFERENCE OPT-IN CHECKBOX
                         const shouldSaveAsPreference = document.getElementById('saveFiltersAsPrefs')?.checked;
 
                         if (shouldSaveAsPreference) {
@@ -4963,22 +5004,27 @@
                             localStorage.setItem('gasWatch_prefFuel', finalFuel);
                             localStorage.setItem('gasWatch_prefMaxPrice', rawPriceValue);
 
-                            // Cross-pollinate directly back over to the modal inputs
                             const prefRadiusSelect = document.getElementById('prefDefaultRadius');
                             const prefFuelSelect = document.getElementById('prefDefaultFuel');
                             const prefPriceInput = document.getElementById('prefMaxPrice');
 
-                            if (prefRadiusSelect) prefRadiusSelect.value = finalRadius.toString();
-                            if (prefFuelSelect) prefFuelSelect.value = finalFuel;
-                            if (prefPriceInput) prefPriceInput.value = rawPriceValue;
+                            // FIX: Value sync coupled with manual event notification
+                            if (prefRadiusSelect) {
+                                prefRadiusSelect.value = finalRadius.toString();
+                                prefRadiusSelect.dispatchEvent(new Event('change'));
+                            }
+                            if (prefFuelSelect) {
+                                prefFuelSelect.value = finalFuel;
+                                prefFuelSelect.dispatchEvent(new Event('change'));
+                            }
+                            if (prefPriceInput) {
+                                prefPriceInput.value = rawPriceValue;
+                                prefPriceInput.dispatchEvent(new Event('input'));
+                            }
                             
-                            // Note: Home Base is updated explicitly via the Preferences Modal itself
                             console.log("💾 Filters explicitly promoted to permanent preferences.");
-                        } else {
-                            console.log("🔒 Running a persistent sandbox session search.");
                         }
 
-                        // Pack payload matrix tightly for backend usage
                         const filterPayload = {
                             address: rawAddress,
                             city: rawCity,
@@ -4991,6 +5037,16 @@
                         };
 
                         console.log("🛰️ Filters packaged and prepped for backend delivery:", filterPayload);
+
+                        if (typeof getPricesNow === "function") {
+                            let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : "");
+                            if (!composedLocation) {
+                                composedLocation = document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80204";
+                            }
+                            getPricesNow(composedLocation);
+                        } else if (typeof applyClientSideMapFilters === "function") {
+                            applyClientSideMapFilters();
+                        }
 
                         if (filterDisplayPanel) {
                             filterDisplayPanel.style.display = "none";
