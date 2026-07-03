@@ -29,11 +29,11 @@ app.use(cors({
             return callback(null, true);
         }
 
-        // 2. BULLETPROOF DOMAIN SHIELD: Checks if the request contains your project name
-        // This catches gas-watch.com, www.gas-watch.com, and all *.vercel.app deployment URLs instantly!
-        const isProjectDomain = origin.includes(PROJECT_NAME);
-
-        if (isProjectDomain) {
+        // 2. SECURE DOMAIN SHIELD: Matches only valid subdomains on vercel.app ending with your project name
+        // e.g., gas-watch.vercel.app or gas-watch-api.vercel.app, but NOT malicious-gas-watch.com
+        const vercelRegex = new RegExp(`^https:\\/\\/([a-zA-Z0-9-]+-)?${PROJECT_NAME}(-.*)?\\.vercel\\.app$`);
+        
+        if (vercelRegex.test(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Blocked by CORS policy: Unauthorized domain request.'));
