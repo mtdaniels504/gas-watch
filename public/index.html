@@ -1191,6 +1191,10 @@
                 margin-left: 8px;
             }
 
+            .prefHomeBaseSpan {
+                width: 200px;
+            }
+
             .subNavMore {
                 display: flex;
                 justify-content: flex-end;
@@ -1288,6 +1292,13 @@
                 padding: 4px;
                 gap: 4px;
                 width: 100%;
+            }
+
+            .setDefault {
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 0 5px;
+                gap: 5px;
             }
 
             .filterRowDuo {
@@ -2722,10 +2733,20 @@
                                 <hr class="subNavHr">
                                 <div class="subNavMoreBox">
                                     
+                                    <!-- 🏠 NEW Feature 0: Persistent Home Base Anchor String -->
+                                    <div class="subNavRow2" style="width: 100%; display: flex; flex-direction: row; align-items: flex-start; gap: 2px;">
+                                        <span class="lesserP subNavItem prefHomeBaseSpan" style="font-weight: 600;">Home Base</span>
+                                        <input type="text" 
+                                            id="prefHomeBase" 
+                                            class="lesserP" 
+                                            placeholder="e.g., Austin, TX or 90210" 
+                                            style="width: 100%; box-sizing: border-box; padding: 4px 6px; height: calc(18px + 0.5vw);">
+                                    </div>
+
                                     <!-- Feature 1: Persistent Fuel Type Choice -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Default Grade</span>
-                                        <select class="lesserP" id="prefDefaultFuel" class="subSmallSelect">
+                                        <select class="lesserP subSmallSelect" id="prefDefaultFuel">
                                             <option value="regular">Regular</option>
                                             <option value="midgrade">Midgrade</option>
                                             <option value="premium">Premium</option>
@@ -2736,7 +2757,7 @@
                                     <!-- Feature 2: Default Search Radius Boundary -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Search Radius</span>
-                                        <select class="lesserP" id="prefDefaultRadius" class="subSmallSelect">
+                                        <select class="lesserP subSmallSelect" id="prefDefaultRadius">
                                             <option value="5">5 Miles</option>
                                             <option value="10">10 Miles</option>
                                             <option value="15">15 Miles</option>
@@ -2744,17 +2765,15 @@
                                         </select>
                                     </div>
 
-
                                     <!-- Feature 3: Sorting Preference Hierarchy -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Primary Sort</span>
-                                        <select class="lesserP" id="prefDefaultSort" class="subSmallSelect">
+                                        <select class="lesserP subSmallSelect" id="prefDefaultSort">
                                             <option value="price">Cheapest First</option>
                                             <option value="distance">Closest First</option>
                                         </select>
                                     </div>
 
-                                    
                                     <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Max Price Cap</span>
@@ -2913,25 +2932,21 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                                 <label class="lesserP" for="distanceRange" style="font-weight: 600; margin: 0;">Distance (miles):</label>
                                 <!-- Read-only numerical display window syncing to slider tracking shifts -->
-                                <input class="lesserP" type="text" id="distanceValue" name="distanceValue" placeholder="5" readonly style="width: 30px; text-align: center; border: none; background: transparent; box-shadow: none; font-weight: 700; height: auto; min-height: unset; padding: 0;">
+                                <input class="lesserP" type="text" id="distanceValue" name="distanceValue" placeholder="10" readonly style="width: 30px; text-align: center; border: none; background: transparent; box-shadow: none; font-weight: 700; height: auto; min-height: unset; padding: 0;">
                             </div>
-                            <input type="range" id="distanceRange" name="distanceRange" min="1" max="25" step="1" value="5" style="width: 100%; cursor: pointer; box-shadow: none;">
+                            <input type="range" id="distanceRange" name="distanceRange" min="1" max="25" step="1" value="10" style="width: 100%; cursor: pointer; box-shadow: none;">
                         </div>
                     </div>
                     
-                    <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
-                    <div class="subNavRow2" style="width: 100%;">
+                    <div class="subNavRow" style="width: 100%;">
                         <span class="lesserP subNavItem">Max Price Cap</span>
-                        
-                        <!-- Unified structural row holding the currency sticker anchor -->
                         <div style="display: flex; align-items: center;">
                             <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
                             <input type="number" 
                                 step="0.01" 
                                 min="0.00" 
                                 class="lesserP" 
-                                id="prefMaxPrice" 
-                                placeholder="3.50" 
+                                id="filterMaxPrice" placeholder="3.50" 
                                 style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
                         </div>
                     </div>
@@ -2945,6 +2960,12 @@
                             <option value="premium">Premium Supreme</option>
                             <option value="diesel">Diesel Fuel</option>
                         </select>
+                    </div>
+
+                    <!-- 🎯 Checkbox to explicitly toggle persistent saving -->
+                    <div class="filterRow setDefault" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; margin-bottom: 6px;">
+                        <input type="checkbox" id="saveFiltersAsPrefs" style="cursor: pointer; width: 14px; height: 14px; margin: 0;">
+                        <label class="lesserP" for="saveFiltersAsPrefs" style="font-weight: 600; cursor: pointer; user-select: none; margin: 0;">Set as default preference</label>
                     </div>
                     
                     <!-- Action Row: Dual submission trigger setup split horizontally via flex utility rules -->
@@ -4216,122 +4237,132 @@
 
         <!-- Include your custom JavaScript code -->
         <script id="map_script">
+            /* ==========================================================================
+            GLOBAL APP STATE & CACHE CONTAINERS
+            ========================================================================== */
+            let map;                         // Global Leaflet map variable
+            let isSearching = false;         // Block concurrent API requests
+            let initialLoadTriggered = false;// Guard against double initialization
+            let markers = [];                // Array tracking currently rendered active station markers
+            let globalRawStations = [];      // 💾 THE DATA ANCHOR: Immutable raw cache from last backend fetch
 
-            let isSearching = false;
-            let initialLoadTriggered = false;
-            let markers = [];
-
-            let activeRadiusMiles = 5;
+            // Volatile Runtime Filter Sync States (Hydrated by Preferences / Session)
+            let activeRadiusMiles = 10; 
             let maxPriceAllowed = null;
+            let activeHomeBaseLocation = "";
+
+            // Baseline Default Coordinates (Denver, CO fallback)
+            const FALLBACK_LAT = 39.7392;
+            const FALLBACK_LON = -104.9903;
+            const FALLBACK_ZIP = "80204";
 
             /* ==========================================================================
-            MAP INIT
+            MAP INITIALIZATION & DOM LIFECYCLE
             ========================================================================== */
+            document.addEventListener("DOMContentLoaded", function() {
+                
+                // 1. Initialize the Leaflet map container centered over baseline fallback coordinates
+                map = L.map('map', {
+                    zoomControl: true,
+                    tap: false 
+                }).setView([FALLBACK_LAT, FALLBACK_LON], 12);
 
-            const map = L.map('map', {
-                zoomControl: true,
-                tap: false // iOS Safari touch fix
-            }).setView([39.7392, -104.9903], 12);
+                // 2. Safely call your external preference setup and style-painting rules
+                if (typeof setupPreferenceEventListeners === "function") setupPreferenceEventListeners();
+                if (typeof initUserPreferences === "function") initUserPreferences();
 
-            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                subdomains: '0123',                // ⚡ Distributes downloads across mt0, mt1, mt2, mt3
-                maxZoom: 20,
-                minZoom: 4,                        // 🛑 Prevents zooming out into infinite world loops
-                updateWhenIdle: true,
-                attribution: 'Map data © Google'
-            }).addTo(map);
-
-            /* ==========================================================================
-            FETCH WITH TIMEOUT
-            ========================================================================== */
-
-            async function fetchWithTimeout(resource, options = {}) {
-                const timeout = options.timeout || 15000;
-
-                const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), timeout);
-
-                try {
-                    const response = await fetch(resource, {
-                        ...options,
-                        signal: controller.signal
-                    });
-
-                    clearTimeout(id); // Clean up the timer if the server responded quickly
-                    return response;
-
-                } catch (err) {
-                    clearTimeout(id); // Clean up the timer if an immediate network error happened
-
-                    // Check if the error was caused by our 15-second countdown kill-switch
-                    if (err.name === 'AbortError') {
-                        throw new Error(`Request timed out after ${timeout / 1000} seconds.`);
-                    }
-                    
-                    throw err;
+                // 3. STATE SYNC: Hydrate main engine variables from current Tier 3 (localStorage) Preferences
+                const storedRadius = localStorage.getItem('gasWatch_prefRadius');
+                if (storedRadius) activeRadiusMiles = parseInt(storedRadius, 10) || 10;
+                
+                const storedMaxPrice = localStorage.getItem('gasWatch_prefMaxPrice');
+                if (storedMaxPrice && storedMaxPrice.trim() !== '') {
+                    maxPriceAllowed = parseFloat(storedMaxPrice);
                 }
-            }
+
+                activeHomeBaseLocation = localStorage.getItem('gasWatch_prefHomeBase') || "";
+
+                // 4. UNIFIED SEARCH UI LISTENERS: Hook up exact HTML ID entry points
+                const bar = document.getElementById("searchBar");
+                const icon = document.getElementById("extSearchIcon");
+
+                if (bar) {
+                    bar.addEventListener("keydown", function(event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            searchLocation();
+                        }
+                    });
+                }
+
+                if (icon) {
+                    icon.addEventListener("click", function(event) {
+                        event.preventDefault();
+                        searchLocation();
+                    });
+                }
+
+                // 5. Force map layout rendering stabilization and kick off application data load
+                requestAnimationFrame(() => {
+                    map.invalidateSize(true);
+                    initApp(); 
+                });
+            });
 
             /* ==========================================================================
-            APP INIT
+            APP INITIALIZATION ROUTER
             ========================================================================== */
-
             function initApp() {
-                // 🚀 Directly routes to immediate default load without blocking for hardware GPS prompts
                 loadDefaultLocation();
             }
 
             /* ==========================================================================
-            DEFAULT MAIN LOADER
+            DEFAULT MAIN DATA LOADER (PREFERENCE-AWARE)
             ========================================================================== */
-
             function loadDefaultLocation() {
                 if (initialLoadTriggered) return;
                 initialLoadTriggered = true;
 
-                const lat = 39.7392;
-                const lon = -104.9903;
+                // Check if the user has a custom home base set in Tier 3 storage
+                if (activeHomeBaseLocation && activeHomeBaseLocation.trim() !== "") {
+                    console.log(`🏠 Startup profile Home Base identified: "${activeHomeBaseLocation}". Initializing backend fetch...`);
+                    
+                    if (typeof getPricesNow === "function") {
+                        getPricesNow(activeHomeBaseLocation);
+                    }
+                } else {
+                    // Drop into standard Denver Sandbox Fallback mode if profile is completely clean
+                    console.log("🌲 No saved Home Base found. Defaulting to Denver baseline environment.");
 
-                // Create the center marker and push it to our global array so clearMarkers() can remove it later
-                const centerMarker = L.marker([lat, lon], {
-                    icon: L.divIcon({
-                        className: 'black-marker-icon'
-                    })
-                }).addTo(map);
-                
-                centerMarker.bindPopup("<b>Hello, Denver!</b>").openPopup();
-                markers.push(centerMarker);
+                    const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
+                        icon: L.divIcon({ className: 'black-marker-icon' })
+                    }).addTo(map);
+                    
+                    centerMarker.bindPopup(`
+                        <div class="custom-popup">
+                            <h3>Hello, Denver!</h3>
+                            <p>Set a persistent "Home Base Location" in Preferences to change this default startup layout view.</p>
+                        </div>
+                    `).openPopup();
+                    
+                    markers.push(centerMarker);
 
-                // Immediately fetch initial data to populate the user's screen
-                getPricesNow("80204");
-            }
-
-            /* ==========================================================================
-            SAFE MAP MOVEMENT
-            ========================================================================== */
-
-            function moveMapSafely(lat, lon) {
-                // 🗺️ Pro-move: Use flyTo for an elegant cinematic glide animation to the new spot
-                map.flyTo([lat, lon], map.getZoom(), {
-                    animate: true,
-                    duration: 0.8 // Buttery smooth 800ms transition
-                });
-
-                // Forces immediate tile recalculation on the next browser redraw frame without setTimeout delays
-                requestAnimationFrame(() => {
-                    map.invalidateSize({ debounceMove: true });
-                });
+                    if (typeof getPricesNow === "function") {
+                        getPricesNow(FALLBACK_ZIP);
+                    }
+                }
             }
 
             /* ==========================================================================
             CLEAR MARKERS
             ========================================================================== */
-
             function clearMarkers() {
                 markers.forEach(marker => map.removeLayer(marker));
-                markers = [];
+                markers.length = 0; // ✅ Safely empties arrays without reference errors
             }
-
+            /* ==========================================================================
+            GET PRICES NOW (FETCH ENGINE)
+            ========================================================================== */
 
             async function getPricesNow(searchQuery) {
                 if (isSearching) return;
@@ -4350,7 +4381,7 @@
                     const datasetItems = await response.json();
                     if (!datasetItems || datasetItems.length === 0) return;
 
-                    // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
+                    // ⚡ EFFICIENT UPGRADE: Map each station to an independent promise
                     const geocodePromises = datasetItems.map(async (station, index) => {
                         const name = station.name || "Gas Station";
                         const address = station.address_line1 || "Unknown Address";
@@ -4363,44 +4394,43 @@
                         const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
 
                         const fullTextAddress = `${address}, ${locality}, ${region}`;
+                        
+                        // Extract raw timing data here before going to the geocoder
+                        const postedTime = station.postedTime || null;
 
                         try {
-                            // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
-                            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
+                            // 🕒 Staged delay based on index to respect Nominatim's strict 1-req/sec policy
+                            await new Promise(resolve => setTimeout(resolve, index * 200));
 
+                            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
                             const geoResponse = await fetch(geocodeUrl, {
                                 headers: { "User-Agent": "GasWatchApp" }
                             });
                             const geoData = await geoResponse.json();
 
-                            // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
                             if (geoData && geoData.length > 0) {
                                 const lat = parseFloat(geoData[0].lat);
                                 const lon = parseFloat(geoData[0].lon);
 
-                                return { lat, lon, name, address, displayPrice, index };
+                                return { lat, lon, name, address, displayPrice, index, postedTime };
                             }
                         } catch (geoError) {
                             console.error(`Could not locate address: ${fullTextAddress}`, geoError);
                         }
-                        return null; // Return null if the lookup completely failed
+                        return null; 
                     });
 
-                    // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
                     const resolvedStations = await Promise.all(geocodePromises);
-
                     let firstValidCoords = null;
 
-                            // 3. Drop all working markers instantly onto your map instance
                     resolvedStations.forEach(station => {
-                        if (!station) return; // Skip failed lookups
+                        if (!station) return; 
 
-                        // Track coordinates of the cheapest station
-                        if (station.index === 0) {
+                        // ✅ FIXED: Captures the absolute first station that resolves successfully to center the map viewport
+                        if (!firstValidCoords) {
                             firstValidCoords = [station.lat, station.lon];
                         }
 
-                        // Injects your CSS pill style dynamically into Leaflet
                         const priceIcon = L.divIcon({
                             className: 'gas-price-marker', 
                             html: station.displayPrice,     
@@ -4408,14 +4438,12 @@
                             iconAnchor: null            
                         });
 
-                        // 🕒 EXTRACT & CLEAN THE TIME FIELD NATIVELY
-                        // Grabs the raw data or defaults to a safe string if unavailable
-                        const rawTime = station.rawStationData?.postedTime || "Recently"; 
-                        let displayTime = "Date unknown";
+                        // 🕒 Safely pulling the timestamp passed through the promise
+                        const rawTime = station.postedTime; 
+                        let displayTime = "Updated recently";
 
-                        if (rawTime && rawTime !== "Recently") {
+                        if (rawTime) {
                             try {
-                                // Turn it into a beautiful, localized text string (e.g. "June 12, 4:44 PM")
                                 const dateObj = new Date(rawTime);
                                 displayTime = dateObj.toLocaleDateString('en-US', {
                                     month: 'short',
@@ -4424,16 +4452,12 @@
                                     minute: '2-digit'
                                 });
                             } catch(e) {
-                                displayTime = rawTime; // Fallback to raw string if formatting slips
+                                displayTime = rawTime; 
                             }
-                        } else {
-                            displayTime = "Updated recently";
                         }
 
-                        // Creates the marker using your custom green price pill style
                         const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
                         
-                        // ✅ INJECTED: Added a clean, muted time badge at the very bottom of the click popup
                         marker.bindPopup(`
                             <b>${station.name}</b><br>
                             ${station.address}<br>
@@ -4445,10 +4469,9 @@
                         markers.push(marker);
                     });
 
-
-                    // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
+                    // 🗺️ Glide over smoothly to show the user the new results area
                     if (firstValidCoords) {
-                        map.setView(firstValidCoords, 13);
+                        moveMapSafely(firstValidCoords[0], firstValidCoords[1]);
                     }
 
                 } catch (error) {
@@ -4457,10 +4480,10 @@
                     isSearching = false;
                 }
             }
-            /* ==========================================================================
-            SEARCH HANDLER (Updated: Complete Geocoding Eradication)
-            ========================================================================== */
 
+            /* ==========================================================================
+            SEARCH HANDLER
+            ========================================================================== */
             function searchLocation() {
                 if (isSearching) return;
 
@@ -4470,414 +4493,539 @@
                 const input = searchBar.value.trim();
                 if (!input) return;
 
-                // Dismiss mobile keyboard
+                // 📱 Dismiss mobile keyboard so users can instantly see the Leaflet map!
                 searchBar.blur();
 
-                // 🚀 DIRECT HAND-OFF: Skip all frontend lookup APIs entirely!
-                // We send the raw text query directly down the single pipeline to the backend.
-                getPricesNow(input, null, null);
+                // 🚀 DIRECT HAND-OFF: Send the volatile text query directly to the backend
+                getPricesNow(input);
             }
 
             /* ==========================================================================
-            DOM READY
+            MASTER CLIENT-SIDE FILTER ENGINE
+            ========================================================================== */
+            function applyClientSideMapFilters() {
+                // Guard clause: Ensure Leaflet is fully initialized before attempting UI modifications
+                if (!map) return;
+                
+                console.log("⚙️ Re-filtering active map view elements against cache...");
+
+                // 1. Extract the volatile session-sticky inputs from the DOM
+                const filterAddress   = document.getElementById('filterAddress')?.value.trim().toLowerCase() || '';
+                const filterCity      = document.getElementById('filterCity')?.value.trim().toLowerCase() || '';
+                const filterZip       = document.getElementById('filterZip')?.value.trim() || '';
+                const filterStoreName = document.getElementById('filterStoreName')?.value.trim().toLowerCase() || '';
+
+                // 2. Clear out all current variable station markers from the Leaflet canvas
+                clearMarkers();
+
+                // 3. Filter your immutable raw dataset cache row by row
+                const matchingStations = globalRawStations.filter(station => {
+                    
+                    // A. FILTER: Maximum Price Threshold
+                    if (maxPriceAllowed !== null && maxPriceAllowed > 0) {
+                        const stationPrice = parseFloat(station.price || station.displayPrice?.replace('$', ''));
+                        if (!isNaN(stationPrice) && stationPrice > maxPriceAllowed) {
+                            return false; 
+                        }
+                    }
+
+                    // B. FILTER: Search Radius Boundary Check
+                    if (station.distance && parseFloat(station.distance) > activeRadiusMiles) {
+                        return false;
+                    }
+
+                    // C. FILTER: Granular Street Address String Matching
+                    if (filterAddress && !station.address?.toLowerCase().includes(filterAddress)) {
+                        return false;
+                    }
+
+                    // D. FILTER: Exact City Matching
+                    if (filterCity && station.city?.toLowerCase() !== filterCity) {
+                        return false;
+                    }
+
+                    // E. FILTER: Postal Zip Code Matching
+                    if (filterZip && !station.zip?.toString().includes(filterZip)) {
+                        return false;
+                    }
+
+                    // F. FILTER: Store Brand Name Matching (e.g., "Shell", "Exxon")
+                    if (filterStoreName && !station.name?.toLowerCase().includes(filterStoreName)) {
+                        return false;
+                    }
+
+                    return true; 
+                });
+
+                // 4. Sort the survived results based on Tier 3 Permanent Preferences
+                const activeSort = localStorage.getItem('gasWatch_prefSort') || 'price';
+                if (activeSort === 'price') {
+                    matchingStations.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+                } else if (activeSort === 'distance') {
+                    matchingStations.sort((a, b) => parseFloat(a.distance || 0) - parseFloat(b.distance || 0));
+                }
+
+                // 5. Repaint the filtered entries on the map canvas
+                console.log(`🎯 Filter Complete: Displaying ${matchingStations.length} of ${globalRawStations.length} stations.`);
+                
+                matchingStations.forEach(station => {
+                    if (typeof renderStationMarker === "function") {
+                        renderStationMarker(station); 
+                    }
+                });
+
+                // 6. Cross-pollinate the result list down into your sidebar UI if it exists
+                if (typeof rebuildSidebarStationList === "function") {
+                    rebuildSidebarStationList(matchingStations);
+                }
+            }
+
+        </script>
+
+        <script id="preferences_and_skins_script">
+            /* ==========================================================================
+            USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED & CROSS-POLLINATED)
             ========================================================================== */
 
+            // --- 1. LOCAL STORAGE REFERENCE KEYS ---
+            const PREF_KEYS = {
+                homeBase: 'gasWatch_prefHomeBase', // 🏠 New Home Base String Anchor Key
+                fuel: 'gasWatch_prefFuel',
+                radius: 'gasWatch_prefRadius',
+                maxPrice: 'gasWatch_prefMaxPrice',
+                sort: 'gasWatch_prefSort',
+                skin: 'gasWatch_mapTheme', 
+                text: 'gasWatch_prefText',
+                contrast: 'gasWatch_prefMarkerContrast'
+            };
+
+            // --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
+            const MAP_THEME_TILES = {
+                google: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
+                matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
+                navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
+            };
+
+            const MAP_THEME_ATTRIBUTIONS = {
+                google: 'Map data © Google',
+                iphone: '© OpenStreetMap contributors, © CARTO',
+                midnight: '© OpenStreetMap contributors, © JawgMaps',
+                matrix: '© OpenStreetMap contributors, © JawgMaps',
+                navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
+            };
+
+            let activeBaseLayer = null;
+
+            // --- 3. INITIALIZE AND APPLY USER PARAMETERS ON RUNTIME BOOT ---
+            function initUserPreferences() {
+                // 🏠 0. Load Home Base Location Anchor
+                const savedHomeBase = localStorage.getItem(PREF_KEYS.homeBase) || '';
+                const homeBaseInput = document.getElementById('prefHomeBase');
+                if (homeBaseInput) homeBaseInput.value = savedHomeBase;
+                
+                // Expose to global context if code execution depends on structural profile setups
+                if (typeof activeHomeBaseLocation !== 'undefined') {
+                    activeHomeBaseLocation = savedHomeBase;
+                }
+
+                // A. Load Persistent Fuel Profile Choice
+                const savedFuel = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
+                const fuelSelect = document.getElementById('prefDefaultFuel');
+                if (fuelSelect) fuelSelect.value = savedFuel;
+                
+                const mainFuelFilter = document.getElementById('fuelType');
+                if (mainFuelFilter) mainFuelFilter.value = savedFuel;
+
+                // B. Load Search Radius Preference
+                const savedRadius = localStorage.getItem(PREF_KEYS.radius) || '10';
+                const radiusSelect = document.getElementById('prefDefaultRadius');
+                if (radiusSelect) radiusSelect.value = savedRadius;
+                
+                // 🔄 CROSS-POLLINATION: Update the quick filter sliders on boot frame
+                const mainRadiusSlider = document.getElementById('distanceRange');
+                const mainRadiusValue = document.getElementById('distanceValue');
+                if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
+                if (mainRadiusValue) mainRadiusValue.value = savedRadius;
+
+                if (typeof activeRadiusMiles !== 'undefined') {
+                    activeRadiusMiles = parseInt(savedRadius, 10) || 10;
+                }
+
+                // C. Load Maximum Price Thresholds
+                const savedMaxPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
+                const maxPriceInput = document.getElementById('prefMaxPrice');
+                if (maxPriceInput) maxPriceInput.value = savedMaxPrice;
+
+                // 🔄 CROSS-POLLINATION: Safely map value to the newly targeted quick filter input container
+                const mainPriceFilter = document.getElementById('filterMaxPrice');
+                if (mainPriceFilter) mainPriceFilter.value = savedMaxPrice;
+                
+                if (typeof maxPriceAllowed !== 'undefined') {
+                    maxPriceAllowed = savedMaxPrice !== '' ? parseFloat(savedMaxPrice) : null;
+                }
+
+                // D. Load List Sort Ordering Metrics
+                const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
+                const sortSelect = document.getElementById('prefDefaultSort');
+                if (sortSelect) sortSelect.value = savedSort;
+
+                // E. Load and Render Selected Map Canvas Skin Theme
+                const savedSkin = localStorage.getItem(PREF_KEYS.skin) || 'google';
+                const skinSelect = document.getElementById('prefMapSkin'); 
+                if (skinSelect) skinSelect.value = savedSkin;
+                
+                // F. Load Marker Contrast Preference
+                const savedContrast = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
+                const contrastSelect = document.getElementById('prefMarkerContrast');
+                if (contrastSelect) contrastSelect.value = savedContrast;
+                applyMarkerContrast(savedContrast);
+
+                // G. Load Font Bubble Scaling Settings
+                const savedText = localStorage.getItem(PREF_KEYS.text) || 'normal';
+                const textSelect = document.getElementById('prefTextSize');
+                if (textSelect) textSelect.value = savedText;
+                applyTextScaling(savedText);
+
+                switchMapTheme(savedSkin);
+            }
+
+            // --- 4. INTERACTIVE EVENT HANDLER CONNECTIONS ---
+            function setupPreferenceEventListeners() {
+                // 🏠 Home Base Input Changes
+                document.getElementById('prefHomeBase')?.addEventListener('change', function() {
+                    const freshHomeBase = this.value.trim();
+                    localStorage.setItem(PREF_KEYS.homeBase, freshHomeBase);
+                    
+                    if (typeof activeHomeBaseLocation !== 'undefined') {
+                        activeHomeBaseLocation = freshHomeBase;
+                    }
+                    console.log("🏠 Permanent profile Home Base updated to:", freshHomeBase);
+                    
+                    // Note: Changing your core home base profile triggers a fresh data layer fetch
+                    if (typeof getPricesNow === "function") {
+                        getPricesNow(freshHomeBase);
+                    }
+                });
+
+                // Grade Dropdown Changes
+                document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.fuel, this.value);
+                    const mainFuelFilter = document.getElementById('fuelType');
+                    if (mainFuelFilter) mainFuelFilter.value = this.value;
+                    triggerMapDataRefresh();
+                });
+
+                // Distance Radius Matrix Changes
+                document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.radius, this.value);
+                    
+                    // 🔄 LIVE CROSS-POLLINATION: Force the quick-filter side to respond to preference updates
+                    const mainRadiusSlider = document.getElementById('distanceRange');
+                    const mainRadiusValue = document.getElementById('distanceValue');
+                    if (mainRadiusSlider) mainRadiusSlider.value = this.value;
+                    if (mainRadiusValue) mainRadiusValue.value = this.value;
+
+                    if (typeof activeRadiusMiles !== 'undefined') {
+                        activeRadiusMiles = parseInt(this.value, 10) || 10;
+                    }
+
+                    triggerMapDataRefresh();
+                });
+
+                // Max Price Input Monitoring
+                document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
+                    const freshValue = this.value.trim();
+                    localStorage.setItem(PREF_KEYS.maxPrice, freshValue);
+                    
+                    // 🔄 LIVE CROSS-POLLINATION: Send value directly to the quick-filter form input tag
+                    const mainPriceFilter = document.getElementById('filterMaxPrice');
+                    if (mainPriceFilter) mainPriceFilter.value = freshValue;
+
+                    if (typeof maxPriceAllowed !== 'undefined') {
+                        maxPriceAllowed = freshValue !== '' ? parseFloat(freshValue) : null;
+                    }
+                    
+                    triggerMapDataRefresh();
+                });
+
+                // Sorting Logic Changes
+                document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.sort, this.value);
+                    triggerMapDataRefresh();
+                });
+
+                // Map Theme Skin Changes
+                document.getElementById('prefMapSkin')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.skin, this.value);
+                    switchMapTheme(this.value);
+                });
+
+                // Typography Sizing Changes
+                document.getElementById('prefTextSize')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.text, this.value);
+                    applyTextScaling(this.value);
+                });
+                
+                // Contrast System Tracking
+                document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.contrast, this.value);
+                    applyMarkerContrast(this.value);
+                });
+            }
+
+            // --- 5. VISUAL REPAINT TRANSFORM MECHANISMS ---
+            function switchMapTheme(themeName) {
+                if (typeof map === 'undefined' || !map) return;
+
+                const activeTheme = themeName || 'google';
+                const selectedUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
+                const selectedAttr = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
+
+                if (activeBaseLayer) {
+                    map.removeLayer(activeBaseLayer);
+                }
+
+                activeBaseLayer = L.tileLayer(selectedUrl, {
+                    subdomains: activeTheme === 'google' ? '0123' : 'abc',
+                    maxZoom: 20,
+                    minZoom: 4,
+                    updateWhenIdle: true,
+                    attribution: selectedAttr
+                }).addTo(map);
+
+                const dynamicStyleId = 'dynamic-dark-popup-override';
+                let popupStyleElement = document.getElementById(dynamicStyleId);
+                
+                if (!popupStyleElement) {
+                    popupStyleElement = document.createElement('style');
+                    popupStyleElement.id = dynamicStyleId;
+                    document.head.appendChild(popupStyleElement);
+                }
+                
+                if (activeTheme === 'midnight' || activeTheme === 'matrix') {
+                    popupStyleElement.innerHTML = `
+                        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
+                        .custom-popup h3 { color: #f5f8ff !important; }
+                        .custom-popup p { color: #dee0e3 !important; }
+                        .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
+                    `;
+                } else {
+                    popupStyleElement.innerHTML = ''; 
+                }
+            }
+
+            function applyTextScaling(scale) {
+                if (scale === 'large') {
+                    document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
+                    document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
+                } else {
+                    document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
+                    document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
+                }
+            }
+
+            function applyMarkerContrast(mode) {
+                const contrastStyleId = 'dynamic-marker-contrast-override';
+                let styleEl = document.getElementById(contrastStyleId);
+                
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = contrastStyleId;
+                    document.head.appendChild(styleEl);
+                }
+                
+                if (mode === 'high') {
+                    styleEl.innerHTML = `
+                        .gas-price-marker { 
+                            box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
+                            font-weight: 800 !important;
+                            border: 2px solid #000 !important;
+                        }
+                    `;
+                } else {
+                    styleEl.innerHTML = ''; 
+                }
+            }
+
+            function triggerMapDataRefresh() {
+                if (typeof applyClientSideMapFilters === "function") {
+                    applyClientSideMapFilters();
+                }
+            }
+        </script>
+
+        <script id="main_filter_interface_script">
             document.addEventListener("DOMContentLoaded", function() {
+            
+                // --- 1. DOM SELECTOR REFERENCES ---
+                const filterForm = document.querySelector(".filterForm");
+                const distanceSlider = document.getElementById("distanceRange");
+                const distanceLabel = document.getElementById("distanceValue");
+                const clearButton = document.getElementById("clearFiltersBtn");
+                const filterDisplayPanel = document.getElementById("filterDisplay");
 
-                // 🎯 Uses your exact HTML ID hooks for ultra-precise element matching
-                const bar = document.getElementById("searchBar");
-                const icon = document.getElementById("extSearchIcon");
+                // --- 2. SESSION LIFECYCLE RECOVERY (STICKY RUNTIME) ---
+                // Pre-populate fields on boot up using local session cache, falling back to global preferences
+                const activeRadius = sessionStorage.getItem('gasWatch_sessRadius') || localStorage.getItem('gasWatch_prefRadius') || '10';
+                const activeFuel = sessionStorage.getItem('gasWatch_sessFuel') || localStorage.getItem('gasWatch_prefFuel') || 'regular';
+                const activeMaxPrice = sessionStorage.getItem('gasWatch_sessMaxPrice') !== null ? sessionStorage.getItem('gasWatch_sessMaxPrice') : (localStorage.getItem('gasWatch_prefMaxPrice') || '');
 
-                // iOS & Mobile Safe Enter Key Handling
-                if (bar) {
-                    bar.addEventListener("keydown", function(event) {
-                        if (event.key === "Enter") {
-                            event.preventDefault();
-                            bar.blur(); // 📱 Pulls down mobile keyboards so users can instantly see the Leaflet map!
-                            searchLocation();
+                // Populate granular location history fields if they exist in this session cache
+                document.getElementById("filterAddress").value = sessionStorage.getItem('gasWatch_sessAddress') || "";
+                document.getElementById("filterCity").value = sessionStorage.getItem('gasWatch_sessCity') || "";
+                document.getElementById("filterState").value = sessionStorage.getItem('gasWatch_sessState') || "";
+                document.getElementById("filterZip").value = sessionStorage.getItem('gasWatch_sessZip') || "";
+                document.getElementById("filterStoreName").value = sessionStorage.getItem('gasWatch_sessStoreName') || "";
+
+                // Sync slider & dropdown state markers
+                if (distanceSlider && distanceLabel) {
+                    distanceSlider.value = activeRadius;
+                    distanceLabel.value = activeRadius;
+                }
+                const fuelSelect = document.getElementById("fuelType");
+                if (fuelSelect) fuelSelect.value = activeFuel;
+
+                const priceFilterInput = document.getElementById("filterMaxPrice");
+                if (priceFilterInput) priceFilterInput.value = activeMaxPrice;
+
+                // --- 3. LIVE SLIDER COUNT SYNCING ---
+                if (distanceSlider && distanceLabel) {
+                    distanceSlider.addEventListener("input", function() {
+                        distanceLabel.value = this.value;
+                        
+                        if (typeof activeRadiusMiles !== 'undefined') {
+                            activeRadiusMiles = parseInt(this.value, 10);
                         }
                     });
                 }
 
-                // Universal Mobile/Desktop Click Handler (Completely safe from scroll-drag glitches)
-                if (icon) {
-                    icon.addEventListener("click", function(event) {
-                        event.preventDefault();
-                        if (bar) bar.blur(); // 📱 Retracts keyboard if they choose to tap the glass icon instead
-                        searchLocation();
+                // --- 4. UNIVERSAL INSTANT LOCAL FORM CLEAR ENTRY ---
+                if (clearButton && filterForm) {
+                    clearButton.addEventListener("click", function(event) {
+                        event.preventDefault(); 
+
+                        // Reset text string inputs cleanly
+                        document.getElementById("filterAddress").value = "";
+                        document.getElementById("filterCity").value = "";
+                        document.getElementById("filterState").value = "";
+                        document.getElementById("filterZip").value = "";
+                        document.getElementById("filterStoreName").value = "";
+                        if (priceFilterInput) priceFilterInput.value = "";
+
+                        // Wipe any temporary runtime session items
+                        sessionStorage.removeItem('gasWatch_sessAddress');
+                        sessionStorage.removeItem('gasWatch_sessCity');
+                        sessionStorage.removeItem('gasWatch_sessState');
+                        sessionStorage.removeItem('gasWatch_sessZip');
+                        sessionStorage.removeItem('gasWatch_sessStoreName');
+                        sessionStorage.removeItem('gasWatch_sessRadius');
+                        sessionStorage.removeItem('gasWatch_sessFuel');
+                        sessionStorage.removeItem('gasWatch_sessMaxPrice');
+
+                        // Revert slider back to persistent global user preference or 10-mile fallback
+                        const preferredRadius = localStorage.getItem('gasWatch_prefRadius') || '10';
+                        if (distanceSlider && distanceLabel) {
+                            distanceSlider.value = preferredRadius;
+                            distanceLabel.value = preferredRadius;
+                        }
+
+                        if (typeof activeRadiusMiles !== 'undefined') {
+                            activeRadiusMiles = parseInt(preferredRadius, 10);
+                        }
+                        if (typeof maxPriceAllowed !== 'undefined') {
+                            maxPriceAllowed = null;
+                        }
+
+                        const preferredFuel = localStorage.getItem('gasWatch_prefFuel') || 'regular';
+                        if (fuelSelect) fuelSelect.value = preferredFuel;
+
+                        const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
+                        if (saveCheckbox) saveCheckbox.checked = false;
+
+                        console.log("🧼 Map filter inputs cleared. Synced back to baseline preferences.");
+                        
+                        if (typeof getPricesNow === "function") {
+                            getPricesNow(""); 
+                        }
                     });
                 }
 
-                // ⚡ INSTANT ENGINE BOOT: Renders your '#map' layout container seamlessly
-                requestAnimationFrame(() => {
-                    map.invalidateSize(true);
-                    initApp(); 
-                });
-            });
+                // --- 5. BACKEND CONTEXT PREPPING & FORM SUBMIT HANDOFF ---
+                if (filterForm) {
+                    filterForm.addEventListener("submit", function(event) {
+                        event.preventDefault(); 
 
-            /* ==========================================================================
-            FILTER FORM SUBMIT
-            ========================================================================== */
+                        const finalRadius = parseInt(distanceSlider ? distanceSlider.value : 10, 10);
+                        const rawPriceValue = priceFilterInput ? priceFilterInput.value.trim() : "";
+                        const finalMaxPrice = rawPriceValue !== "" ? parseFloat(rawPriceValue) : null;
+                        const finalFuel = fuelSelect ? fuelSelect.value : "regular";
 
+                        const rawAddress = document.getElementById("filterAddress").value.trim();
+                        const rawCity = document.getElementById("filterCity").value.trim();
+                        const rawState = document.getElementById("filterState").value.trim();
+                        const rawZip = document.getElementById("filterZip").value.trim();
+                        const rawStore = document.getElementById("filterStoreName").value.trim();
 
+                        // 🔄 MEMORIZE IN SESSION STORAGE (Keeps form sticky if closed and reopened)
+                        sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
+                        sessionStorage.setItem('gasWatch_sessCity', rawCity);
+                        sessionStorage.setItem('gasWatch_sessState', rawState);
+                        sessionStorage.setItem('gasWatch_sessZip', rawZip);
+                        sessionStorage.setItem('gasWatch_sessStoreName', rawStore);
+                        sessionStorage.setItem('gasWatch_sessRadius', finalRadius.toString());
+                        sessionStorage.setItem('gasWatch_sessFuel', finalFuel);
+                        sessionStorage.setItem('gasWatch_sessMaxPrice', rawPriceValue);
 
-</script>
+                        if (typeof activeRadiusMiles !== 'undefined') activeRadiusMiles = finalRadius;
+                        if (typeof maxPriceAllowed !== 'undefined') maxPriceAllowed = finalMaxPrice;
 
-<script id="preferences_and_skins_script">
-/* ==========================================================================
-   USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED)
-   ========================================================================== */
+                        // 🎯 EVALUATE EXPLICIT PREFERENCE OPT-IN CHECKBOX
+                        const shouldSaveAsPreference = document.getElementById('saveFiltersAsPrefs')?.checked;
 
-document.addEventListener("DOMContentLoaded", function() {
-    
-    // --- 1. LOCAL STORAGE REFERENCE KEYS ---
-    const PREF_KEYS = {
-        fuel: 'gasWatch_prefFuel',
-        radius: 'gasWatch_prefRadius',
-        maxPrice: 'gasWatch_prefMaxPrice',
-        sort: 'gasWatch_prefSort',
-        skin: 'gasWatch_mapTheme', 
-        text: 'gasWatch_prefText',
-        contrast: 'gasWatch_prefMarkerContrast'
-    };
+                        if (shouldSaveAsPreference) {
+                            localStorage.setItem('gasWatch_prefRadius', finalRadius.toString());
+                            localStorage.setItem('gasWatch_prefFuel', finalFuel);
+                            localStorage.setItem('gasWatch_prefMaxPrice', rawPriceValue);
 
-// --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX (JAWG PRESET VARIATION) ---
-    const MAP_THEME_TILES = {
-        google: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-        iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        
-        midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
-        matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
-        
-        navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
-    };
+                            // Cross-pollinate directly back over to the modal inputs
+                            const prefRadiusSelect = document.getElementById('prefDefaultRadius');
+                            const prefFuelSelect = document.getElementById('prefDefaultFuel');
+                            const prefPriceInput = document.getElementById('prefMaxPrice');
 
-    const MAP_THEME_ATTRIBUTIONS = {
-        google: 'Map data © Google',
-        iphone: '© OpenStreetMap contributors, © CARTO',
-        midnight: '© OpenStreetMap contributors, © JawgMaps',
-        matrix: '© OpenStreetMap contributors, © JawgMaps',
-        navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
-    };
+                            if (prefRadiusSelect) prefRadiusSelect.value = finalRadius.toString();
+                            if (prefFuelSelect) prefFuelSelect.value = finalFuel;
+                            if (prefPriceInput) prefPriceInput.value = rawPriceValue;
+                            
+                            // Note: Home Base is updated explicitly via the Preferences Modal itself
+                            console.log("💾 Filters explicitly promoted to permanent preferences.");
+                        } else {
+                            console.log("🔒 Running a persistent sandbox session search.");
+                        }
 
-    // --- 3. INITIALIZE AND APPLY USER PARAMETERS ON RUNTIME BOOT ---
-    initUserPreferences();
+                        // Pack payload matrix tightly for backend usage
+                        const filterPayload = {
+                            address: rawAddress,
+                            city: rawCity,
+                            state: rawState,
+                            zipCode: rawZip,
+                            brandName: rawStore,
+                            radiusMiles: finalRadius,
+                            maxPriceLimit: finalMaxPrice,
+                            fuelGradeSelection: finalFuel
+                        };
 
-    function initUserPreferences() {
-        // A. Load Persistent Fuel Profile Choice
-        const savedFuel = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
-        const fuelSelect = document.getElementById('prefDefaultFuel');
-        if (fuelSelect) fuelSelect.value = savedFuel;
-        
-        const mainFuelFilter = document.getElementById('fuelType');
-        if (mainFuelFilter) mainFuelFilter.value = savedFuel;
+                        console.log("🛰️ Filters packaged and prepped for backend delivery:", filterPayload);
 
-        // B. Load Search Radius Preference
-        const savedRadius = localStorage.getItem(PREF_KEYS.radius) || '5';
-        const radiusSelect = document.getElementById('prefDefaultRadius');
-        if (radiusSelect) radiusSelect.value = savedRadius;
-        
-        const mainRadiusSlider = document.getElementById('distanceRange');
-        const mainRadiusValue = document.getElementById('distanceValue');
-        if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
-        if (mainRadiusValue) mainRadiusValue.value = savedRadius;
-
-        const savedMaxPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
-        const maxPriceInput = document.getElementById('prefMaxPrice');
-        if (maxPriceInput) maxPriceInput.value = savedMaxPrice;
-
-        // Sync it straight into your primary filter panel input field if it exists
-        const mainPriceFilter = document.getElementById('priceValue');
-        if (mainPriceFilter) mainPriceFilter.value = savedMaxPrice;
-
-
-        // C. Load List Sort Ordering Metrics
-        const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
-        const sortSelect = document.getElementById('prefDefaultSort');
-        if (sortSelect) sortSelect.value = savedSort;
-
-        // D. Load and Render Selected Map Canvas Skin Theme
-        const savedSkin = localStorage.getItem(PREF_KEYS.skin) || 'google';
-        const skinSelect = document.getElementById('prefMapSkin'); 
-        if (skinSelect) skinSelect.value = savedSkin;
-        
-        // Load Marker Contrast Preference
-        const savedContrast = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
-        const contrastSelect = document.getElementById('prefMarkerContrast');
-        if (contrastSelect) contrastSelect.value = savedContrast;
-        applyMarkerContrast(savedContrast);
-
-
-        // Let the primary map script boot natively first, then modify tile layouts if necessary
-        requestAnimationFrame(() => {
-            if (savedSkin !== 'google') {
-                switchMapTheme(savedSkin);
-            }
-        });
-
-        // E. Load Font Bubble Scaling Settings
-        const savedText = localStorage.getItem(PREF_KEYS.text) || 'normal';
-        const textSelect = document.getElementById('prefTextSize');
-        if (textSelect) textSelect.value = savedText;
-        applyTextScaling(savedText);
-    }
-
-    // --- 4. INTERACTIVE EVENT HANDLER CONNECTIONS ---
-
-    // Grade Dropdown Changes
-    document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.fuel, this.value);
-        const mainFuelFilter = document.getElementById('fuelType');
-        if (mainFuelFilter) mainFuelFilter.value = this.value;
-        triggerMapDataRefresh();
-    });
-
-    // Distance Radius Matrix Changes
-    document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.radius, this.value);
-        const mainRadiusSlider = document.getElementById('distanceRange');
-        const mainRadiusValue = document.getElementById('distanceValue');
-        if (mainRadiusSlider) mainRadiusSlider.value = this.value;
-        if (mainRadiusValue) mainRadiusValue.value = this.value;
-        triggerMapDataRefresh();
-    });
-
-    document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
-        const freshValue = this.value.trim();
-        localStorage.setItem(PREF_KEYS.maxPrice, freshValue);
-        
-        // Sync to the primary sidebar filter form variable array natively
-        const mainPriceFilter = document.getElementById('priceValue');
-        if (mainPriceFilter) mainPriceFilter.value = freshValue;
-        
-        // Trigger immediate map repaint frames as they edit the threshold
-        triggerMapDataRefresh();
-    });
-
-
-    // Sorting Logic Changes
-    document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.sort, this.value);
-        triggerMapDataRefresh();
-    });
-
-    // Map Theme Skin Changes
-    document.getElementById('prefMapSkin')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.skin, this.value);
-        switchMapTheme(this.value);
-    });
-
-    // Typography Sizing Changes
-    document.getElementById('prefTextSize')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.text, this.value);
-        applyTextScaling(this.value);
-    });
-
-    // --- 5. VISUAL REPAINT TRANSFORM MECHANISMS ---
-
-    /**
-     * 🗺️ switchMapTheme
-     * Modifies the already-initialized global 'map' instance as necessary
-     */
-    function switchMapTheme(themeName) {
-        if (typeof map === 'undefined' || !map) return;
-
-        const activeTheme = themeName || 'google';
-        const selectedUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
-        const selectedAttr = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
-
-        // Strip previous tile layers cleanly from beneath your emerald capsules
-        map.eachLayer(function(layer) {
-            if (layer instanceof L.TileLayer) {
-                map.removeLayer(layer);
-            }
-        });
-
-        // Initialize and bind the fresh graphic backdrop
-        L.tileLayer(selectedUrl, {
-            subdomains: activeTheme === 'google' ? '0123' : 'abc',
-            maxZoom: 20,
-            minZoom: 4,
-            updateWhenIdle: true,
-            attribution: selectedAttr
-        }).addTo(map);
-
-        // Dark Theme Specific Card Adjustments
-        const dynamicStyleId = 'dynamic-dark-popup-override';
-        let popupStyleElement = document.getElementById(dynamicStyleId);
-        
-        if (!popupStyleElement) {
-            popupStyleElement = document.createElement('style');
-            popupStyleElement.id = dynamicStyleId;
-            document.head.appendChild(popupStyleElement);
-        }
-        
-        if (activeTheme === 'midnight') {
-            popupStyleElement.innerHTML = `
-                .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
-                .custom-popup h3 { color: #f5f8ff !important; }
-                .custom-popup p { color: #dee0e3 !important; }
-                .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
-            `;
-        } else {
-            popupStyleElement.innerHTML = ''; // Reverts cleanly to standard white styles
-        }
-    }
-
-    /**
-     * 🔍 applyTextScaling
-     * Controls CSS micro-variables to expand marker sizing variables on the fly
-     */
-    function applyTextScaling(scale) {
-        if (scale === 'large') {
-            document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
-            document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
-        } else {
-            document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
-            document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
-        }
-    }
-
-    function applyMarkerContrast(mode) {
-        const contrastStyleId = 'dynamic-marker-contrast-override';
-        let styleEl = document.getElementById(contrastStyleId);
-        
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = contrastStyleId;
-            document.head.appendChild(styleEl);
-        }
-        
-        if (mode === 'high') {
-            styleEl.innerHTML = `
-                .gas-price-marker { 
-                    box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
-                    font-weight: 800 !important;
-                    border: 2px solid #000 !important; /* Harsh black contrast border */
+                        if (filterDisplayPanel) {
+                            filterDisplayPanel.style.display = "none";
+                        }
+                    });
                 }
-            `;
-        } else {
-            styleEl.innerHTML = ''; // Restores your pristine emerald glow configuration layout
-        }
-    }
+            });
+        </script>
 
-    /**
-     * ⚡ triggerMapDataRefresh
-     * Safety valve ensuring map displays adapt instantly to sorting choices
-     */
-    function triggerMapDataRefresh() {
-        if (typeof applyClientSideMapFilters === "function") {
-            applyClientSideMapFilters();
-        }
-    }
-});
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-    
-    // --- 1. DOM SELECTOR REFERENCES ---
-    const filterForm = document.querySelector(".filterForm");
-    const distanceSlider = document.getElementById("distanceRange");
-    const distanceLabel = document.getElementById("distanceValue");
-    const clearButton = document.getElementById("clearFiltersBtn");
-    const filterDisplayPanel = document.getElementById("filterDisplay");
-
-    // --- 2. LIVE SLIDER COUNT SYNCING ---
-    if (distanceSlider && distanceLabel) {
-        // Force initial state matching on boot frames
-        distanceLabel.value = distanceSlider.value;
-
-        // Redraw numeric text dynamically as the user slides the control knob
-        distanceSlider.addEventListener("input", function() {
-            distanceLabel.value = this.value;
-        });
-    }
-
-    // --- 3. UNIVERSAL INSTANT LOCAL FORM CLEAR ENTRY ---
-    if (clearButton && filterForm) {
-        clearButton.addEventListener("click", function(event) {
-            event.preventDefault(); // Guard against default button behaviors
-
-            // Reset text string inputs cleanly
-            document.getElementById("filterAddress").value = "";
-            document.getElementById("filterCity").value = "";
-            document.getElementById("filterState").value = "";
-            document.getElementById("filterZip").value = "";
-            document.getElementById("filterStoreName").value = "";
-            document.getElementById("prefMaxPrice").value = "";
-
-            // Revert slider variables back to default 5-mile radius baseline marks
-            if (distanceSlider && distanceLabel) {
-                distanceSlider.value = 5;
-                distanceLabel.value = 5;
-            }
-
-            // Revert dropdown index state back to Regular Unleaded option
-            const fuelSelect = document.getElementById("fuelType");
-            if (fuelSelect) fuelSelect.value = "regular";
-
-            console.log("🧼 Map filter inputs cleared cleanly local side.");
-            
-            // OPTIONAL PRO MOVE: Trigger an un-filtered map re-fetch or redraw automatically
-            if (typeof getPricesNow === "function") {
-                getPricesNow(""); // Calls back your master tracker script to dump full area data
-            }
-        });
-    }
-
-    // --- 4. BACKEND CONTEXT PREPPING & FORM SUBMIT HANDOFF ---
-    if (filterForm) {
-        filterForm.addEventListener("submit", function(event) {
-            event.preventDefault(); // Block standard form post reloads to protect map canvas frame layers
-
-            // Assemble all active entry keys tightly into a single structured payload matrix
-            const filterPayload = {
-                address: document.getElementById("filterAddress").value.trim(),
-                city: document.getElementById("filterCity").value.trim(),
-                state: document.getElementById("filterState").value.trim(),
-                zipCode: document.getElementById("filterZip").value.trim(),
-                brandName: document.getElementById("filterStoreName").value.trim(),
-                radiusMiles: parseInt(distanceSlider ? distanceSlider.value : 5),
-                maxPriceLimit: parseFloat(document.getElementById("prefMaxPrice").value) || null,
-                fuelGradeSelection: document.getElementById("fuelType") ? document.getElementById("fuelType").value : "regular"
-            };
-
-            // 🚀 THE READY ENGINE LINE: Data payload is fully staged for server.js!
-            console.log("🛰️ Filters packaged and prepped for backend delivery:", filterPayload);
-
-            /* 
-               ==========================================================================
-               UNIFIED BACKEND FETCH STRING HOOK (READY FOR NEXT STAGE)
-               ==========================================================================
-               This is the exact connection format we will use when linking up server.js:
-
-               fetch("/api/gas-prices/filter", {
-                   method: "POST",
-                   headers: { "Content-Type": "application/json" },
-                   body: JSON.stringify(filterPayload)
-               })
-               .then(response => response.json())
-               .then(filteredData => {
-                   // Clean old indicators and paint fresh filtered search results onto map canvas
-                   if (typeof clearMarkers === "function" && typeof markers !== "undefined") {
-                       clearMarkers();
-                       // (Map renderer call array loops sit here)
-                   }
-               })
-               .catch(err => console.error("Filter connection fault:", err));
-            */
-
-            // Retract the sliding overlay panel display smoothly once values pass through submission triggers
-            if (filterDisplayPanel) {
-                filterDisplayPanel.style.display = "none";
-            }
-        });
-    }
-});
-</script>
-
-<script type="text/javascript"> var infolinks_pid = 3446312; var infolinks_wsid = 0; </script> <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
-
-
+        <script type="text/javascript"> var infolinks_pid = 3446312; var infolinks_wsid = 0; </script> <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
     </body>
 </html>
