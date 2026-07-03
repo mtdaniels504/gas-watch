@@ -4221,11 +4221,11 @@
     window.markers = [];
     window.globalRawStations = [];
 
-    // Volatile Runtime Filter Sync States (Coordinated globally across all filter layers)
-    window.activeRadiusMiles = window.activeRadiusMiles || 10; 
-    window.maxPriceAllowed = window.maxPriceAllowed || null;
-    window.activeFuelType = window.activeFuelType || 'regular';
-    window.activeHomeBaseLocation = window.activeHomeBaseLocation || "";
+    // Volatile Runtime Filter Sync States
+    window.activeRadiusMiles = 10; 
+    window.maxPriceAllowed = null;
+    window.activeFuelType = 'regular';
+    window.activeHomeBaseLocation = "";
 
     // Baseline Default Coordinates (Denver, CO fallback)
     const FALLBACK_LAT = 39.7392;
@@ -4236,19 +4236,47 @@
        MAP INITIALIZATION & DOM LIFECYCLE
        ========================================================================== */
     document.addEventListener("DOMContentLoaded", function() {
-        
-        // 1. Initialize the Leaflet map container centered over baseline fallback coordinates
+        // 1. HYDRATE APP STATE FIRST (Read from LocalStorage)
+        hydratePreferences();
+
+        // 2. DETERMINE RUNTIME STARTING ANCHOR COORD
+        const startLat = parseFloat(localStorage.getItem('gasWatch_prefLat')) || FALLBACK_LAT;
+        const startLon = parseFloat(localStorage.getItem('gasWatch_prefLon')) || FALLBACK_LON;
+        const hasSavedHome = !!localStorage.getItem('gasWatch_prefHomeBase');
+
+        // 3. INITIALIZE MAP AT TARGET ANCHOR
         window.map = L.map('map', {
             zoomControl: true,
             tap: false 
-        }).setView([FALLBACK_LAT, FALLBACK_LON], 12);
+        }).setView([startLat, startLon], 12);
 
-        // ⚡ FIXED: Added standard map tiles so the actual geographic graphics render cleanly underneath markers
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(window.map);
 
-        // 2. STATE HYDRATION: Ensure engine variables match persistent baseline configurations before running UI initializations
+        // 4. BIND UI INPUT LISTENERS
+        setupSearchUIListeners();
+
+        // 5. STABILIZE AND DISPATCH DATA FETCH SIMULTANEOUSLY
+        requestAnimationFrame(() => {
+            if (window.map) window.map.invalidateSize(true);
+            
+            // Execute automated startup search query down the wire
+            if (hasSavedHome && window.activeHomeBaseLocation.trim() !== "") {
+                console.log(`🏠 Startup profile Home Base found: "${window.activeHomeBaseLocation}". Syncing backend layer...`);
+                getPricesNow(window.activeHomeBaseLocation);
+            } else {
+                console.log("🌲 No saved Home Base found. Rendering default Denver baseline ecosystem.");
+                dropDenverWelcomeMarker();
+                getPricesNow(FALLBACK_ZIP);
+            }
+        });
+    });
+
+    /* ==========================================================================
+       STATE MANAGEMENT UTILITIES
+       ========================================================================== */
+    function hydratePreferences() {
         const storedRadius = localStorage.getItem('gasWatch_prefRadius');
         if (storedRadius) window.activeRadiusMiles = parseInt(storedRadius, 10) || 10;
         
@@ -4262,82 +4290,42 @@
 
         window.activeHomeBaseLocation = localStorage.getItem('gasWatch_prefHomeBase') || "";
 
-        // 3. Safely coordinate external preference setup and style-painting rules
+        // Safely wire up peripheral UI listeners / painting engines if loaded elsewhere
         if (typeof setupPreferenceEventListeners === "function") setupPreferenceEventListeners();
         if (typeof initUserPreferences === "function") initUserPreferences();
+    }
 
-        // 4. UNIFIED SEARCH UI LISTENERS: Hook up exact HTML ID entry points
+    function dropDenverWelcomeMarker() {
+        const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
+            icon: L.divIcon({ className: 'black-marker-icon' })
+        }).addTo(window.map);
+        
+        centerMarker.bindPopup(`
+            <div class="custom-popup">
+                <h3>Welcome to Denver!</h3>
+                <p>Set your custom location in <b>Preferences</b> to update your default starting view area.</p>
+            </div>
+        `).openPopup();
+        
+        window.markers.push(centerMarker);
+    }
+
+    function setupSearchUIListeners() {
         const bar = document.getElementById("searchBar");
         const icon = document.getElementById("extSearchIcon");
 
         if (bar) {
-            bar.addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    searchLocation();
-                }
+            bar.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") { e.preventDefault(); searchLocation(); }
             });
         }
-
         if (icon) {
-            icon.addEventListener("click", function(event) {
-                event.preventDefault();
-                searchLocation();
-            });
-        }
-
-        // 5. Force map layout rendering stabilization and kick off application data load
-        requestAnimationFrame(() => {
-            if (window.map) {
-                window.map.invalidateSize(true);
-            }
-            initApp(); 
-        });
-    });
-
-    /* ==========================================================================
-       APP INITIALIZATION ROUTER
-       ========================================================================== */
-    function initApp() {
-        loadDefaultLocation();
-    }
-
-    /* ==========================================================================
-       DEFAULT MAIN DATA LOADER (PREFERENCE-AWARE)
-       ========================================================================== */
-    function loadDefaultLocation() {
-        if (window.initialLoadTriggered || window.isSearching) return;
-        window.initialLoadTriggered = true;
-
-        if (window.activeHomeBaseLocation && window.activeHomeBaseLocation.trim() !== "") {
-            console.log(`🏠 Startup profile Home Base identified: "${window.activeHomeBaseLocation}". Initializing backend fetch...`);
-            if (typeof getPricesNow === "function") {
-                getPricesNow(window.activeHomeBaseLocation);
-            }
-        } else {
-            console.log("🌲 No saved Home Base found. Defaulting to Denver baseline environment.");
-
-            const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
-                icon: L.divIcon({ className: 'black-marker-icon' })
-            }).addTo(window.map);
-            
-            centerMarker.bindPopup(`
-                <div class="custom-popup">
-                    <h3>Hello, Denver!</h3>
-                    <p>Set a persistent "Home Base Location" in Preferences to change this default startup layout view.</p>
-                </div>
-            `).openPopup();
-            
-            window.markers.push(centerMarker);
-
-            if (typeof getPricesNow === "function") {
-                getPricesNow(FALLBACK_ZIP);
-            }
+            icon.addEventListener("click", function(e) { e.preventDefault(); searchLocation(); });
         }
     }
 
     /* ==========================================================================
-       CLEAR MARKERS
+       CLEAR MARKERS UTILITY (ADDED BACK IN)
        ========================================================================== */
     function clearMarkers() {
         window.markers.forEach(marker => {
@@ -4355,33 +4343,28 @@
 
         const BACKEND_URL = "/api/gas-prices";
         clearMarkers();
-        
         window.globalRawStations = [];
 
         try {
-            // Pack and stream active states down the pipe to backend
             const response = await fetch(BACKEND_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     search: searchQuery,
                     radius: window.activeRadiusMiles,
-                    fuelType: window.activeFuelType // Aligned naming convention across layers
+                    fuelType: window.activeFuelType
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`Server returned status code: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
 
             const datasetItems = await response.json();
             if (!datasetItems || datasetItems.length === 0) {
-                console.warn("⚠️ No station data returned from backend engine.");
+                console.warn("⚠️ Empty payload returned from backend query location.");
                 applyClientSideMapFilters();
                 return;
             }
 
-            // Map structural payload safely down into state tracking array
             window.globalRawStations = datasetItems.map(station => {
                 let rawLat = station.lat ?? station.latitude ?? station.location?.lat ?? station.location?.latitude;
                 let rawLon = station.lon ?? station.longitude ?? station.location?.lon ?? station.location?.longitude;
@@ -4398,21 +4381,17 @@
                     postedTime: station.postedTime,
                     distance: parseFloat(station.distance || 0)
                 };
-            }).filter(station => !isNaN(station.lat) && !isNaN(station.lon)); // Remove breaking corrupted objects
+            }).filter(station => !isNaN(station.lat) && !isNaN(station.lon));
 
-            console.log(`📡 Saved ${window.globalRawStations.length} map-ready points directly to the client data layer.`);
-
-            // Run UI filters on cached data
             applyClientSideMapFilters();
 
-            // Dynamically fit the map bounds to contain all returned markers perfectly
             if (window.map && window.globalRawStations.length > 0) {
                 const bounds = window.globalRawStations.map(s => [s.lat, s.lon]);
                 window.map.fitBounds(bounds, { padding: [50, 50] });
             }
 
         } catch (error) {
-            console.error("🔴 Connection failed completely:", error);
+            console.error("🔴 Map synchronization fetch failed completely:", error);
         } finally {
             window.isSearching = false;
         }
@@ -4484,7 +4463,6 @@
         
         console.log("⚙️ Re-filtering active map view elements against cache...");
 
-        // Clean inputs directly at retrieval points
         const filterAddress   = document.getElementById('filterAddress')?.value.trim().toLowerCase() || '';
         const filterCity      = document.getElementById('filterCity')?.value.trim().toLowerCase() || '';
         const filterZip       = document.getElementById('filterZip')?.value.trim() || '';
@@ -4511,8 +4489,7 @@
                 return false;
             }
 
-            // ⚡ FIXED: Shifted from absolute match (!==) to loose containment inclusion (.includes) 
-            // This prevents string layout bugs or state tail-codes from breaking matching lookups
+            // D. FILTER: City Containment Checking
             if (filterCity && !station.city?.toLowerCase().includes(filterCity)) {
                 return false;
             }
@@ -4550,10 +4527,10 @@
     }
 </script>
 
-        <script id="preferences_and_skins_script">
+<script id="preferences_and_skins_script">
             /* ==========================================================================
-            USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED & CROSS-POLLINATED)
-            ========================================================================== */
+               USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED & CROSS-POLLINATED)
+               ========================================================================== */
 
             // --- 1. LOCAL STORAGE REFERENCE KEYS ---
             const PREF_KEYS = {
@@ -4569,7 +4546,8 @@
 
             // --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
             const MAP_THEME_TILES = {
-                google: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                // ⚡ FIXED: Added subdomain variable placeholder {s} to prevent Leaflet parsing crashes
+                google: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
                 iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                 midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
                 matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
@@ -4752,6 +4730,7 @@
                 }
 
                 activeBaseLayer = L.tileLayer(selectedUrl, {
+                    // ⚡ FIXED: Adjusted subdomain definitions to accommodate Google server load allocation indices safely
                     subdomains: activeTheme === 'google' ? '0123' : 'abc',
                     maxZoom: 20,
                     minZoom: 4,
@@ -4788,6 +4767,8 @@
                     document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
                     document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
                 }
+                // 🔄 CROSS-SCRIPT OPTIMIZATION: Forces Leaflet DOM to immediately clean and apply new text scaling dimensions
+                triggerMapDataRefresh();
             }
 
             function applyMarkerContrast(mode) {
@@ -4811,6 +4792,8 @@
                 } else {
                     styleEl.innerHTML = ''; 
                 }
+                // 🔄 CROSS-SCRIPT OPTIMIZATION: Forces Leaflet DOM to instantly redraw current layout with contrast rendering
+                triggerMapDataRefresh();
             }
 
             function triggerMapDataRefresh() {
@@ -4832,7 +4815,7 @@
             }
         </script>
 
-        <script id="main_filter_interface_script">
+<script id="main_filter_interface_script">
             document.addEventListener("DOMContentLoaded", function() {
             
                 // --- 1. DOM SELECTOR REFERENCES ---
@@ -4869,7 +4852,9 @@
 
                 if (distanceSlider && distanceLabel) {
                     distanceSlider.value = activeRadius;
-                    distanceLabel.value = activeRadius;
+                    // Standardized element setting context safely handling text node types
+                    if (distanceLabel.tagName === "INPUT") distanceLabel.value = activeRadius;
+                    else distanceLabel.textContent = activeRadius;
                 }
                 if (fuelSelect) fuelSelect.value = activeFuel;
                 if (priceFilterInput) priceFilterInput.value = activeMaxPrice;
@@ -4881,7 +4866,9 @@
                 // --- 3. LIVE INPUT CHANGES & RE-CROSS POLLINATION ---
                 if (distanceSlider && distanceLabel) {
                     distanceSlider.addEventListener("input", function() {
-                        distanceLabel.value = this.value;
+                        if (distanceLabel.tagName === "INPUT") distanceLabel.value = this.value;
+                        else distanceLabel.textContent = this.value;
+                        
                         window.activeRadiusMiles = parseInt(this.value, 10) || 10;
                         if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
                     });
@@ -4927,7 +4914,8 @@
                         const preferredRadius = localStorage.getItem('gasWatch_prefRadius') || '10';
                         if (distanceSlider && distanceLabel) {
                             distanceSlider.value = preferredRadius;
-                            distanceLabel.value = preferredRadius;
+                            if (distanceLabel.tagName === "INPUT") distanceLabel.value = preferredRadius;
+                            else distanceLabel.textContent = preferredRadius;
                         }
 
                         window.activeRadiusMiles = parseInt(preferredRadius, 10) || 10;
@@ -4989,21 +4977,12 @@
                             const prefFuelSelect = document.getElementById('prefDefaultFuel');
                             const prefPriceInput = document.getElementById('prefMaxPrice');
 
-                            // FIX: Value sync coupled with manual event notification
-                            if (prefRadiusSelect) {
-                                prefRadiusSelect.value = finalRadius.toString();
-                                prefRadiusSelect.dispatchEvent(new Event('change'));
-                            }
-                            if (prefFuelSelect) {
-                                prefFuelSelect.value = finalFuel;
-                                prefFuelSelect.dispatchEvent(new Event('change'));
-                            }
-                            if (prefPriceInput) {
-                                prefPriceInput.value = rawPriceValue;
-                                prefPriceInput.dispatchEvent(new Event('input'));
-                            }
+                            // ⚡ FIXED: Updated raw values directly without throwing noisy events to prevent infinite event cycles
+                            if (prefRadiusSelect) prefRadiusSelect.value = finalRadius.toString();
+                            if (prefFuelSelect) prefFuelSelect.value = finalFuel;
+                            if (prefPriceInput) prefPriceInput.value = rawPriceValue;
                             
-                            console.log("💾 Filters explicitly promoted to permanent preferences.");
+                            console.log("💾 Filters promoted directly to preferences bypassing cross-pollination event loops.");
                         }
 
                         const filterPayload = {
