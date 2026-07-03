@@ -130,32 +130,32 @@ router.post('/', async (req, res) => {
         let processedStations = [];
 
         if (Array.isArray(rawDatasetItems)) {
+            // Locate this block inside Phase 3 of your gasPrices.js route:
             processedStations = rawDatasetItems.map((station, index) => {
                 
-                // 📐 COORDINATE HARNESS: Fall back gracefully to a non-overlapping scatter layout if data lacks exact tags
                 const sLat = parseFloat(station.latitude || station.lat || (centerLat ? centerLat + (index * 0.0015) : null));
                 const sLon = parseFloat(station.longitude || station.lng || (centerLon ? centerLon + (index * 0.0015) : null));
 
-                const cash = parseFloat(station.price_cash || 0);
-                const credit = parseFloat(station.price_credit || 0);
+                // 🔄 FIXED: Point to Apify's native "cashPrice" and "creditPrice" keys
+                const cash = parseFloat(station.cashPrice || station.price_cash || 0);
+                const credit = parseFloat(station.creditPrice || station.price_credit || 0);
                 
-                // Unify price variants under a single normalized float flag, preferring cash structures
                 const resolvedPrice = cash > 0 ? cash : (credit > 0 ? credit : 0);
 
-                // Run exact, live distance matrix tracking against our geocoded search epicenter center point
                 const computedDistance = (centerLat && centerLon && sLat && sLon) 
                     ? calculateHaversineDistance(centerLat, centerLon, sLat, sLon)
                     : 0;
 
-                // Return a uniform, clean object layout that maps seamlessly to our frontend code hooks
                 return {
                     name: station.name || "Gas Station",
-                    address: station.address_line1 || station.address || "Unknown Address",
-                    city: station.address_locality || station.city || "",
-                    zip: station.address_postal_code || station.zip || "",
+                    // 🔄 FIXED: Handle direct address string alternatives fallback
+                    address: station.address || station.address_line1 || "Unknown Address",
+                    city: station.city || station.address_locality || "",
+                    zip: station.zip || station.address_postal_code || "",
                     price: resolvedPrice,
                     displayPrice: resolvedPrice > 0 ? `$${resolvedPrice.toFixed(2)}` : "N/A",
-                    postedTime: station.postedTime || station.updatedAt || null,
+                    // 🔄 FIXED: Handle Apify's reporting timestamps
+                    postedTime: station.cashPosted || station.creditPosted || station.postedTime || null,
                     lat: sLat,
                     lon: sLon,
                     distance: computedDistance
