@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
             console.log(`📡 [Cache Miss] Running wide-net data sweep on Apify Actor for: "${finalSearchParameter}"`);
             
             /* ==========================================================================
-               PHASE 1: GEOLOCATION ORIGIN ANCHORING (FIXED RUNTIME EVALUATION)
+               PHASE 1: GEOLOCATION ORIGIN ANCHORING
                ========================================================================== */
             let centerLat = null;
             let centerLon = null;
@@ -78,16 +78,13 @@ router.post('/', async (req, res) => {
             }
 
             /* ==========================================================================
-               PHASE 2: LIVE WIDE-NET DATA SCRAPE WITH MAX ITEMS EXPANSION
+               PHASE 2: LIVE DATA SCRAPE (ADJUSTED TARGET PARAMETERS)
                ========================================================================== */
             const inputConfig = {
                 "search": finalSearchParameter, 
                 "fuel": 1,
-                "maxAge": 0,
-                "lang": "en",
-                "radius": 25,
-                "maxResults": 100, // ⚡ ADDED: Explicit result target limits 
-                "limit": 100       // ⚡ ADDED: Secondary catch-all limit parameters
+                "lang": "en"
+                // ⚡ Removed 'maxAge: 0' to pull the actor's full cached dataset results pool natively 
             };
 
             const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=30`;
@@ -111,13 +108,12 @@ router.post('/', async (req, res) => {
             }
 
             /* ==========================================================================
-               PHASE 3: TRANSLATION & SPATIAL INJECTION MATRIX (COORDINATE PARSER FIXED)
+               PHASE 3: TRANSLATION MATRIX
                ========================================================================== */
             if (Array.isArray(rawDatasetItems)) {
                 stationsDataset = rawDatasetItems.map((station, index) => {
-                    // 🛡️ ACCURATE DATA PARSING MAP: Capture data locations from the nested structures
-                    const sLat = parseFloat(station.latitude || station.lat || station.location?.lat || station.coords?.lat || (centerLat ? centerLat + (index * 0.0015) : null));
-                    const sLon = parseFloat(station.longitude || station.lng || station.lon || station.location?.lng || station.coords?.lng || (centerLon ? centerLon + (index * 0.0015) : null));
+                    const sLat = parseFloat(station.latitude || station.lat || (centerLat ? centerLat + (index * 0.0015) : null));
+                    const sLon = parseFloat(station.longitude || station.lng || (centerLon ? centerLon + (index * 0.0015) : null));
 
                     const cash = parseFloat(station.cashPrice || station.price_cash || station.price || 0);
                     const credit = parseFloat(station.creditPrice || station.price_credit || 0);
@@ -147,11 +143,11 @@ router.post('/', async (req, res) => {
                 stationsDataset = [];
             }
         } else {
-            console.log(`🎯 [Cache Hit] Serving high-performance data array for location key: ${locationCacheKey}`);
+            console.log(`🎯 [Cache Hit] Serving data array for location key: ${locationCacheKey}`);
         }
 
         /* ==========================================================================
-           PHASE 4: LIVE DYNAMIC MEMORY SLICING (RADIUS & BRAND)
+           PHASE 4: LIVE FILTER SLICING
            ========================================================================== */
         let filteredResponse = stationsDataset.filter(station => station.distance <= targetRadius);
 
