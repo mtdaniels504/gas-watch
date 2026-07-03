@@ -4364,123 +4364,153 @@
             GET PRICES NOW (FETCH ENGINE)
             ========================================================================== */
 
-            async function getPricesNow(searchQuery) {
-                if (isSearching) return;
-                isSearching = true;
+/* ==========================================================================
+   GET PRICES NOW (FETCH ENGINE)
+   ========================================================================== */
+async function getPricesNow(searchQuery) {
+    if (isSearching) return;
+    isSearching = true;
 
-                const BACKEND_URL = "/api/gas-prices";
-                clearMarkers();
+    const BACKEND_URL = "/api/gas-prices";
+    clearMarkers();
+    
+    // Reset our master immutable data cache for the new query location
+    globalRawStations = [];
 
-                try {
-                    const response = await fetchWithTimeout(BACKEND_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ search: searchQuery })
-                    });
+    try {
+        const response = await fetchWithTimeout(BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ search: searchQuery })
+        });
 
-                    const datasetItems = await response.json();
-                    if (!datasetItems || datasetItems.length === 0) return;
+        const datasetItems = await response.json();
+        if (!datasetItems || datasetItems.length === 0) {
+            console.warn("⚠️ No station data returned from backend engine.");
+            return;
+        }
 
-                    // ⚡ EFFICIENT UPGRADE: Map each station to an independent promise
-                    const geocodePromises = datasetItems.map(async (station, index) => {
-                        const name = station.name || "Gas Station";
-                        const address = station.address_line1 || "Unknown Address";
-                        const locality = station.address_locality || "";
-                        const region = station.address_region || "";
-                        
-                        const cash = parseFloat(station.price_cash || 0);
-                        const credit = parseFloat(station.price_credit || 0);
-                        const finalPrice = cash > 0 ? cash : credit;
-                        const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
+        // ⚡ EFFICIENT UPGRADE: Map each station to an independent geocoding promise
+        const geocodePromises = datasetItems.map(async (station, index) => {
+            const name = station.name || "Gas Station";
+            const address = station.address_line1 || "Unknown Address";
+            const locality = station.address_locality || "";
+            const region = station.address_region || "";
+            const city = locality; // Map for client-side matching
+            const zip = station.address_postal_code || ""; // Extract zip explicitly if available
+            
+            const cash = parseFloat(station.price_cash || 0);
+            const credit = parseFloat(station.price_credit || 0);
+            const finalPrice = cash > 0 ? cash : credit;
+            const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
 
-                        const fullTextAddress = `${address}, ${locality}, ${region}`;
-                        
-                        // Extract raw timing data here before going to the geocoder
-                        const postedTime = station.postedTime || null;
+            const fullTextAddress = `${address}, ${locality}, ${region}`;
+            const postedTime = station.postedTime || null;
+            const distance = station.distance || 0; // Capture distance if provided by API
 
-                        try {
-                            // 🕒 Staged delay based on index to respect Nominatim's strict 1-req/sec policy
-                            await new Promise(resolve => setTimeout(resolve, index * 200));
+            try {
+                // 🕒 Staged delay based on index to respect Nominatim's strict 1-req/sec policy
+                await new Promise(resolve => setTimeout(resolve, index * 250));
 
-                            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
-                            const geoResponse = await fetch(geocodeUrl, {
-                                headers: { "User-Agent": "GasWatchApp" }
-                            });
-                            const geoData = await geoResponse.json();
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
+                const geoResponse = await fetch(geocodeUrl, {
+                    headers: { "User-Agent": "GasWatchApp" }
+                });
+                const geoData = await geoResponse.json();
 
-                            if (geoData && geoData.length > 0) {
-                                const lat = parseFloat(geoData[0].lat);
-                                const lon = parseFloat(geoData[0].lon);
+                if (geoData && geoData.length > 0) {
+                    const lat = parseFloat(geoData[0].lat);
+                    const lon = parseFloat(geoData[0].lon);
 
-                                return { lat, lon, name, address, displayPrice, index, postedTime };
-                            }
-                        } catch (geoError) {
-                            console.error(`Could not locate address: ${fullTextAddress}`, geoError);
-                        }
-                        return null; 
-                    });
-
-                    const resolvedStations = await Promise.all(geocodePromises);
-                    let firstValidCoords = null;
-
-                    resolvedStations.forEach(station => {
-                        if (!station) return; 
-
-                        // ✅ FIXED: Captures the absolute first station that resolves successfully to center the map viewport
-                        if (!firstValidCoords) {
-                            firstValidCoords = [station.lat, station.lon];
-                        }
-
-                        const priceIcon = L.divIcon({
-                            className: 'gas-price-marker', 
-                            html: station.displayPrice,     
-                            iconSize: null,                
-                            iconAnchor: null            
-                        });
-
-                        // 🕒 Safely pulling the timestamp passed through the promise
-                        const rawTime = station.postedTime; 
-                        let displayTime = "Updated recently";
-
-                        if (rawTime) {
-                            try {
-                                const dateObj = new Date(rawTime);
-                                displayTime = dateObj.toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-                            } catch(e) {
-                                displayTime = rawTime; 
-                            }
-                        }
-
-                        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
-                        
-                        marker.bindPopup(`
-                            <b>${station.name}</b><br>
-                            ${station.address}<br>
-                            <b>${station.displayPrice}</b><br>
-                            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
-                                🕒 ${displayTime}
-                            </div>
-                        `);
-                        markers.push(marker);
-                    });
-
-                    // 🗺️ Glide over smoothly to show the user the new results area
-                    if (firstValidCoords) {
-                        moveMapSafely(firstValidCoords[0], firstValidCoords[1]);
-                    }
-
-                } catch (error) {
-                    console.error("Fetch failed:", error);
-                } finally {
-                    isSearching = false;
+                    // Return a uniform structural data object to populate our master data anchor cache
+                    return { 
+                        lat, 
+                        lon, 
+                        name, 
+                        address, 
+                        city, 
+                        zip, 
+                        price: finalPrice, 
+                        displayPrice, 
+                        postedTime, 
+                        distance 
+                    };
                 }
+            } catch (geoError) {
+                console.error(`Could not locate address: ${fullTextAddress}`, geoError);
             }
+            return null; 
+        });
 
+        const resolvedStations = await Promise.all(geocodePromises);
+        
+        // 💾 HYDRATE MASTER DATA LAYER: Filter out failures and commit to immutable global cache
+        globalRawStations = resolvedStations.filter(station => station !== null);
+
+        if (globalRawStations.length === 0) {
+            console.warn("⚠️ Geocoding yielded zero map-routable locations.");
+            return;
+        }
+
+        // 🎯 LEVERAGE FILTER LOGIC: Hand off rendering completely to your client-side filters
+        // This ensures radius boundaries and max price caps are instantly enforced on search!
+        applyClientSideMapFilters();
+
+        // 🗺️ VIEWPORT FOCUS: Capture the absolute first valid coordinate cluster to glide map position smoothly
+        const firstValid = globalRawStations[0];
+        if (firstValid && typeof moveMapSafely === "function") {
+            moveMapSafely(firstValid.lat, firstValid.lon);
+        }
+
+    } catch (error) {
+        console.error("Fetch failed:", error);
+    } finally {
+        isSearching = false;
+    }
+}
+
+/* ==========================================================================
+   STATION MARKER CREATION UTILITY (ISOLATED UI LAYER)
+   ========================================================================== */
+function renderStationMarker(station) {
+    if (!map || !station) return;
+
+    const priceIcon = L.divIcon({
+        className: 'gas-price-marker', 
+        html: station.displayPrice,     
+        iconSize: null,                
+        iconAnchor: null            
+    });
+
+    // 🕒 Timetamp formatting pipeline
+    let displayTime = "Updated recently";
+    if (station.postedTime) {
+        try {
+            const dateObj = new Date(station.postedTime);
+            displayTime = dateObj.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch(e) {
+            displayTime = station.postedTime; 
+        }
+    }
+
+    const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
+    
+    marker.bindPopup(`
+        <b>${station.name}</b><br>
+        ${station.address}<br>
+        <b>${station.displayPrice}</b><br>
+        <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+            🕒 ${displayTime}
+        </div>
+    `);
+
+    markers.push(marker);
+}
             /* ==========================================================================
             SEARCH HANDLER
             ========================================================================== */
