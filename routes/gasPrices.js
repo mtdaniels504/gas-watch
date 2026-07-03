@@ -1,203 +1,94 @@
-/* ==========================================================================
-   MODULE IMPORT DIRECTORY & CACHE MANAGEMENT
-   ========================================================================== */
 const express = require('express');
 const router = express.Router();
 const NodeCache = require('node-cache');
 
-// 💾 Cache spatial responses for 15 minutes (900s)
 const gasCache = new NodeCache({ stdTTL: 900, checkperiod: 120 });
 
-// Map incoming frontend fuel grades to the structural integer definitions expected by the Apify scraper
-const FUEL_GRADE_MAP = {
-    'regular': 1,
-    'midgrade': 2,
-    'premium': 3,
-    'diesel': 4
-};
-
-/* ==========================================================================
-   SPATIAL CALCULATIONS UTILITY (HAVERSINE GEOMETRY ENGINE)
-   ========================================================================== */
-function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
-    
-    const R = 3958.8; // Earth Radius in Miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    
-    const a = 
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return parseFloat((R * c).toFixed(2));
-}
-
-/* ==========================================================================
-   PRIMARY ROUTE INTERFACE (POST /api/gas-prices)
-   ========================================================================== */
 router.post('/', async (req, res) => {
     try {
-        // ⚡ FIXED: Added fallback extraction matching 'brandName', 'zipCode', and 'fuelGradeSelection' from client payloads
-        const { 
-            search, 
-            radius, 
-            storeName, brandName, 
-            address, 
-            city, 
-            state, 
-            zip, zipCode,
-            fuelGradeSelection 
-        } = req.body || {};
+        // ⚡ THE FIX: Add "= {}" at the end to prevent native engine crashes if req.body is undefined
+        const { search, radius, storeName, address, city, state, zip } = req.body || {};
         
-        const targetStore = (storeName || brandName || "").trim();
-        const targetZip = (zip || zipCode || "").trim();
-        const targetFuelGrade = fuelGradeSelection || "regular";
-
         const APIFY_TOKEN = process.env.APIFY_TOKEN; 
         const ACTOR_ID = "johnvc~fuelprices";
         
         if (!APIFY_TOKEN) {
-            console.error("🚨 Critical Error: APIFY_TOKEN is missing from the environment vault.");
-            return res.status(500).json({ error: "Server configuration missing active data key." });
+            console.error("Critical: APIFY_TOKEN is missing from environment vault.");
+            return res.status(500).json({ error: "Server configuration missing API key." });
         }
 
-        // Build a consistent location query
-        let finalSearchParameter = targetZip || [address, city, state].filter(p => p).join(", ") || search || "Denver";
-        finalSearchParameter = finalSearchParameter.trim();
+        // Build parameters for Apify
+        let finalSearchParameter = zip || [address, city, state].filter(p => p).join(", ") || search || "Denver";
         
-        const targetRadius = parseInt(radius, 10) && !isNaN(parseInt(radius, 10)) ? parseInt(radius, 10) : 15;
+        let cacheKeyParts = [`text-${finalSearchParameter.replace(/\s+/g, '-').toLowerCase()}`];
+        if (storeName) cacheKeyParts.push(`brand-${storeName.replace(/\s+/g, '-').toLowerCase()}`);
+        const searchRadius = parseInt(radius) && !isNaN(parseInt(radius)) ? parseInt(radius) : 15;
+        cacheKeyParts.push(`rad-${searchRadius}`);
 
-        // Include the fuel type selection inside the cache signature to prevent cross-grade display leakage
-        const locationCacheKey = `loc-${finalSearchParameter.replace(/\s+/g, '-').toLowerCase()}-${targetFuelGrade}`;
+        const cacheKey = cacheKeyParts.join('_');
 
-        let stationsDataset = gasCache.get(locationCacheKey);
+        // Cache Check
+        const cachedData = gasCache.get(cacheKey);
+        if (cachedData) {
+            return res.json(cachedData);
+        }
 
-        if (!stationsDataset) {
-            console.log(`📡 [Cache Miss] Running sweep on Apify Actor for: "${finalSearchParameter}" [Grade: ${targetFuelGrade}]`);
+        // Fetch from Apify
+        const inputConfig = {
+            "search": finalSearchParameter, 
+            "fuel": 1,
+            "maxAge": 0,
+            "lang": "en",
+            "radius": searchRadius
+        };
+
+        // ✨ THE FIXED URL ENDPOINT DIRECTORY Endpoints
+        const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=8`;
+
+        let datasetItems = [];
+
+        // 🛡️ CRASH PROTECTOR: Wrap the raw fetch call inside its own catch loop to prevent server restarts
+        try {
+            console.log(`📡 [Backend Miss] Contacting Apify securely: ${finalSearchParameter}`);
+            const apifyResponse = await fetch(apifyUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(inputConfig)
+            });
+
+            if (!apifyResponse.ok) {
+                console.error(`⚠️ Apify server returned an error status: ${apifyResponse.status}`);
+                return res.status(502).json({ error: "Gas price database provider is currently unavailable." });
+            }
             
-            /* ==========================================================================
-               PHASE 1: GEOLOCATION ORIGIN ANCHORING
-               ========================================================================== */
-            let centerLat = 39.7392; 
-            let centerLon = -104.9903;
-            try {
-                const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalSearchParameter)}&limit=1`;
-                const geoRes = await fetch(geoUrl, { headers: { "User-Agent": "GasWatchAppBackend" } });
-                
-                if (geoRes.ok) {
-                    const geoData = await geoRes.json();
-                    if (geoData && geoData.length > 0) {
-                        centerLat = parseFloat(geoData[0].lat);
-                        centerLon = parseFloat(geoData[0].lon);
-                        console.log(`📍 Geocoded search origin: [${centerLat}, ${centerLon}]`);
-                    }
-                }
-            } catch (geoErr) {
-                console.warn("⚠️ Geocoding failed on search origin text query.", geoErr.message);
-            }
-
-            /* ==========================================================================
-               PHASE 2: LIVE ORIGINAL WORKING SCRAPE
-               ========================================================================== */
-            // ⚡ FIXED: Map string fuel preferences directly to the target configuration parameters
-            const apifyFuelId = FUEL_GRADE_MAP[targetFuelGrade.toLowerCase()] || 1;
-
-            const inputConfig = {
-                "search": finalSearchParameter, 
-                "fuel": apifyFuelId,
-                "maxAge": 0,
-                "lang": "en",
-                "radius": 25 
-            };
-
-            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=15`;
-            let rawDatasetItems = [];
-
-            try {
-                const apifyResponse = await fetch(apifyUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(inputConfig)
-                });
-
-                if (!apifyResponse.ok) {
-                    console.error(`🚨 Apify responded with status: ${apifyResponse.status}`);
-                    return res.status(502).json({ error: "Live gas price data provider unavailable." });
-                }
-                rawDatasetItems = await apifyResponse.json();
-            } catch (fetchErr) {
-                console.error("🚨 Apify Fetch Execution Error:", fetchErr.message);
-                return res.status(502).json({ error: "Failed to establish synchronization with data source stream." });
-            }
-
-            /* ==========================================================================
-               PHASE 3: TRANSLATION & GEOMETRIC DISTRIBUTION MATRIX
-               ========================================================================== */
-            if (Array.isArray(rawDatasetItems)) {
-                stationsDataset = rawDatasetItems.map((station, index) => {
-                    
-                    const computedDistance = station.distance ? parseFloat(station.distance) : 0;
-                    
-                    // Convert distances into coordinate displacements distributed evenly around a circle
-                    const angle = (index * (360 / Math.max(rawDatasetItems.length, 1))) * (Math.PI / 180);
-                    const latOffset = (computedDistance / 69.0) * Math.sin(angle); 
-                    const lonOffset = (computedDistance / (69.0 * Math.cos(centerLat * Math.PI / 180))) * Math.cos(angle);
-
-                    const sLat = centerLat + latOffset;
-                    const sLon = centerLon + lonOffset;
-
-                    const cash = parseFloat(station.cashPrice || station.price_cash || 0);
-                    const credit = parseFloat(station.creditPrice || station.price_credit || 0);
-                    const resolvedPrice = cash > 0 ? cash : (credit > 0 ? credit : 0);
-
-                    return {
-                        name: station.name || "Gas Station",
-                        address: station.address || station.address_line1 || "Unknown Address",
-                        city: station.city || station.address_locality || "",
-                        zip: station.zip || station.address_postal_code || "",
-                        price: resolvedPrice,
-                        displayPrice: resolvedPrice > 0 ? `$${resolvedPrice.toFixed(2)}` : "N/A",
-                        postedTime: station.cashPosted || station.creditPosted || station.postedTime || null,
-                        lat: sLat,
-                        lon: sLon,
-                        distance: computedDistance
-                    };
-                });
-                
-                // Commit complete location array down to raw cache
-                gasCache.set(locationCacheKey, stationsDataset);
-            } else {
-                stationsDataset = [];
-            }
+            datasetItems = await apifyResponse.json();
+        } catch (fetchErr) {
+            console.error("🔴 Fatal Fetch Error: Apify URL connection failed completely.", fetchErr.message);
+            return res.status(502).json({ error: "Failed to connect to the gas price database engine repository." });
         }
 
-        /* ==========================================================================
-           PHASE 4: LIVE FILTER SLICING
-           ========================================================================== */
-        let filteredResponse = stationsDataset.filter(station => station.distance <= targetRadius);
-
-        // ⚡ FIXED: Uses structural safe fallbacks for normalized brand string searches
-        if (targetStore) {
-            const cleanTargetBrand = targetStore.toLowerCase();
-            filteredResponse = filteredResponse.filter(station => station.name.toLowerCase().includes(cleanTargetBrand));
+        // Brand Filtering
+        if (storeName && Array.isArray(datasetItems)) {
+            const cleanTargetBrand = storeName.toLowerCase().trim();
+            datasetItems = datasetItems.filter(station => (station.name || '').toLowerCase().includes(cleanTargetBrand));
         }
 
-        // Sort ascending by lowest price
-        filteredResponse.sort((a, b) => {
-            if (a.price === 0) return 1;
-            if (b.price === 0) return -1;
-            return a.price - b.price;
-        });
+        // ✨ PRODUCTION SORTING: Sort by Cheapest Cash/Credit Price First
+        if (Array.isArray(datasetItems)) {
+            datasetItems.sort((a, b) => {
+                const priceA = parseFloat(a.price_cash || a.price_credit || Infinity);
+                const priceB = parseFloat(b.price_cash || b.price_credit || Infinity);
+                return priceA - priceB;
+            });
+        }
 
-        console.log(`⚡ Output Complete: Returning ${filteredResponse.length} matching localized stations for grade [${targetFuelGrade}].`);
-        res.json(filteredResponse);
+        // Send the raw dataset straight back
+        gasCache.set(cacheKey, datasetItems);
+        res.json(datasetItems);
 
     } catch (error) {
-        console.error("🔴 Unhandled route runtime error exception thrown:", error.stack || error.message);
-        res.status(500).json({ error: "Failed to complete processing operations." });
+        console.error("🔴 Backend error:", error.message);
+        res.status(500).json({ error: "Failed to fetch fuel prices safely." });
     }
 });
 
