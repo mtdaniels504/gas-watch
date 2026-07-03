@@ -54,13 +54,13 @@ router.post('/', async (req, res) => {
         let stationsDataset = gasCache.get(locationCacheKey);
 
         if (!stationsDataset) {
-            console.log(`📡 [Cache Miss] Running wide-net data sweep on Apify Actor for: "${finalSearchParameter}"`);
+            console.log(`📡 [Cache Miss] Running sweep on Apify Actor for: "${finalSearchParameter}"`);
             
             /* ==========================================================================
                PHASE 1: GEOLOCATION ORIGIN ANCHORING
                ========================================================================== */
-            let centerLat = null;
-            let centerLon = null;
+            let centerLat = 39.7392; 
+            let centerLon = -104.9903;
             try {
                 const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalSearchParameter)}&limit=1`;
                 const geoRes = await fetch(geoUrl, { headers: { "User-Agent": "GasWatchAppBackend" } });
@@ -78,16 +78,17 @@ router.post('/', async (req, res) => {
             }
 
             /* ==========================================================================
-               PHASE 2: LIVE DATA SCRAPE (ADJUSTED TARGET PARAMETERS)
+               PHASE 2: LIVE ORIGINAL WORKING SCRAPE
                ========================================================================== */
             const inputConfig = {
                 "search": finalSearchParameter, 
                 "fuel": 1,
-                "lang": "en"
-                // ⚡ Removed 'maxAge: 0' to pull the actor's full cached dataset results pool natively 
+                "maxAge": 0,
+                "lang": "en",
+                "radius": 25 
             };
 
-            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=30`;
+            const apifyUrl = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=15`;
             let rawDatasetItems = [];
 
             try {
@@ -99,7 +100,7 @@ router.post('/', async (req, res) => {
 
                 if (!apifyResponse.ok) {
                     console.error(`🚨 Apify responded with status: ${apifyResponse.status}`);
-                    return res.status(502).json({ error: "Live gas price repository provider is temporarily unavailable." });
+                    return res.status(502).json({ error: "Live gas price data provider unavailable." });
                 }
                 rawDatasetItems = await apifyResponse.json();
             } catch (fetchErr) {
@@ -108,20 +109,25 @@ router.post('/', async (req, res) => {
             }
 
             /* ==========================================================================
-               PHASE 3: TRANSLATION MATRIX
+               PHASE 3: TRANSLATION & GEOMETRIC DISTRIBUTION MATRIX
                ========================================================================== */
             if (Array.isArray(rawDatasetItems)) {
                 stationsDataset = rawDatasetItems.map((station, index) => {
-                    const sLat = parseFloat(station.latitude || station.lat || (centerLat ? centerLat + (index * 0.0015) : null));
-                    const sLon = parseFloat(station.longitude || station.lng || (centerLon ? centerLon + (index * 0.0015) : null));
+                    
+                    const computedDistance = station.distance ? parseFloat(station.distance) : 0;
+                    
+                    // 🛠️ GEOMETRIC SPATIAL DISTRIBUTION FIX: 
+                    // Convert the actual station distance into relative coordinate displacement offsets distributed evenly in a 360-degree circle
+                    const angle = (index * (360 / Math.max(rawDatasetItems.length, 1))) * (Math.PI / 180);
+                    const latOffset = (computedDistance / 69.0) * Math.sin(angle); 
+                    const lonOffset = (computedDistance / (69.0 * Math.cos(centerLat * Math.PI / 180))) * Math.cos(angle);
 
-                    const cash = parseFloat(station.cashPrice || station.price_cash || station.price || 0);
+                    const sLat = centerLat + latOffset;
+                    const sLon = centerLon + lonOffset;
+
+                    const cash = parseFloat(station.cashPrice || station.price_cash || 0);
                     const credit = parseFloat(station.creditPrice || station.price_credit || 0);
                     const resolvedPrice = cash > 0 ? cash : (credit > 0 ? credit : 0);
-
-                    const computedDistance = (centerLat && centerLon && sLat && sLon) 
-                        ? calculateHaversineDistance(centerLat, centerLon, sLat, sLon)
-                        : 0;
 
                     return {
                         name: station.name || "Gas Station",
@@ -142,8 +148,6 @@ router.post('/', async (req, res) => {
             } else {
                 stationsDataset = [];
             }
-        } else {
-            console.log(`🎯 [Cache Hit] Serving data array for location key: ${locationCacheKey}`);
         }
 
         /* ==========================================================================
@@ -168,7 +172,7 @@ router.post('/', async (req, res) => {
 
     } catch (error) {
         console.error("🔴 Unhandled route runtime error exception thrown:", error.stack || error.message);
-        res.status(500).json({ error: "Failed to complete processing operations on live fuel data structures." });
+        res.status(500).json({ error: "Failed to complete processing operations." });
     }
 });
 
