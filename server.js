@@ -50,7 +50,7 @@ app.post('/api/gas-prices', async (req, res) => {
 });
 
 // Fallback for all other routes to serve index.html
-app.get('*', (req, res) => {
+app.get('/:url(.*)', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
