@@ -1,71 +1,60 @@
-require('dotenv').config();
 const express = require('express');
-const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
+const cors = require('cors');
+const compression = require('compression'); 
+const path = require('path'); 
+require('dotenv').config(); 
+
+// 🛡️ BARE BONES ROUTING PROFILE
+const PROJECT_NAME = 'gas-watch'; 
+
+// Pull in independent route file
+const gasPricesRoute = require('./routes/gasPrices');
 
 const app = express();
-app.use(express.json());
 
-// Initialize with the PUBLIC anon key
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+app.use(compression()); 
+app.use(express.json()); 
 
-// 1. Static file serving (Serves your index.html and frontend assets)
+// 🛡️ SECURITY SCHEMA (UNIVERSAL SKELETON)
+const allowedOrigins = [
+    'https://gas-watch.com', 
+    'http://localhost:5500',        
+    'http://localhost:3000'         
+]; 
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // 1. Allow internal/local requests or empty testing origins
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        }
+
+        // FIXED: Double-escaped literal dots to ensure full string-to-regex literal compilation safety
+        const vercelRegex = new RegExp(`^https:\\/\\/([a-zA-Z0-9-]+-)?${PROJECT_NAME}(-.*)?\\.vercel\\.app$`);
+                
+        if (vercelRegex.test(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Blocked by CORS policy: Unauthorized domain request.'));
+        }
+    }
+}));
+
+// Tell Express where static assets live so it can serve index.html
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. API Route to fetch gas prices
-app.post('/api/gas-prices', async (req, res) => {
-    try {
-        const { search } = req.body;
-        console.log("🔍 Search requested for:", search);
+// Mount main price fetch API path
+app.use('/api/gas-prices', gasPricesRoute);
 
-        if (!search) {
-            return res.status(400).json({ error: "Search parameter is required" });
-        }
-
-        const normalizedCity = search.split(',')[0].trim().toLowerCase();
-
-        // Ensure env variables are present before calling Supabase
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-            throw new Error("Missing Supabase environment variables");
-        }
-
-        // Query: Uses ILIKE to search both city and address columns for a match
-        const { data, error } = await supabase
-            .from('gas_stations')
-            .select('*')
-            .or(`city.ilike.%${normalizedCity}%,address.ilike.%${normalizedCity}%`)
-            .order('price', { ascending: true });
-
-        if (error) {
-            console.error("❌ Supabase Query Error:", error);
-            throw error;
-        }
-
-        // Check if data is empty
-        const isDataMissing = !data || data.length === 0;
-
-        if (isDataMissing) {
-            console.warn(`⚠️ No gas stations found for: ${normalizedCity}`);
-        } else {
-            console.log(`✅ Found ${data.length} stations.`);
-        }
-
-        // Logic for map origin: fallback to default if nothing found
-        const defaultOrigin = { lat: 39.7392, lon: -104.9903 }; 
-        const origin = (!isDataMissing) ? { lat: data[0].lat, lon: data[0].lon } : defaultOrigin;
-
-        // Final JSON response
-        res.json({ 
-            origin: origin, 
-            stations: data || [],
-            status: isDataMissing ? "PENDING" : "OK"
-        });
-
-    } catch (err) {
-        console.error("🔴 Database Route Error:", err);
-        res.status(500).json({ error: "Failed to fetch station data" });
-    }
+// Catch-all route to serve the core SPA layout
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Local server port configuration
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Secure gateway running locally on port ${PORT}`));
+}
+
+module.exports = app; // Required by Vercel serverless functions
