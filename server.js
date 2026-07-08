@@ -16,9 +16,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search } = req.body;
+        console.log("🔍 Search requested for:", search); // Debug log
+
         if (!search) return res.status(400).json({ error: "Search parameter is required" });
 
         const normalizedCity = search.split(',')[0].trim().toLowerCase();
+
+        // Debug: Check if variables are loaded
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+            throw new Error("Missing Supabase environment variables");
+        }
 
         const { data, error } = await supabase
             .from('gas_stations')
@@ -26,7 +33,10 @@ app.post('/api/gas-prices', async (req, res) => {
             .eq('city', normalizedCity)
             .order('price', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+            console.error("❌ Supabase Query Error:", error); // Specific DB error
+            throw error;
+        }
 
         const isDataMissing = !data || data.length === 0;
         const defaultOrigin = { lat: 39.7392, lon: -104.9903 }; 
