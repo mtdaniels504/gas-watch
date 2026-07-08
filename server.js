@@ -30,12 +30,21 @@ app.post('/api/gas-prices', async (req, res) => {
         const { data, error } = await supabase
             .from('gas_stations')
             .select('*')
-            .eq('city', normalizedCity)
+            .or(`city.ilike.%${normalizedCity}%,address.ilike.%${normalizedCity}%`)
             .order('price', { ascending: true });
 
         if (error) {
-            console.error("❌ Supabase Query Error:", error); // Specific DB error
+            console.error("❌ Supabase Query Error:", error);
             throw error;
+        }
+
+        // Define this BEFORE you use it!
+        const isDataMissing = !data || data.length === 0;
+
+        if (isDataMissing) {
+            console.warn(`⚠️ No gas stations found for: ${normalizedCity}`);
+        } else {
+            console.log(`✅ Found ${data.length} stations.`);
         }
 
         const isDataMissing = !data || data.length === 0;
