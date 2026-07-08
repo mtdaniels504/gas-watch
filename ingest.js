@@ -175,9 +175,15 @@ async function smartIngestion(searchQuery) {
 async function runAllCities(tierFilter) {
     const targets = CITIES.filter(c => c.tier === tierFilter);
     for (const city of targets) {
-        // Use smartIngestion instead of runIngestion here
-        await smartIngestion(city.name);
+        try {
+            console.log(`--- Processing ${city.name} ---`);
+            await smartIngestion(city.name);
+        } catch (err) {
+            console.error(`❌ Failed to process ${city.name}:`, err.message);
+            // The loop continues to the next city instead of dying
+        }
     }
+    console.log(`--- Starting Geocode Cleanup ---`);
     await geocodePending();
 }
 
