@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>Gas Watch by TWMM</title>
+        <title>Gas Watch by The World Motor Market</title>
         <meta name="description" content="Find the cheapest gas prices in your area instantly. Search by city, zip code, or address on our interactive live fuel map to save money on gas today.">
 
 
@@ -12,6 +12,8 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
+            crossorigin="anonymous"></script>
 
         <style id="General">
 
@@ -28,8 +30,8 @@
 
             section {
                 z-index: 200;
-                margin: clamp(2px, 0.5dvw, 5px);
-                padding: clamp(2px, 0.5dvw, 5px);
+                margin: 2px 4px;
+                padding: 2px;
                 width: 100%;
                 border-radius: 4px;
                 box-shadow: 0 0 10px rgba(242, 242, 246, 0.2);
@@ -44,6 +46,19 @@
                 padding: 2px;
                 border-radius: 2px;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+            }
+
+            .row {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .column {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
             }
 
             /* For Specific Use-Case
@@ -72,42 +87,75 @@
 
             h3, h4 {
                 font-weight: 625;
-                font-size: clamp(0.625rem, 0.375rem + 1.06dvw, .9rem);
+                font-size: clamp(0.7rem, 0.375rem + 1.06dvw, .9rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
             }
 
-            button  {
+            button, .ButtonB  {
                 font-size: clamp(0.57rem, 0.5rem + .7dvw, 0.85rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
             }
             
             h5, p, 
-            span, details, a, strong, label,
-            input, textarea, select, option  {
-                font-size: clamp(0.55rem, 0.3rem + .7dvw, 0.75rem);
+            span, details, a, strong, 
+            input, textarea, option, label  {
+                font-size: clamp(0.55rem, 0.3rem + .68dvw, 0.72rem);
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
             }
 
 
-            strong, label {
+            strong, .Bold2 {
                 font-weight: 600;
+            }
+
+            .Bold3 {
+                font-weight: 510; 
+
             }
 
 
             .lesserP, h6 {
-                font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.5rem);
+                font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.55rem);
+            }
+            
+            select {
+                font-size: clamp(0.425rem, 0.3rem + 0.675dvw, 0.525rem);
             }
 
             .fineP {
-                font-size: clamp(0.375rem, 0.25rem + 0.6dvw, 0.45rem);
+                font-size: clamp(0.4rem, 0.28em + 0.61dvw, 0.45rem);
+            }
+
+            .fineLogIn {
+                text-decoration: underline;
             }
 
 
             /* -- Special -- */
 
+            
+            /* WebKit browsers (Chrome, Safari) */
+            ::-webkit-scrollbar {
+                width: 5px; /* width for vertical scrollbar */
+            }
+
+            ::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1); /* light semi-transparent track color */
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background-color: #ccc; /* semi-transparent thumb color *//* roundness */
+                transition: background-color 0.3s ease;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(4, 86, 191, 0.9); /* darker on hover */
+            }
+
             /*Inputs(Textrea)/Selects*/
 
             input, select, textarea {
+                cursor: pointer;
                 outline: none;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             }
@@ -120,32 +168,45 @@
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             }
 
-            input {
-                padding-left: 2.5px;
-            }
-
-            textarea {
-                padding: 2px;
+            input, textarea {
+                border-radius: 2px;
             }
 
             select {
-                padding: 4px;
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
+                border-radius: 1px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                background: #fff;
             }
 
 
-            a{
-                text-decoration: none;
-                color: inherit;
+            input {
+                cursor: auto;
+                padding-left: 2.5px;
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
+            }
+
+            textarea {
+                cursor: auto;
+                padding: 2px;
+            }
+
+            ::placeholder {
+                color: #999;
+                font-style: italic;
             }
 
 
             .userInput {
                 width: 100%;
                 border-radius: 2px 0px 0px 2px;
-                min-height: 18px;
-                height: calc(17px + 0.35vw);
-                max-height: 20px;
             }
+
 
 
             /*Images*/
@@ -163,6 +224,20 @@
 
             /*Hr*/
 
+            .hiddenTextHrBox { 
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+            }
+
             hr {
                 width: 96%;
                 height: 1.5px;
@@ -178,7 +253,7 @@
 
             /* -- Buttons -- */
 
-            button {
+            button, .ButtonB {
                 cursor: pointer;
                 display: flex;
                 justify-content: center;
@@ -216,6 +291,14 @@
                 height: calc(17px + 0.35vw);
                 max-height: 20px;
                 width: auto;
+                padding: 0 5px;
+            }
+
+            .fullSmallButton {
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
+                width: 100%;
                 padding: 0 5px;
             }
 
@@ -317,10 +400,10 @@
             
             /*D(Color/Small)*/
             .IconD {
-                min-width: 16px;
+                min-width: 14px;
                 width: calc(12px + .6dvw);
                 max-width: 20px;
-                min-height: 16px;
+                min-height: 14px;
                 height: calc(12px + .6dvw);
                 max-height: 20px;
                 line-height: 16px;
@@ -338,7 +421,7 @@
 
             /*DisplayIcon(Transparent/Fine)*/
 
-            .displayIcons, .displayIcon {
+            .displayIcons, .displayIcon, .fineIcon {
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -350,6 +433,10 @@
             }
             
             .displayIcon {
+                font-size: clamp(0.5rem, 0.35rem + 0.8dvw, 0.65rem);
+            }
+
+            .fineIcon {
                 font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.55rem);
             }
 
@@ -379,7 +466,7 @@
             /*FA Types*/
 
 
-            .tabToggle, .cloudHelpSection {
+            .bodyTabToggle, .cloudHelpSection {
                 background: transparent;
                 border: none;
                 box-shadow: none;
@@ -387,7 +474,7 @@
                 padding: 0;
             }
                         
-            .tabToggle, .navArrow, .cloudHelpSection {
+            .bodyTabToggle, .navArrow, .cloudHelpSection {
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -397,6 +484,46 @@
                 cursor: grab;
             }
 
+            
+
+            /* Checkbox */
+
+            .checkbox {
+                min-width: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                width: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                max-width: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                min-height: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                height: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                max-height: clamp(0.3rem + 4px, 0.3rem + 0.6dvw + 4px, 0.45rem + 4px);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: transparent;
+                padding: 2px;
+                border-radius: 2px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+                margin: 0;
+                cursor: pointer;
+            }
+
+                /* Hide the actual HTML checkbox completely */
+            .custom-checkbox input {
+                display: none;
+            }
+
+                /* Hide the FontAwesome icon by default */
+            .custom-checkbox input + .checkbox i {
+                display: none;
+            }
+
+                /* AUTOMATICALLY show the icon when the checkbox is checked */
+            .custom-checkbox input:checked + .checkbox  i {
+                display: flex;
+            }
+
+            .fa-check {
+                margin: 0 0 -1px 0;
+            }
 
             
             /*searchIcon*/
@@ -416,24 +543,30 @@
             }
 
 
+            /* Page Numbers */
 
-            /*tab/contToggle*/
+            .pageNumbers {
+                margin: 5px;
+                gap: 5px;
+            }
+
+            /*bodyTab/contToggle*/
             
-            .tabToggle {
+            .bodyTabToggle {
                 flex-direction: column;
                 margin: 0;
                 gap: .2px;
             }
 
-            .tabToggle i {
+            .bodyTabToggle i {
                 font-size: clamp(0.65rem, 0.15rem + 1vw, 0.8rem);
             }
 
-            .tabToggle > :first-child {
+            .bodyTabToggle > :first-child {
                 margin-bottom: -5px;
             }
 
-            .tabToggle > :nth-child(2) {
+            .bodyTabToggle > :nth-child(2) {
                 margin-bottom: -2px;
             }
 
@@ -441,7 +574,7 @@
             .contSizeToggle {
                 margin: auto;
                 gap: 0px;
-                padding: 1px 0;
+                padding: 2px 0;
                 position: absolute; /* or fixed */
                 touch-action: none; /* REQUIRED: stops browser from scrolling/panning */
                 user-select: none;  /* stops text highlighting while dragging */
@@ -495,7 +628,7 @@
 
 
             .cloud {
-                z-index: 820;
+                z-index: 920;
                 opacity: 0;
                 transition: opacity .9s ease-in-out;
             }
@@ -534,7 +667,7 @@
 
 
             .cloudHelpSection {
-                z-index: 825;
+                z-index: 925;
                 top: calc(1.5rem + 1.5dvw);
                 right: calc(6.75rem + 6.75dvw);
             }
@@ -565,6 +698,7 @@
             }
 
         </style>
+
 
         <style id="Standard">
 
@@ -603,12 +737,65 @@
             }
 
             .Tail {
+                z-index: 500;
+                position: fixed;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 5px 10px;
+                bottom: 5px;
+                left: 1%;
+                width: calc(100% - 9px);
+            }
+
+            .adBox, .subNav-adBox, .filter-adBox {
+                /* 1. Alignment & Display Engine */
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                width: 100%;
+                margin: 2px;
+                margin-bottom: 2px;
+                padding: 10px 0;
+                background: #ffffff;
+                
+                /* 2. Strict Boundary Lockdowns */
+                height: 50px;  
+                max-height: 50px;
+                box-sizing: content-box;
+                overflow: contain;
+                
+                /* 3. Subtle Presentation Aesthetics */
+                border-radius: 6px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            /* Target the third-party elements directly to freeze them in the center */
+            .adBox iframe, .filter-adBox-adAbox iframe, .subNav-adBox iframe
+            .adBox div, .filter-adBox-adAbox div, .subNav-adBox div  {
+                margin: 0 auto !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+
+
+            .subNav-adBox, .filter-adBox {
+                margin-top: auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: calc(100% - 4px);
+                height: calc(196px + 5dvw);
+                max-height: unset;
                 bottom: 0;
             }
+
+            .subNav-adBox {
+                margin-top: 44dvh;
+                bottom: 2px;
+                height: calc(146px + 5dvw);
+            }
+
+
 
             .part {
                 width: 100%;
@@ -918,7 +1105,7 @@
 
             /* -- SubNav -- */
 
-            .headNav, .subNavMore, .subNavMoreBox {
+            .headNav, .subNavMore, .subNavMoreBox, .subNavConten {
                 background: transparent;
                 border: none;
                 box-shadow: none;
@@ -934,12 +1121,35 @@
 
             .subNav {
                 position: absolute;
-                width: calc(200px + 5dvw);
+                width: calc(150px + 15dvw);
                 height: auto;
-                gap: 1px;
                 z-index: 999;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
                 top: 60px;
                 left: 0;
+                height: calc(100dvh - 62px);
+                max-height: 100%;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            
+            .subNav a, .sideBar a, .subNavGroup {
+                width: 100%;
+            }
+            
+            .subNav a, .sideBar a, .subNavGroup {
+                width: 100%;
+            }
+
+            .subNavGroup1 {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 4px;
             }
 
             .subNavRow, .subNavRow2 {
@@ -948,10 +1158,38 @@
                 align-items: center;
                 cursor: pointer;
                 padding: 4px;
+                max-width: 100%;
+            }
+
+            .subNavRow3 {
+                gap: 5px;
+            }
+
+            .subNavRowImg {
+                min-width: unset;
+                width: auto;
+                max-width: unset;
+                min-height: unset;
+                height: auto;
+                max-height: 10px;
+            }         
+            
+            .subNavRowP2 {
+                margin-left: auto;
+                margin-right: 10px;
+            }
+
+
+
+            .applyFiltersButton {
+                min-height: 18px;
+                height: calc(17px + 0.35vw);
+                max-height: 20px;
             }
 
             .subNavRow2 {
-                margin-left: 10px;
+                max-width: calc(100% - 8px);
+                margin-left: 8px;
             }
 
             .subNavMore {
@@ -978,6 +1216,11 @@
             .subNavButton {
                 line-height: 1;
                 cursor: pointer;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             .subPlusButton {
@@ -988,7 +1231,28 @@
             .subMoreToggle {
                 transform: rotate(-90deg);
                 margin-right: 1px;
+                margin-top: 2px;
             }
+
+            /* SubNav Styles */      
+                
+            .subNav {
+                width: 57.5dvw;
+            }
+
+            .sideBar {
+                width: 67.5dvw;
+            }
+
+            .sideBarTab {
+                padding: 5px 5px 0px 5px;
+                height: 18px;
+            } 
+                            
+            .subNavRow3 {
+                gap: 3px;
+            }
+
 
 
             /* -- FilterDisplay -- */
@@ -997,13 +1261,19 @@
                 position: absolute;
                 width: calc(200px + 5dvw);
                 height: calc(100dvh - 60px);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
                 z-index: 999;
                 top: 60px;
                 right: 0;
             }
 
             .filterForm {
+                flex-grow: 1;
                 width: 100%;
+                height: 100%;
             }
 
             .filterForm input {
@@ -1755,12 +2025,10 @@
 #map {
     z-index: 220;
     flex-grow: 1;
-    width: 100%;
+    width: calc(100% - 2px);
     height: calc(100dvh - 70px);
     max-height: calc(100dvh - 70px);
-    border-radius: 16px; /* Smoother, modern pill geometry corners */
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Soft floating atmosphere */
+    border-radius: 2px; /* Smoother, modern pill geometry corners */
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1772,7 +2040,13 @@
 /* ==========================================================================
    DYNAMIC GAS PRICE MARKER BUBBLES
    ========================================================================== */
-.gas-price-marker {
+/* Add this right near your .gas-price-marker styles */
+.leaflet-div-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+   .gas-price-marker {
     background: #10b981 !important; /* Fresh, modern emerald green accent color */
     color: #ffffff !important;
     border: 2px solid #ffffff !important;
@@ -1863,10 +2137,11 @@
 .black-marker-icon {
     background-color: #0f172a; /* Smooth midnight-black matte shading tone */
     border: 3px solid #ffffff;
-    border-radius: 50%;
+    border-radius: 2px;
     box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.2), 0 4px 10px rgba(0,0,0,0.3); /* Smooth target sonar pulse glow circle lines */
     width: 16px !important;
     height: 16px !important;
+    padding: 2px;
     transform: translate(-50%, -50%);
 }
 
@@ -1917,7 +2192,7 @@
                 
                 <!-- extSearchBar -->
                 <div class="search">
-                    <input class="userInput" id="searchBar" placeholder="Search Zip Codes and Cities Here!"
+                    <input class="userInput" id="searchBar" placeholder="Search Zip Codes or Cities"
                         data-function="searchFunction" data-self="searchBar" data-searchListener="true"
                     >
                     <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
@@ -1945,186 +2220,472 @@
                         <!-- Map will be dynamically populated in script -->
                     </div>
                 </div>
+            
             </section>
+
+            <div class="Tail">
+                <div class="adBox">
+                    <!-- Horizontal Body -->
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="ca-pub-2241743795999309"
+                        data-ad-slot="5685627432"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+            </div>
 
             <!-- Extended -->
 
             <div class="subNav" id="subNav" style="display: none;">
 
-                <!--subNavHome-->
-                <div class="subNavRow">
-                    <span class="subNavItem">Home</span>
-                    <i class="subNavButton subHomeButton fa-solid fa-home"></i>
-                </div>
+                <div class="subNavContent">
+                    <!--subNavHome-->
+                    <div class="subNavRow">
+                        <span class="subNavItem">Home</span>
+                        <i class="IconC subNavButton subHomeButton fa-solid fa-home"></i>
+                    </div>
 
-                <!--subNavHelp-->
-                <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
-                    <span class="subNavItem">Help</span>
-                    <i class="subNavButton subMoreToggle" id="subMore-help">▼</i>
-                </div>
-                <!--subNavMore-->
-                <div class="subNavMore" id="subNav-help" style="display: none;">
-                    <hr class="subNavHr">
-                    <div class="subNavMoreBox">
-                        <div class="subNavRow2">
-                            <span class="subNavItem">FAQs</span>
-                            <i class="subNavButton subPlusButton">+</i>
+                    <!-- ==========================================================================
+                        SUBNAV HELP & ACCORDION FAQ SECTION
+                        ========================================================================== -->
+                    <div class="subNavRow" data-target="#subNav-help" data-slug="#subMore-help">
+                        <span class="subNavItem">Help</span>
+                        <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-help"></i>
+                    </div>
+
+                    <div class="subNavMore" id="subNav-help" style="display: none;">
+                        <hr class="subNavHr">
+                        <div class="subNavMoreBox" class="subNavGroup1">
+                            
+                            <!-- Nested Core FAQ Header Row Toggle Trigger -->
+                            <div class="subNavRow subNavRow2" data-target="#faq-list-container" data-slug="#faq-master-plus">
+                                <span class="subNavItem" style="font-weight: 600;">FAQs</span>
+                                <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="faq-master-plus"></i>
+                            </div>
+
+                            <!-- Hidden Inner FAQ Sheet Wrapper -->
+                            <div id="faq-list-container" class="column" style="display: none; width: 100%; align-items: flex-start; gap: 4px; padding-left: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
+                                
+                                <!-- Question 1: Data Freshness -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-1" data-slug="#faq-chev-1" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">How fresh are these gas prices?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-1" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-1" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our backend scrapes live pricing feeds. Prices refresh continuously throughout the day, logging a localized timestamp directly inside each marker's information popup.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 2: Inaccurate Pricing Report -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-2" data-slug="#faq-chev-2" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">What if a price on the map is wrong?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-2" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-2" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Gas station owners can change corporate street signs rapidly. Tap any pricing marker bubble to click the built-in "Flag Report" element to ping our queue for verification parameters.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 3: Missing Station Geocodes -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-3" data-slug="#faq-chev-3" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why can't I see a specific station?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-3" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-3" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Check your preferences. It's likely hidden by an active filter parameter—such as your Maximum Price Cap threshold or selected Search Radius boundary settings.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 4: Cash vs Credit Divergence -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-4" data-slug="#faq-chev-4" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are these cash or credit card prices?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-4" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-4" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our engine maps the absolute lowest rate available. If a location carries different parameters, we default explicitly to cash values to secure the best look on the tracking pills.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 5: Browser GPS Blocking -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-5" data-slug="#faq-chev-5" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why isn't the "Near Me" button locating me?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-5" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-5" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Your browser or mobile device might be blocking location permissions. Tap the lock icon in your browser's address bar, enable 'Location access,' and refresh the page to let the map glide to your spot.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 6: Fuel Grade Variations -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-6" data-slug="#faq-chev-6" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does the map show Midgrade and Diesel?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-6" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-6" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Yes! While the map default is Regular, you can open your sliding filter form panel or change your permanent account Preferences to instantly swap all map pins to view Midgrade, Premium, or Diesel prices.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 7: International Data Scope -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-7" data-slug="#faq-chev-7" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does this app work outside the US?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-7" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-7" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Currently, our scraper nodes optimize for the United States and parts of North America. We are steadily expanding our database connectivity to track European and global fuel networks soon.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Question 8: EV Charging Point Data Future -->
+                                <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                    <div class="row subNavRow" data-target="#faq-ans-8" data-slug="#faq-chev-8" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                        <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are Electric Vehicle charging rates tracked?</span>
+                                        <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="faq-chev-8" style="font-size: 0.45rem;"></i>
+                                    </div>
+                                    <div id="faq-ans-8" class="subNavRow2" style="display: none;">
+                                        <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">This feature is on our immediate horizon line! We are actively designing a complementary data layer to let users instantly map local EV charging kilowatt costs alongside combustion fuel nodes.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>        
+                    
+                    <!--subNavSettings-->
+                    <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
+                        <span class="subNavItem">Settings</span>
+                        <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-settings"></i>
+                    </div>
+                    <!--subNavMore-->
+                    <div class="subNavMore" id="subNav-settings" style="display: none;">
+                        <hr class="subNavHr">
+                        <div class="subNavMoreBox">
+                            <!-- ==========================================================================
+                                SUBNAV PREFERENCES ACCORDION
+                                ========================================================================== -->
+                            <div class="subNavRow subNavRow2" data-target="#subNav-preferences" data-slug="#subMore-preferences">
+                                <span class="subNavItem">Preferences</span>
+                                <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-preferences"></i>
+                            </div>
+
+                            <div class="subNavMore" id="subNav-preferences" style="display: none;">
+                                <hr class="subNavHr">
+                                <div class="subNavMoreBox">
+                                    
+                                    <!-- Feature 1: Persistent Fuel Type Choice -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Default Grade</span>
+                                        <select class="lesserP" id="prefDefaultFuel" class="subSmallSelect">
+                                            <option value="regular">Regular</option>
+                                            <option value="midgrade">Midgrade</option>
+                                            <option value="premium">Premium</option>
+                                            <option value="diesel">Diesel</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Feature 2: Default Search Radius Boundary -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Search Radius</span>
+                                        <select class="lesserP" id="prefDefaultRadius" class="subSmallSelect">
+                                            <option value="5">5 Miles</option>
+                                            <option value="10">10 Miles</option>
+                                            <option value="15">15 Miles</option>
+                                            <option value="20">20 Miles</option>
+                                        </select>
+                                    </div>
+
+
+                                    <!-- Feature 3: Sorting Preference Hierarchy -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Primary Sort</span>
+                                        <select class="lesserP" id="prefDefaultSort" class="subSmallSelect">
+                                            <option value="price">Cheapest First</option>
+                                            <option value="distance">Closest First</option>
+                                        </select>
+                                    </div>
+
+                                    
+                                    <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Max Price Cap</span>
+                                        
+                                        <!-- Unified structural row holding the currency sticker anchor -->
+                                        <div style="display: flex; align-items: center;">
+                                            <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
+                                            <input type="number" 
+                                                step="0.01" 
+                                                min="0.00" 
+                                                class="lesserP" 
+                                                id="prefMaxPrice" 
+                                                placeholder="3.50" 
+                                                style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ==========================================================================
+                                SUBNAV ACCESSIBILITY ACCORDION
+                                ========================================================================== -->
+                            <div class="subNavRow subNavRow2" data-target="#subNav-accessibility" data-slug="#subMore-accessibility">
+                                <span class="subNavItem">Accessibility</span>
+                                <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-accessibility"></i>
+                            </div>
+
+                            <div class="subNavMore" id="subNav-accessibility" style="display: none;">
+                                <hr class="subNavHr">
+                                <div class="subNavMoreBox">
+                                    
+                                    <!-- Accessibility Dropdown 1: Interactive Map Theme Switcher -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Map Theme</span>
+                                        <select class="lesserP" id="prefMapSkin" class="subSmallSelect">
+                                            <option value="google">Google Light</option>
+                                            <option value="iphone">iPhone iOS (Clean)</option>
+                                            <option value="midnight">Jawg Charcoal (Dark)</option>
+                                            <option value="matrix">Jawg Neon (Matrix)</option>
+                                            <option value="navigation">Waze Nav (Tactical)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Accessibility 4: Live UI Color Theme Switcher -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Color Theme</span>
+                                        <select class="lesserP subSmallSelect" id="prefColorTheme">
+                                            <option value="intLightNorm">Light Standard</option>
+                                            <option value="intLightNeon">Light Neon</option>
+                                            <option value="dark">Dark Standard</option>
+                                            <option value="darkNeon">Dark Neon</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Accessibility 3: Text Sizing Magnifier -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Marker Bubble Size</span>
+                                        <select class="lesserP" id="prefTextSize" class="subSmallSelect">
+                                            <option value="normal">Standard</option>
+                                            <option value="large">Large Text</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- NEW Accessibility 4: Marker Visual Contrast Contrast -->
+                                    <div class="subNavRow2" style="width: 100%;">
+                                        <span class="lesserP subNavItem">Marker Contrast</span>
+                                        <select class="lesserP subSmallSelect" id="prefMarkerContrast">
+                                            <option value="normal">Standard</option>
+                                            <option value="high">High Opacity / Bold</option>
+                                        </select>
+                                    </div>
+
+                                </div>
+                            </div>
+
                         </div>
                     </div>
-                </div>         
-                
-                <!--subNavSettings-->
-                <div class="subNavRow" data-target="#subNav-settings" data-slug="#subMore-settings">
-                    <span class="subNavItem">Settings</span>
-                    <i class="subNavButton subMoreToggle" id="subMore-settings">▼</i>
-                </div>
-                <!--subNavMore-->
-                <div class="subNavMore" id="subNav-settings" style="display: none;">
-                    <hr class="subNavHr">
-                    <div class="subNavMoreBox">
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Accessibility</span>
-                            <i class="subNavButton subPlusButton">+</i>
-                        </div>
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Preferences</span>
-                            <i class="subNavButton subPlusButton">+</i>
+
+                    <!--subNavAccount-->
+                    <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
+                        <span class="subNavItem">Account</span>
+                        <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="subMore-account"></i>
+                    </div>
+                    <!--subNavMore-->
+                    <div class="subNavMore" id="subNav-account" style="display: none;">
+                        <hr class="subNavHr">
+                        <div class="subNavMoreBox">
+                            <div class="subNavRow2">
+                                <span class="subNavItem">My Account</span>
+                                <i class="IconC subNavButton subPlusButton">+</i>
+                            </div>
+                            <div class="subNavRow2">
+                                <span class="subNavItem">Create Account</span>
+                                <i class="IconC subNavButton subPlusButton">+</i>
+                            </div>
+                            <div class="subNavRow2">
+                                <span class="subNavItem">Sign In</span>
+                                <i class="IconC subNavButton subPlusButton">+</i>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!--subNavAccount-->
-                <div class="subNavRow" data-target="#subNav-account" data-slug="#subMore-account">
-                    <span class="subNavItem">Account</span>
-                    <i class="subNavButton subMoreToggle" id="subMore-account">▼</i>
+                <div class="subNav-adBox">
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="ca-pub-2241743795999309"
+                        data-ad-slot="1016744364"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
                 </div>
-                <!--subNavMore-->
-                <div class="subNavMore" id="subNav-account" style="display: none;">
-                    <hr class="subNavHr">
-                    <div class="subNavMoreBox">
-                        <div class="subNavRow2">
-                            <span class="subNavItem">My Account</span>
-                            <i class="subNavButton subPlusButton">+</i>
-                        </div>
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Create Account</span>
-                            <i class="subNavButton subPlusButton">+</i>
-                        </div>
-                        <div class="subNavRow2">
-                            <span class="subNavItem">Sign In</span>
-                            <i class="subNavButton subPlusButton">+</i>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
+            <!-- ==========================================================================
+                REFINED FILTER DISPLAY SIDE PANEL
+                ========================================================================== -->
             <div class="filterDisplay" id="filterDisplay" style="display: none;">
                 <form class="filterForm">
+                    
+                    <!-- Geographic Group 1: Absolute Street/Point Target -->
                     <div class="filterRow">
-                        <label for="filterAddress">Address:</label>
-                        <input type="text" id="filterAddress" name="filterAddress" placeholder="Enter Address">
+                        <label class="lesserP" for="filterAddress" style="font-weight: 600; margin-bottom: 2px; display: block;">Address:</label>
+                        <input class="lesserP" type="text" id="filterAddress" name="filterAddress" placeholder="Enter Address">
                     </div>
+                    
+                    <!-- Geographic Group 2: Regional Targeting -->
                     <div class="filterRow">
-                        <label for="filterCity">City:</label>
-                        <input type="text" id="filterCity" name="filterCity" placeholder="Enter City">
+                        <label class="lesserP" for="filterCity" style="font-weight: 600; margin-bottom: 2px; display: block;">City:</label>
+                        <input class="lesserP" type="text" id="filterCity" name="filterCity" placeholder="Enter City">
                     </div>
-                    <div class="filterRowDuo">
-                        <div class="filterRow">
-                            <label for="filterState">State:</label>
-                            <input type="text" id="filterState" name="filterState" placeholder="Enter State">
+                    
+                    <!-- Split Row: State & Zip Coordinates -->
+                    <div class="filterRowDuo" style="display: flex; gap: 6px; width: 100%; justify-content: space-between;">
+                        <div class="filterRow" style="flex: 1; margin: 0;">
+                            <label class="lesserP" for="filterState" style="font-weight: 600; margin-bottom: 2px; display: block;">State:</label>
+                            <input class="lesserP" type="text" id="filterState" name="filterState" placeholder="Enter State">
                         </div>
-                        <div class="filterRow">
-                            <label for="filterZip">Zip Code:</label>
-                            <input type="text" id="filterZip" name="filterZip" placeholder="Enter Zip Code">
-                        </div>
-                    </div>
-                    <div class="filterRow">
-                        <label for="filterStoreName">Store Name or Reference Point:</label>
-                        <input type="text" id="filterStoreName" name="filterStoreName" placeholder="e.g., Shell, Walmart, Main St.">
-                    </div>
-                    <div class="filterRow">
-                        <div class="halfRow">
-                            <label for="distanceRange">Distance (miles):</label>
-                            <input type="text" id="distanceValue" name="distanceValue" placeholder="Enter Radius">
-                            <input type="range" id="distanceRange" name="distanceRange" min="0" max="20" step="1">
+                        <div class="filterRow" style="flex: 1; margin: 0;">
+                            <label class="lesserP" for="filterZip" style="font-weight: 600; margin-bottom: 2px; display: block;">Zip Code:</label>
+                            <input class="lesserP" type="text" id="filterZip" name="filterZip" placeholder="Enter Zip Code">
                         </div>
                     </div>
-                    <div class="filterRow" style="display: none;">
-                        <label for="priceRangeMin">Price Range ($):</label>
-                        <div class="priceRangeInputs">
-                            <input type="text" id="priceMinValue" name="priceMinValue" placeholder="Min">
-                            <span class="priceRangeSeparator">To</span>
-                            <input type="text" id="priceValue" name="priceValue" placeholder="Max">
+                    
+                    <!-- Branding Match Filter Group -->
+                    <div class="filterRow">
+                        <label class="lesserP" for="filterStoreName" style="font-weight: 600; margin-bottom: 2px; display: block;">Store Name or Reference Point:</label>
+                        <input class="lesserP" type="text" id="filterStoreName" name="filterStoreName" placeholder="e.g., Shell, Walmart, Main St.">
+                    </div>
+                    
+                    <!-- Distance Matrix Slider Control Group -->
+                    <div class="filterRow">
+                        <div class="halfRow" style="width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                <label class="lesserP" for="distanceRange" style="font-weight: 600; margin: 0;">Distance (miles):</label>
+                                <!-- Read-only numerical display window syncing to slider tracking shifts -->
+                                <input class="lesserP" type="text" id="distanceValue" name="distanceValue" placeholder="5" readonly style="width: 30px; text-align: center; border: none; background: transparent; box-shadow: none; font-weight: 700; height: auto; min-height: unset; padding: 0;">
+                            </div>
+                            <input type="range" id="distanceRange" name="distanceRange" min="1" max="25" step="1" value="5" style="width: 100%; cursor: pointer; box-shadow: none;">
                         </div>
                     </div>
-                    <div class="filterRow" style="display: none;">
-                        <label for="fuelType">Fuel Type:</label>
-                        <select id="fuelType" name="fuelType">
-                            <option value="">Any</option>
-                            <option value="regular">Regular</option>
-                            <option value="midgrade">Midgrade</option>
-                            <option value="premium">Premium</option>
-                            <option value="diesel">Diesel</option>
+                    
+                    <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
+                    <div class="subNavRow2" style="width: 100%;">
+                        <span class="lesserP subNavItem">Max Price Cap</span>
+                        
+                        <!-- Unified structural row holding the currency sticker anchor -->
+                        <div style="display: flex; align-items: center;">
+                            <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
+                            <input type="number" 
+                                step="0.01" 
+                                min="0.00" 
+                                class="lesserP" 
+                                id="prefMaxPrice" 
+                                placeholder="3.50" 
+                                style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                        </div>
+                    </div>
+                    
+                    <!-- REVEALED: Fuel Grade Specific Dropdown Select Menu -->
+                    <div class="filterRow">
+                        <label class="lesserP" for="fuelType" style="font-weight: 600; margin-bottom: 2px; display: block;">Fuel Type Grade:</label>
+                        <select class="lesserP subSmallSelect" id="fuelType" name="fuelType" style="width: 100%;">
+                            <option value="regular">Regular Unleaded</option>
+                            <option value="midgrade">Midgrade Plus</option>
+                            <option value="premium">Premium Supreme</option>
+                            <option value="diesel">Diesel Fuel</option>
                         </select>
                     </div>
-                    <button type="submit" class=" fullButton applyFiltersButton">Apply Filters</button>
+                    
+                    <!-- Action Row: Dual submission trigger setup split horizontally via flex utility rules -->
+                    <div style="display: flex; gap: 4px; margin-top: 8px; width: 100%; background: transparent; border: none; box-shadow: none; padding: 0;">
+                        <button type="button" id="clearFiltersBtn" class="smallButton" style="flex: 1; background: #999; border: 1px solid #666; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Clear</button>
+                        <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
+                    </div>
                 </form>
+                <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
+                <div class="filter-adBox">
+                    <!-- SubNav Ad -->
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="ca-pub-2241743795999309"
+                        data-ad-slot="8240628269"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
             </div>
 
+
             </div>
-        </section>
+        </div>
+        </div>
+        </div>
 
         <script>
-function isInAppBrowser() {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
+            function isInAppBrowser() {
+                const ua = navigator.userAgent || navigator.vendor || window.opera;
 
-    return (
-        ua.includes("FBAN") ||
-        ua.includes("FBAV") ||
-        ua.includes("Instagram") ||
-        ua.includes("Line") ||
-        ua.includes("Twitter")
-    );
-}
+                return (
+                    ua.includes("FBAN") ||
+                    ua.includes("FBAV") ||
+                    ua.includes("Instagram") ||
+                    ua.includes("Line") ||
+                    ua.includes("Twitter")
+                );
+            }
 
-if (isInAppBrowser()) {
+            if (isInAppBrowser()) {
 
-    document.addEventListener("DOMContentLoaded", () => {
+                document.addEventListener("DOMContentLoaded", () => {
 
-        const url = "https://gas-watch.com";
+                    const url = "https://gas-watch.com";
 
-        const overlay = document.createElement("div");
+                    const overlay = document.createElement("div");
 
-        overlay.style.cssText = `
-            position:fixed;
-            inset:0;
-            background:#000;
-            color:#fff;
-            z-index:999999;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            align-items:center;
-            text-align:center;
-            padding:24px;
-            font-family: sans-serif;
-        `;
+                    overlay.style.cssText = `
+                        position:fixed;
+                        inset:0;
+                        background:#000;
+                        color:#fff;
+                        z-index:999999;
+                        display:flex;
+                        flex-direction:column;
+                        justify-content:center;
+                        align-items:center;
+                        text-align:center;
+                        padding:24px;
+                        font-family: sans-serif;
+                    `;
 
-        overlay.innerHTML = `
-            <h2 style="margin-bottom:12px;">
-                Best used in Safari or Chrome
-            </h2>
+                    overlay.innerHTML = `
+                        <h2 style="margin-bottom:12px;">
+                            Best used in Safari or Chrome
+                        </h2>
 
-            <p style="opacity:0.8; font-size:14px; word-break:break-all;">
-                ${url}
-            </p>
-        `;
+                        <p style="opacity:0.8; font-size:14px; word-break:break-all;">
+                            ${url}
+                        </p>
+                    `;
 
-        document.body.appendChild(overlay);
-    });
-}
-</script>
+                    document.body.appendChild(overlay);
+                });
+            }
+        </script>
 
         <script id="colorPalette_script">
 
@@ -2232,59 +2793,362 @@ if (isInAppBrowser()) {
                     '.exitFChat:hover': {background: 'linear-gradient(180deg, #0f5999 0%, #1160af 100%)'},
                     '.exitFChat:focus': {background: 'linear-gradient(180deg, #075baf 0%, #1160af 100%)'},
                 },
-                dark: {},
-                custom: {}
+
+                intLightNeon: {
+            
+                    //General
+                    body: {background: `${white2}`, color: `${black2}`},
+                    // ⚡ POPPING UPGRADE: Intensified double-layered external neon aura with sharp inner frame lines
+                    section: {background: `${white1}`, border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 25px rgba(7, 91, 175, 0.22), 0 0 10px rgba(34, 116, 199, 0.15), inset 0 0 12px ${whiteBlueNeon}`},
+                    'section:hover': {background: `${white1}`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 35px rgba(34, 116, 199, 0.42), 0 0 15px rgba(7, 91, 175, 0.2), inset 0 0 14px ${whiteBlue}`},
+                    div: {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 4px 15px rgba(7, 91, 175, 0.08)`},
+                    
+                    //Text
+                    h1: {color: `${cobalt1}`, 'text-shadow': `0 0 12px rgba(7, 91, 175, 0.35)`},
+                    h2: {color: `${cobalt2}`, 'text-shadow': `0 0 10px rgba(7, 91, 175, 0.28)`},
+                    h3: {color: `${cobaltLight}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.2)`},
+                    h4: {color: `${cobaltLight}`},
+                    h5: {color: `${cobalt2}`},
+                    h6: {color: `${cobaltDark}`},
+                    
+                    //Special
+                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 12px rgba(34, 116, 199, 0.45)`},
+                    button: {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt1} 100%)`, color: `${white1}`, border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 14px rgba(34, 116, 199, 0.3)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${white1}`, 'box-shadow': `0 0 22px rgba(7, 91, 175, 0.55)`},
+                    'button:focus, button.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltLight} 100%)`},
+                    'select, textarea, input': {border: `1.5px solid ${cobalt2}`, background: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.35)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 15px rgba(7, 91, 175, 0.45)`},
+
+                    hr: {background: `linear-gradient(90deg, transparent 0%, ${cobaltLight} 50%, transparent 100%)`},
+                    '.shadow': {background: `${cobaltDark}`, opacity: '.15'},
+
+                    '::-webkit-scrollbar-track': {background: `${white3}`},
+                    '::-webkit-scrollbar-track:hover': {background: `${white2}`},
+                    '::-webkit-scrollbar-thumb': {background: `${whiteBlueNeon}`},
+                    '::-webkit-scrollbar-thumb:hover': {background: `${cobaltLight}`},
+                    
+                    //Icon
+                    '#flagReportReason': {background: `${whiteBlue}`},
+                    '.cloudHelpNav': {border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 15px rgba(7, 91, 175, 0.2)`},
+                    '.cloudHelpSection h5': {color: `${white1}`},
+
+                    '.IconA': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 14px rgba(34, 116, 199, 0.45)`},
+                    '.IconA:focus, .IconC.active': {background: `${whiteBlue}`},
+
+                    '.IconB': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.35)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 18px rgba(7, 91, 175, 0.5)`},
+                    'IconB:focus, IconB.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobaltLight} 100%)`},
+
+                    '.IconC': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${whiteBlueNeon}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${white1}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 8px rgba(34, 116, 199, 0.25)`},
+                    'IconC:focus, .IconC.active': {background: `${whiteBlue}`},
+
+                    '.IconD': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`},
+                    'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobaltDark} 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobalt1} 100%)`},
+
+                    '.fa-gear': {color: `${cobaltLight}`},
+                    '.navArrow': {color: `${white1}`},
+                    
+                    //Parts
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlueNeon} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 16px rgba(34, 116, 199, 0.35)`},
+
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1px solid ${cobalt2}`},
+                    '.headPopUpH2': {color: `${cobaltDark}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`, color: `${cobalt1}`, border: `1px solid ${cobaltLight}`},
+                    '.headPopUpH2:hover': {background: `${white1}`, color: `${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.3)`},
+
+                    '.navLinksBox': {opacity: '.98', background: `${white1}`, border: `1px solid ${cobalt2}`, 'box-shadow': `0 10px 25px rgba(7, 91, 175, 0.15)`},
+                    '.navLinksBoxShadows': {'border-bottom': `2px solid ${whiteBlueNeon}`},
+                                        
+                    '.pollDisplayBody': {background: '#001120'},
+                    '.chatPage h4': {color: `${cobaltDark}`},
+                    '.chatSort:hover': {background: `linear-gradient(180deg, ${white1} 0%, ${whiteBlue} 100%)`},
+                    '.chatSort:focus': {background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`},
+                    '.chatSort.active': {border: `1.5px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${whiteBlue} 0%, ${whiteBlueNeon} 100%)`, color: `${cobaltDark}`},
+                    '.chatSort.active:hover': {background: `${white1}`, color: `${cobalt1}`},
+                    '.opinionGTBox': {'border-bottom': `1.5px solid ${whiteBlueNeon}`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1.5px solid ${whiteBlueNeon}`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1.5px solid ${whiteBlueNeon}`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1.5px solid ${whiteBlueNeon}`},
+                    '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobalt2} 0%, ${cobaltLight} 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 16px rgba(7, 91, 175, 0.4)`},
+                    '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`},
+                },
+
+
+                dark: {
+        
+                    //General
+                    body: {background: `${black1}`, color: `${white2}`},
+                    // 🪙 METALLIC LUXURY REFINEMENT: Replaces all blue traces with a clean silver/white alpha ambiance
+                    section: {background: `rgba(18, 20, 24, 0.65)`, border: `1px solid rgba(255, 255, 255, 0.12)`, 'box-shadow': `0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(242, 242, 246, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.05)`},
+                    'section:hover': {background: `rgba(18, 20, 24, 0.75)`, border: `1px solid rgba(255, 255, 255, 0.25)`, 'box-shadow': `0 10px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(242, 242, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)`},
+                    div: {background: `rgba(0, 0, 0, 0.3)`, border: `1px solid rgba(255, 255, 255, 0.05)`, 'box-shadow': `0 2px 8px rgba(0, 0, 0, 0.3)`},
+                    
+                    //Text - Clean silver/white typography without any color bleeding
+                    h1: {color: `${white1}`, 'text-shadow': `1px 1px 1px rgba(0, 0, 0, 0.5)`},
+                    h2: {color: `${white2}`, 'text-shadow': `1px 1px 1px rgba(0, 0, 0, 0.4)`},
+                    h3: {color: `${white3}`},
+                    h4: {color: `${grey2}`},
+                    h5: {color: `${grey3}`},
+                    h6: {color: `${greyDark}`},
+                    
+                    //Special
+                    i: {color: `${white2}`},
+                    button: {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.15)`, 'box-shadow': `0 4px 12px rgba(0, 0, 0, 0.4)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, border: `1px solid rgba(255, 255, 255, 0.3)`, 'box-shadow': `0 0 15px rgba(255, 255, 255, 0.1)`},
+                    'button:focus, button.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
+                    'select, textarea, input': {border: `1px solid rgba(255, 255, 255, 0.18)`, background: `${black2}`, color: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1px solid rgba(255, 255, 255, 0.3)`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.05)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1px solid rgba(255, 255, 255, 0.4)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.15)`},
+
+                    hr: {background: `linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)`},
+                    '.shadow': {background: `${black1}`, opacity: '.5'},
+
+                    '::-webkit-scrollbar-track': {background: `${black2}`},
+                    '::-webkit-scrollbar-track:hover': {background: `${black1}`},
+                    '::-webkit-scrollbar-thumb': {background: `${black3}`},
+                    '::-webkit-scrollbar-thumb:hover': {background: `${greyDark}`},
+                    
+                    //Icon
+                    '#flagReportReason': {background: `${black3}`},
+                    '.cloudHelpNav': {border: `1px solid rgba(255, 255, 255, 0.15)`, 'box-shadow': `0 0 12px rgba(0, 0, 0, 0.4)`},
+                    '.cloudHelpSection h5': {color: `${white1}`},
+
+                    '.IconA': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid rgba(255, 255, 255, 0.1)`, color: `${white2}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.25)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.08)`, color: `${white1}`},
+                    '.IconA:focus, .IconC.active': {background: `${black3}`},
+
+                    '.IconB': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.15)`, 'box-shadow': `0 4px 10px rgba(0, 0, 0, 0.3)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`, 'box-shadow': `0 0 14px rgba(255, 255, 255, 0.1)`},
+                    'IconB:focus, IconB.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
+
+                    '.IconC': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid rgba(255, 255, 255, 0.08)`, color: `${grey2}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.2)`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.05)`, color: `${white2}`},
+                    'IconC:focus, .IconC.active': {background: `${black3}`},
+
+                    '.IconD': {background: `linear-gradient(178deg, #222 0%, #111 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.08)`},
+                    'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, #333 0%, #1a1a1a 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, #111 0%, #222 100%)`},
+
+                    '.fa-gear': {color: `${grey1}`},
+                    '.navArrow': {color: `${white1}`},
+                    
+                    //Parts
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${black1} 0%, #222 100%)`, border: `1px solid rgba(255, 255, 255, 0.2)`, 'box-shadow': `0 4px 12px rgba(0, 0, 0, 0.4)`},
+
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.headPopUpH2': {color: `${grey1}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, #222 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid rgba(255, 255, 255, 0.25)`},
+                    '.headPopUpH2:hover': {background: `#222`, color: `${white1}`, 'box-shadow': `0 0 8px rgba(255, 255, 255, 0.1)`},
+
+                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid rgba(255, 255, 255, 0.12)`},
+                    '.navLinksBoxShadows': {'border-bottom': `1px solid rgba(255, 255, 255, 0.12)`},
+                                        
+                    '.pollDisplayBody': {background: '#0d1117'},
+                    '.chatPage h4': {color: `${white1}`},
+                    '.chatSort:hover': {background: `${black3}`},
+                    '.chatSort:focus': {background: `#222`},
+                    '.chatSort.active': {border: `1px solid rgba(255, 255, 255, 0.2)`, background: `linear-gradient(180deg, #222 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.chatSort.active:hover': {background: `${black2}`},
+                    '.opinionGTBox': {'border-bottom': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1px solid rgba(255, 255, 255, 0.1)`},
+                    '.exitFChat': {border: `1px solid rgba(255, 255, 255, 0.2)`, background: `linear-gradient(180deg, #222 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, #333 0%, #1a1a1a 100%)`, 'box-shadow': `0 0 10px rgba(255, 255, 255, 0.15)`},
+                    '.exitFChat:focus': {background: `linear-gradient(180deg, #111 0%, #222 100%)`},
+
+                    // 💎 Flawless neutral separation for overlay drawers on standard dark mode
+                    '.subNav, .filterDisplay': {background: 'rgba(18, 20, 24, 0.95)', border: '1px solid rgba(255, 255, 255, 0.15)', 'box-shadow': '0 20px 40px rgba(0, 0, 0, 0.85), 0 0 12px rgba(242, 242, 246, 0.02)', 'backdrop-filter': 'blur(10px)'},
+                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.04)', 'margin-top': '4px', padding: '4px'}
+                },
+
+                darkNeon: {
+            
+                    //General
+                    body: {background: `${black2}`, color: `${white2}`},
+                    // ⚡ MAXIMUM ILLUMINATION: Intense, double-layered cobalt neon light beams on borders and drop shadows
+                    section: {background: `rgba(0, 0, 0, 0.65)`, border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 25px rgba(0, 96, 181, 0.35), 0 0 10px rgba(34, 116, 199, 0.2), inset 0 0 12px rgba(0, 96, 181, 0.15)`},
+                    'section:hover': {background: `rgba(0, 0, 0, 0.75)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 35px rgba(34, 116, 199, 0.6), 0 0 15px rgba(0, 96, 181, 0.35), inset 0 0 14px rgba(34, 116, 199, 0.25)`},
+                    div: {background: `linear-gradient(178deg, rgba(18, 20, 24, 0.85) 0%, rgba(0, 0, 0, 0.95) 100%)`, border: `1px solid ${cobaltDark}`, 'box-shadow': `0 4px 15px rgba(0, 0, 0, 0.5)`},
+                    
+                    //Text - Hyper-realistic filament glow effect
+                    h1: {color: `${white1}`, 'text-shadow': `0 0 15px rgba(0, 96, 181, 0.7), 0 0 6px rgba(34, 116, 199, 0.4)`},
+                    h2: {color: `${white2}`, 'text-shadow': `0 0 12px rgba(0, 96, 181, 0.6), 0 0 4px rgba(34, 116, 199, 0.3)`},
+                    h3: {color: `${whiteBlueNeon}`, 'text-shadow': `0 0 8px rgba(34, 116, 199, 0.45)`},
+                    h4: {color: `${whiteBlue}`},
+                    h5: {color: `${whiteBlueNeon}`},
+                    h6: {color: `${grey3}`},
+                    
+                    //Special
+                    i: {color: `${cobaltLight}`, 'text-shadow': `0 0 12px rgba(34, 116, 199, 0.55)`},
+                    button: {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 12px rgba(0, 96, 181, 0.4)`},
+                    'button:hover, button.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${white1}`, 'box-shadow': `0 0 22px rgba(34, 116, 199, 0.75)`},
+                    'button:focus, button.active': {background: `linear-gradient(178deg, ${cobalt2} 0%, ${cobalt1} 100%)`},
+                    'select, textarea, input': {border: `1.5px solid ${cobalt1}`, background: `${black1}`, color: `${white1}`},
+                    'input:hover, textarea:hover, select:hover': {border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 12px rgba(34, 116, 199, 0.45)`},
+                    'input:focus, textarea:focus, select:focus': {border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': `0 0 16px rgba(204, 221, 255, 0.6)`},
+
+                    hr: {background: `linear-gradient(90deg, transparent 0%, ${cobaltLight} 50%, transparent 100%)`},
+                    '.shadow': {background: `${black1}`, opacity: '.6'},
+
+                    '::-webkit-scrollbar-track': {background: `${black2}`},
+                    '::-webkit-scrollbar-track:hover': {background: `${black1}`},
+                    '::-webkit-scrollbar-thumb': {background: `${cobaltDark}`},
+                    '::-webkit-scrollbar-thumb:hover': {background: `${cobaltLight}`},
+                    
+                    //Icon
+                    '#flagReportReason': {background: `${black3}`},
+                    '.cloudHelpNav': {border: `1.5px solid ${cobalt1}`, 'box-shadow': `0 0 18px rgba(0, 96, 181, 0.45)`},
+                    '.cloudHelpSection h5': {color: `${white1}`},
+
+                    '.IconA': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid ${cobaltDark}`, color: `${white2}`},
+                    '.IconA:hover, IconA.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 15px rgba(34, 116, 199, 0.6)`, color: `${white1}`},
+                    '.IconA:focus, .IconC.active': {background: `${cobaltDark}`},
+
+                    '.IconB': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 0 12px rgba(0, 96, 181, 0.4)`},
+                    'IconB:hover, IconB.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 20px rgba(34, 116, 199, 0.65)`},
+                    'IconB:focus, IconB.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobalt2} 100%)`},
+
+                    '.IconC': {background: `linear-gradient(178deg, ${black2} 0%, ${black1} 100%)`, border: `1px solid ${cobaltDark}`, color: `${grey2}`},
+                    '.IconC:hover, .IconC.active:hover': {background: `${black2}`, border: `1px solid ${cobaltLight}`, 'box-shadow': `0 0 10px rgba(34, 116, 199, 0.45)`, color: `${white2}`},
+                    'IconC:focus, .IconC.active': {background: `${cobaltDark}`},
+
+                    '.IconD': {background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobaltDark}`},
+                    'IconD:hover, IconD.active:hover': {background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobaltDark} 100%)`},
+                    'IconD:focus, IconD.active': {background: `linear-gradient(178deg, ${cobalt1} 0%, ${cobalt2} 100%)`},
+
+                    '.fa-gear': {color: `${whiteBlueNeon}`},
+                    '.navArrow': {color: `${white1}`},
+                    
+                    // 💎 LOGOCONT UPGRADE: Gorgeous deep-space cobalt neon battery cells look
+                    '.logoTitleContN': {background: `linear-gradient(178deg, ${black1} 0%, ${cobaltDark} 100%)`, border: `1.5px solid ${cobaltLight}`, 'box-shadow': `0 0 22px rgba(34, 116, 199, 0.6), inset 0 0 10px rgba(34, 116, 199, 0.3)`},
+
+                    '.sectionHead:hover, .sectionHead:focus, .headPopUp:hover': {background: `${black2}`, border: `1px solid ${cobalt1}`},
+                    '.headPopUpH2': {color: `${whiteBlue}`},
+                    '.headPopUpH2.active': {background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1px solid ${cobaltLight}`},
+                    '.headPopUpH2:hover': {background: `${cobalt1}`, color: `${white1}`, 'box-shadow': `0 0 14px rgba(0, 96, 181, 0.5)`},
+
+                    '.navLinksBox': {opacity: '.98', background: `${black2}`, border: `1px solid ${cobalt1}`, 'box-shadow': `0 12px 30px rgba(0, 96, 181, 0.4)`},
+                    '.navLinksBoxShadows': {'border-bottom': `2px solid ${cobaltDark}`},
+                                        
+                    '.pollDisplayBody': {background: '#000814'},
+                    '.chatPage h4': {color: `${white1}`},
+                    '.chatSort:hover': {background: `${black3}`},
+                    '.chatSort:focus': {background: `${cobaltDark}`},
+                    '.chatSort.active': {border: `1.5px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.chatSort.active:hover': {background: `${black2}`},
+                    '.opinionGTBox': {'border-bottom': `1.5px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(odd)': {'border-right': `1.5px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(even)': {'border-left': `1.5px solid ${cobaltDark}`},
+                    '.opinionGTBox:nth-child(n+3)': {'border-top': `1.5px solid ${cobaltDark}`},
+                    '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`},
+                    '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`, 'box-shadow': `0 0 16px rgba(34, 116, 199, 0.65)`},
+                    '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`},
+
+                    // High-octane smoked glass overlay panel isolation strings
+                    '.subNav, .filterDisplay': {background: 'rgba(18, 20, 24, 0.5)', border: '1.5px solid ${cobalt1}', 'box-shadow': '0 20px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(7, 91, 175, 0.3)', 'backdrop-filter': 'blur(10px)'},
+                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.45)', border: '1px solid ${cobaltDark}', 'margin-top': '4px', padding: '4px'}
+                },
             };
 
 
-            //Declarations
+            /* ==========================================================================
+            DYNAMIC COLOR SCHEME SWITCH ENGINE (CINEMATIC TRANSITION FIXED)
+            ========================================================================= */
 
+            // Declarations
             let cssString = '';
+            const PALETTE_PREF_KEY = 'gasWatch_prefColorTheme';
 
-            const lightPalette = colorPalettes.intLightNorm;
-            const darkPalette = colorPalettes.dark;
-            const customPalette = colorPalettes.custom;
-
-
-            function customizeColors(scheme) {
-
-
-                //loop through elements and set CSS Structure
-                for (const [element, styles] of Object.entries(scheme)) {
-                    
-                    cssString += `${element} { `; //"body { '
-
-                    //loop through styles(properties) and values
-                    for (const [property, value] of Object.entries(styles)) {
-                        cssString += `${property}: ${value};`; //color: black; ...
-                    }
-
-                    cssString += '} '; //'} "... "section {...}"
-
-                }
-
-
-                //Inject CSS into the #Dynamic Style Element
-                const styleTag = document.getElementById('Dynamic');
-                styleTag.textContent += cssString;
-
-
+            /**
+             * 🎨 customizeColors
+             * Compiles JS token objects into raw CSS code and handles the cover transition animation
+             */
+            function customizeColors(scheme, isInitialLoad = false) {
                 const p2 = document.getElementById('loadScreen1');
                 const p3 = document.getElementById('plane3');
 
-                setTimeout(() => {
+                // HELPER FUNCTION: Performs the actual CSS compilation and injection
+                function executeStyleSwap() {
+                    cssString = ''; // Reset compiler string to prevent rules stacking up
+                    const activeScheme = (scheme && Object.keys(scheme).length > 0) ? scheme : colorPalettes.intLightNorm;
 
-                    p2.style.display = 'none';
+                    for (const [element, styles] of Object.entries(activeScheme)) {
+                        cssString += `${element} { `; 
+                        for (const [property, value] of Object.entries(styles)) {
+                            cssString += `${property}: ${value}; `; 
+                        }
+                        cssString += '} '; 
+                    }
+
+                    const styleTag = document.getElementById('Dynamic');
+                    if (styleTag) styleTag.textContent = cssString; // Paint everything instantly under the cover screen
+                }
+
+                // --- EXECUTION MATRIX BASED ON LIFECYCLE ---
+                if (isInitialLoad) {
+                    // State A: Page Boot. The curtain (p2) is already visible. Just swap styles and lift it.
+                    executeStyleSwap();
                     
                     setTimeout(() => {
-                        p3.style.opacity = '1';
-                    }, 150);
+                        if (p2) p2.style.display = 'none';
+                        setTimeout(() => {
+                            if (p3) p3.style.opacity = '1';
+                        }, 150);
+                    }, 650);
 
-                }, 650);
+                } else {
+                    // State B: Active Theme Shift. Bring down the curtain, swap styles, and lift it back up.
+                    if (p3) p3.style.opacity = '0'; // Immediately hide main site content cleanly
+
+                    setTimeout(() => {
+                        if (p2) p2.style.display = 'flex'; // Bring back the loading screen assets
+                        
+                        // Wait for loading curtain to settle before swapping styles behind it
+                        setTimeout(() => {
+                            executeStyleSwap();
+                            
+                            // Lift the curtain back up smoothly over the new theme layout
+                            setTimeout(() => {
+                                if (p2) p2.style.display = 'none';
+                                setTimeout(() => {
+                                    if (p3) p3.style.opacity = '1';
+                                }, 150);
+                            }, 650);
+                        }, 100);
+                    }, 300); // Matches your universal 0.3s ease transition time
+                }
             }
 
-            window.addEventListener('DOMContentLoaded', customizeColors(lightPalette));
-            
+            /**
+             * ⚡ initializeAndBindColorThemes
+             * Handles boot configuration values and registers active change event frameworks
+             */
+            document.addEventListener("DOMContentLoaded", function() {
+                const themeDropdown = document.getElementById('prefColorTheme');
+                const savedThemeSelection = localStorage.getItem(PALETTE_PREF_KEY) || 'intLightNorm';
+                
+                if (themeDropdown) themeDropdown.value = savedThemeSelection;
+
+                // Trigger initial app boot sequence (Marked explicitly true for initial load state)
+                const targetPaletteProfile = colorPalettes[savedThemeSelection];
+                customizeColors(targetPaletteProfile, true);
+
+                // Bind change handler for interactive mid-session transitions
+                themeDropdown?.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    localStorage.setItem(PALETTE_PREF_KEY, selectedValue);
+                    
+                    const freshPaletteProfile = colorPalettes[selectedValue];
+                    customizeColors(freshPaletteProfile, false); // Triggers full cinematic cover cycle
+                });
+            });
+
         </script>
 
         <script id="generalElements_script">
@@ -2795,173 +3659,157 @@ if (isInAppBrowser()) {
 
         </script>
 
-        <script id="filter_script">
+        <script>
 
-            document.addEventListener("DOMContentLoaded", () => {
-                // --- DISTANCE FILTER LOGIC ---
-                const distanceRange = document.getElementById("distanceRange");
-                const distanceValue = document.getElementById("distanceValue");
+            /* ---- Chat Functionality ---- */
 
-                // Initialize distance at 5 miles
-                distanceRange.value = 5;
-                distanceValue.value = 5;
 
-                // Sync Slider -> Input (Strictly capping display/slider range to 10 as requested)
-                distanceRange.max = 20; 
-                distanceRange.addEventListener("input", (e) => {
-                    distanceValue.value = e.target.value;
+            /* -- Chat Tabs -- */
+            
+            const chatTabs = document.querySelectorAll('.chatTab');
+
+            chatTabs.forEach(tab => {
+                //chatTab Dataset (target, contClass, dTitle, h)
+                const cClasses = document.querySelectorAll(tab.getAttribute('data-contClass'));
+
+                const target = document.getElementById(tab.getAttribute('data-target'));
+                const dTitle = document.getElementById(tab.getAttribute('data-title'));
+                const h = tab.getAttribute('data-h');  
+
+                tab.addEventListener('click', () => {
+                    //Displays None & Remove Actives
+                    cClasses.forEach(c => {c.style.display = 'none';});
+                    chatTabs.forEach(t => {t.classList.remove('active');});
+                    //Updates (Target Flex, dTitle = h, Add Active)
+                    target.style.display = 'flex';
+                    dTitle.textContent = `${h}`;
+                    tab.classList.add('active');
                 });
+            });
+            
 
-                // Sync Input -> Slider
-                distanceValue.addEventListener("input", (e) => {
-                    let val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0 && val <= 10) {
-                        distanceRange.value = val;
+            /* -- Chat Title -- */
+
+            //Page Title and Pop Up
+            const chatPageTitles = document.querySelectorAll('.chatPageHead h3');
+            const chatHeadH3PopUps = document.querySelectorAll('.chatHeadH3PopUp');
+
+            chatPageTitles.forEach(title => {
+                //chatPageTitle Dataset (pop)
+                const chatHeadPopUp = document.getElementById(title.getAttribute('data-pop'));
+
+                title.addEventListener('click', () => {
+                    //Pop Display Flex
+                    chatHeadPopUp.style.display = 'flex';
+                    //blurChatNav
+                    function blurChatNav(event) {
+                        if (!document.querySelector('.chatPageHead').contains(event.target)) {
+                            //Pop Display None
+                            chatHeadPopUp.style.display = 'none';
+                            
+                            document.removeEventListener('click', blurChatNav);
+                        }
                     }
+                    document.addEventListener('click', blurChatNav);
+                });
+            });
+
+            chatHeadH3PopUps.forEach(title => {
+                //chatHeadH3PopUp Dataset (contClass, target, tab, title, h)
+                const cClasses = document.querySelectorAll(title.getAttribute('data-contClass'));
+
+                const target = document.getElementById(title.getAttribute('data-target'));
+                const dTab = document.getElementById(title.getAttribute('data-tab'));
+                const dTitle = document.getElementById(title.getAttribute('data-title'));
+                const h = title.getAttribute('data-h');
+
+                title.addEventListener('click', () => {
+                    //Displays None & Remove Actives
+                    cClasses.forEach(body => body.style.display = 'none');
+                    chatTabs.forEach(t => t.classList.remove('active'));
+                    chatHeadH3PopUps.forEach(t => t.classList.remove('active'));
+                    //Updates (Target Flex, dTitle = h, Add Actives)
+                    target.style.display = 'flex';
+                    dTitle.textContent = `${h}`;
+                    title.classList.add('active');
+                    dTab.classList.add('active');
+                    //Hide Pop Up
+                    document.querySelector('.chatHeadPopUp').style.display = 'none';
                 });
             });
 
 
-            /* ==========================================================================
-            FILTER SEARCH
-            ========================================================================== */
+            /* -- Chat Sorts -- */
 
-            function buildFilterSearchString() {
+            //Chat Sorts and Chat Boards
+            const chatSorts = document.querySelectorAll('.chatSort');
+            const chatBoards = document.querySelectorAll('.chatBoard'); 
 
-                const storeName =
-                    document.getElementById('filterStoreName')?.value.trim();
+            chatSorts.forEach(sort => {
+                //chatSort Dataset (contClass, selfClass, target, check, checkSlug)
+                const specChatBoards = document.querySelectorAll(sort.getAttribute('data-contClass'));
+                const specChatSorts = document.querySelectorAll(sort.getAttribute('data-selfClass'));
+                const target = document.getElementById(sort.getAttribute('data-target'));
+                const check = document.getElementById(sort.getAttribute('data-check'));
+                const checkSlug = document.getElementById(sort.getAttribute('data-checkSlug'));
 
-                const address =
-                    document.getElementById('filterAddress')?.value.trim();
-
-                const city =
-                    document.getElementById('filterCity')?.value.trim();
-
-                const state =
-                    document.getElementById('filterState')?.value.trim();
-
-                const zip =
-                    document.getElementById('filterZip')?.value.trim();
-
-                // Remove empty values automatically
-                const searchParts = [
-                    storeName,
-                    address,
-                    city,
-                    state,
-                    zip
-                ].filter(part => part && part.length > 0);
-
-                // Build clean comma-separated string
-                return searchParts.join(', ');
-            }
-
-            /* ==========================================================================
-            APPLY FILTERS
-            ========================================================================== */
-
-            function applyFilters(event) {
-
-                event.preventDefault();
-
-                if (isSearching) return;
-
-                const finalSearchString =
-                    buildFilterSearchString();
-
-                if (!finalSearchString) {
-
-                    alert("Please enter at least one filter field.");
-
-                    return;
-                }
-
-                console.log(
-                    "Filter search:",
-                    finalSearchString
-                );
-
-                clearMarkers();
-
-                // ZIP-only optimization
-                if (/^\d{5}$/.test(finalSearchString)) {
-
-                    searchByZipcode(finalSearchString);
-
-                } else {
-
-                    searchByPlaceName(finalSearchString);
-                }
+                sort.addEventListener('click', () => {
+                    //Displays None & Remove Actives
+                    specChatBoards.forEach(c => {c.style.display = 'none';});
+                    check.style.display = 'none';
+                    checkSlug.style.display = 'none';
+                    specChatSorts.forEach(s => {s.classList.remove('active');});
+                    //Updates (Target Grid, Add Active)
+                    target.style.display = 'grid';
+                    sort.classList.add('active');
+                });
+            });
 
 
+            /* -- Full Chat -- */
 
-                const distanceInput =
-                    document.getElementById('distanceValue');
-
-                const distanceSlider =
-                    document.getElementById('distanceRange');
-
-                const selectedDistance =
-                    parseFloat(
-                        distanceInput?.value ||
-                        distanceSlider?.value
-                    );
-
-                if (
-                    !isNaN(selectedDistance) &&
-                    selectedDistance > 0
-                ) {
-
-                    activeRadiusMiles = selectedDistance;
-
-                } else {
-
-                    // fallback default
-                    activeRadiusMiles = 5;
-                }
-
-                console.log(
-                    "ACTIVE RADIUS:",
-                    activeRadiusMiles,
-                    "miles"
-                );
-
-
-                // Price filter
-
-                /*
-
-                const priceMaxInput = document.getElementById('priceValue');
-                const parsedMaxPrice = parseFloat(priceMaxInput?.value);
-
-                if (!isNaN(parsedMaxPrice) && parsedMaxPrice > 0) {
-                    maxPriceAllowed = parsedMaxPrice;
-                } else {
-                    maxPriceAllowed = null;
-                }
-
-                */
-
-  
-
-                const fields = [
-                    'filterStoreName',
-                    'filterAddress',
-                ];
-
-                fields.forEach(id => {
-
-                    const element =
-                        document.getElementById(id);
-
-                    if (element) {
-                        element.value = '';
+            //Click Mini-Chat-Board for Full Chat
+            chatBoards.forEach(board => {
+                //chatBoard Dataset (sClass, target, slug)
+                const sClasses = document.querySelectorAll(board.getAttribute('data-sClass'));
+                const target = document.getElementById(board.getAttribute('data-target'));
+                const slug = document.getElementById(board.getAttribute('data-slug'));
+                board.addEventListener('click', () => {
+                    //Return if on Target Full Chat
+                    if (board.id === target.id) {
+                        return
+                    } else {
+                        //Find Current Chat Boards & Display None
+                        sClasses.forEach(c => {c.style.display = 'none';});
+                        //Target Full Chat and Body Display Grid
+                        target.style.display = 'grid';
+                        slug.style.display = 'grid';
                     }
                 });
+            });
 
-                document.getElementById('filterDisplay').style.display = 'none';
+            //Exit Full Chat    
+            const exitFChats = document.querySelectorAll('.exitFChat');
 
-            }
+            exitFChats.forEach(exit => {
+                //exitFChat Dataset (target, slug, revert)                
+                const target = document.getElementById(exit.getAttribute('data-target'));                
+                const slug = document.getElementById(exit.getAttribute('data-slug'));                
+                const revert = document.querySelector(exit.getAttribute('data-revert'));
+                const revertTarget = document.getElementById(revert.getAttribute('data-target'));
+
+                exit.addEventListener('click', () => {
+                    //Display None & Add Active
+                    target.style.display = 'none';
+                    slug.style.display = 'none';
+                    //Find Active Board and Display Grid
+                    revertTarget.style.display = 'grid';
+                });
+            });
+            
+
+        </script>
+
 
             
         </script>
@@ -2976,474 +3824,667 @@ if (isInAppBrowser()) {
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
         <!-- Include your custom JavaScript code -->
-<script id="map_script">
+        <script id="map_script">
 
-let isSearching = false;
-let initialLoadTriggered = false;
-let markers = [];
+            let isSearching = false;
+            let initialLoadTriggered = false;
+            let markers = [];
 
-let activeRadiusMiles = 5;
-let maxPriceAllowed = null;
+            let activeRadiusMiles = 5;
+            let maxPriceAllowed = null;
 
-/* ==========================================================================
-   MAP INIT
-========================================================================== */
+            /* ==========================================================================
+            MAP INIT
+            ========================================================================== */
 
-const map = L.map('map', {
-    zoomControl: true,
-    tap: false // iOS Safari touch fix
-}).setView([39.7392, -104.9903], 13);
+            const map = L.map('map', {
+                zoomControl: true,
+                tap: false // iOS Safari touch fix
+            }).setView([39.7392, -104.9903], 12);
 
-L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    attribution: 'Map data © Google'
-}).addTo(map);
-
-/* ==========================================================================
-   FETCH WITH TIMEOUT
-========================================================================== */
-
-async function fetchWithTimeout(resource, options = {}) {
-    const timeout = options.timeout || 15000;
-
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        const response = await fetch(resource, {
-            ...options,
-            signal: controller.signal
-        });
-
-        clearTimeout(id);
-        return response;
-
-    } catch (err) {
-        clearTimeout(id);
-        throw err;
-    }
-}
-
-/* ==========================================================================
-   APP INIT
-========================================================================== */
-
-function initApp() {
-
-    if (initialLoadTriggered) return;
-
-    // Mobile geolocation requires HTTPS
-    if (location.protocol !== 'https:') {
-        console.warn("HTTPS required for geolocation.");
-        loadDenverFallback();
-        return;
-    }
-
-    if (!navigator.geolocation) {
-        loadDenverFallback();
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-
-        function(position) {
-
-            if (initialLoadTriggered) return;
-            initialLoadTriggered = true;
-
-            const userLat = position.coords.latitude;
-            const userLon = position.coords.longitude;
-
-            moveMapSafely(userLat, userLon);
-
-            const startingMarker = L.marker([userLat, userLon], {
-                icon: L.divIcon({
-                    className: 'black-marker-icon'
-                })
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                subdomains: '0123',                // ⚡ Distributes downloads across mt0, mt1, mt2, mt3
+                maxZoom: 20,
+                minZoom: 4,                        // 🛑 Prevents zooming out into infinite world loops
+                updateWhenIdle: true,
+                attribution: 'Map data © Google'
             }).addTo(map);
 
-            startingMarker
-                .bindPopup("<b>You are here</b>")
-                .openPopup();
+            /* ==========================================================================
+            FETCH WITH TIMEOUT
+            ========================================================================== */
 
-            getPricesNow("Current Location", userLat, userLon);
-        },
+            async function fetchWithTimeout(resource, options = {}) {
+                const timeout = options.timeout || 15000;
 
-        function(error) {
-            console.warn("Geolocation failed:", error);
-            loadDenverFallback();
-        },
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), timeout);
 
-        {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
-        }
-    );
-}
+                try {
+                    const response = await fetch(resource, {
+                        ...options,
+                        signal: controller.signal
+                    });
 
-/* ==========================================================================
-   FALLBACK
-========================================================================== */
+                    clearTimeout(id); // Clean up the timer if the server responded quickly
+                    return response;
 
-function loadDenverFallback() {
+                } catch (err) {
+                    clearTimeout(id); // Clean up the timer if an immediate network error happened
 
-    if (initialLoadTriggered) return;
+                    // Check if the error was caused by our 15-second countdown kill-switch
+                    if (err.name === 'AbortError') {
+                        throw new Error(`Request timed out after ${timeout / 1000} seconds.`);
+                    }
+                    
+                    throw err;
+                }
+            }
 
-    initialLoadTriggered = true;
+            /* ==========================================================================
+            APP INIT
+            ========================================================================== */
 
-    const lat = 39.7392;
-    const lon = -104.9903;
+            function initApp() {
+                // 🚀 Directly routes to immediate default load without blocking for hardware GPS prompts
+                loadDefaultLocation();
+            }
 
-    moveMapSafely(lat, lon);
+            /* ==========================================================================
+            DEFAULT MAIN LOADER
+            ========================================================================== */
 
-    const marker = L.marker([lat, lon], {
-        icon: L.divIcon({
-            className: 'black-marker-icon'
-        })
-    }).addTo(map);
+            function loadDefaultLocation() {
+                if (initialLoadTriggered) return;
+                initialLoadTriggered = true;
 
-    getPricesNow("80204", lat, lon);
-}
+                const lat = 39.7392;
+                const lon = -104.9903;
 
-/* ==========================================================================
-   SAFE MAP MOVEMENT
-========================================================================== */
+                // Create the center marker and push it to our global array so clearMarkers() can remove it later
+                const centerMarker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'black-marker-icon'
+                    })
+                }).addTo(map);
+                
+                centerMarker.bindPopup("<b>Hello, Denver!</b>").openPopup();
+                markers.push(centerMarker);
 
-function moveMapSafely(lat, lon) {
+                // Immediately fetch initial data to populate the user's screen
+                getPricesNow("80204");
+            }
 
-    setTimeout(() => {
+            /* ==========================================================================
+            SAFE MAP MOVEMENT
+            ========================================================================== */
 
-        map.setView([lat, lon], 13);
+            function moveMapSafely(lat, lon) {
+                // 🗺️ Pro-move: Use flyTo for an elegant cinematic glide animation to the new spot
+                map.flyTo([lat, lon], map.getZoom(), {
+                    animate: true,
+                    duration: 0.8 // Buttery smooth 800ms transition
+                });
 
-        requestAnimationFrame(() => {
-            map.invalidateSize(true);
-        });
+                // Forces immediate tile recalculation on the next browser redraw frame without setTimeout delays
+                requestAnimationFrame(() => {
+                    map.invalidateSize({ debounceMove: true });
+                });
+            }
 
-    }, 400);
-}
+            /* ==========================================================================
+            CLEAR MARKERS
+            ========================================================================== */
 
-/* ==========================================================================
-   CLEAR MARKERS
-========================================================================== */
+            function clearMarkers() {
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+            }
 
-function clearMarkers() {
 
-    markers.forEach(marker => {
-        map.removeLayer(marker);
-    });
+            async function getPricesNow(searchQuery) {
+                if (isSearching) return;
+                isSearching = true;
 
-    markers = [];
-}
+                const BACKEND_URL = "/api/gas-prices";
+                clearMarkers();
 
-/* ==========================================================================
-   GAS PRICE FETCH
-========================================================================== */
+                try {
+                    const response = await fetchWithTimeout(BACKEND_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ search: searchQuery })
+                    });
 
-async function getPricesNow(searchQuery, targetLat, targetLon) {
+                    const datasetItems = await response.json();
+                    if (!datasetItems || datasetItems.length === 0) return;
 
-    if (isSearching) return;
+                    // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
+                    const geocodePromises = datasetItems.map(async (station, index) => {
+                        const name = station.name || "Gas Station";
+                        const address = station.address_line1 || "Unknown Address";
+                        const locality = station.address_locality || "";
+                        const region = station.address_region || "";
+                        
+                        const cash = parseFloat(station.price_cash || 0);
+                        const credit = parseFloat(station.price_credit || 0);
+                        const finalPrice = cash > 0 ? cash : credit;
+                        const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
 
-    isSearching = true;
+                        const fullTextAddress = `${address}, ${locality}, ${region}`;
 
-    console.log("Fetching gas prices...");
+                        try {
+                            // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
+                            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
 
-    const searchField = document.getElementById('searchBar');
+                            const geoResponse = await fetch(geocodeUrl, {
+                                headers: { "User-Agent": "GasWatchApp" }
+                            });
+                            const geoData = await geoResponse.json();
 
-    if (searchField) {
-        searchField.placeholder = "Loading gas prices...";
-    }
+                            // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
+                            if (geoData && geoData.length > 0) {
+                                const lat = parseFloat(geoData[0].lat);
+                                const lon = parseFloat(geoData[0].lon);
 
-    const BACKEND_URL =
-        "https://gas-watch-server.onrender.com/api/gas-prices";
+                                return { lat, lon, name, address, displayPrice, index };
+                            }
+                        } catch (geoError) {
+                            console.error(`Could not locate address: ${fullTextAddress}`, geoError);
+                        }
+                        return null; // Return null if the lookup completely failed
+                    });
 
-    try {
+                    // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
+                    const resolvedStations = await Promise.all(geocodePromises);
 
-        const response = await fetchWithTimeout(BACKEND_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Cache-Control": "no-cache"
-            },
-            body: JSON.stringify({
-                search: searchQuery,
-                _t: Date.now() // 🔥 cache-buster
-            }),
-            cache: "no-store"
-        });
+                    let firstValidCoords = null;
 
-        if (!response.ok) {
-            throw new Error("Backend request failed.");
-        }
+                            // 3. Drop all working markers instantly onto your map instance
+                    resolvedStations.forEach(station => {
+                        if (!station) return; // Skip failed lookups
 
-        const datasetItems = await response.json();
+                        // Track coordinates of the cheapest station
+                        if (station.index === 0) {
+                            firstValidCoords = [station.lat, station.lon];
+                        }
 
-        if (searchField) {
-            searchField.placeholder =
-                "Search city or ZIP code...";
-        }
+                        // Injects your CSS pill style dynamically into Leaflet
+                        const priceIcon = L.divIcon({
+                            className: 'gas-price-marker', 
+                            html: station.displayPrice,     
+                            iconSize: null,                
+                            iconAnchor: null            
+                        });
 
-        if (datasetItems.error) {
-            throw new Error(datasetItems.error);
-        }
+                        // 🕒 EXTRACT & CLEAN THE TIME FIELD NATIVELY
+                        // Grabs the raw data or defaults to a safe string if unavailable
+                        const rawTime = station.rawStationData?.postedTime || "Recently"; 
+                        let displayTime = "Date unknown";
 
-        if (!datasetItems || datasetItems.length === 0) {
-            alert("No gas stations found.");
-            return;
-        }
+                        if (rawTime && rawTime !== "Recently") {
+                            try {
+                                // Turn it into a beautiful, localized text string (e.g. "June 12, 4:44 PM")
+                                const dateObj = new Date(rawTime);
+                                displayTime = dateObj.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                            } catch(e) {
+                                displayTime = rawTime; // Fallback to raw string if formatting slips
+                            }
+                        } else {
+                            displayTime = "Updated recently";
+                        }
 
-        clearMarkers();
+                        // Creates the marker using your custom green price pill style
+                        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
+                        
+                        // ✅ INJECTED: Added a clean, muted time badge at the very bottom of the click popup
+                        marker.bindPopup(`
+                            <b>${station.name}</b><br>
+                            ${station.address}<br>
+                            <b>${station.displayPrice}</b><br>
+                            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+                                🕒 ${displayTime}
+                            </div>
+                        `);
+                        markers.push(marker);
+                    });
 
-        datasetItems.forEach((station, index) => {
 
-            const angle =
-                index * (360 / datasetItems.length) * (Math.PI / 180);
+                    // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
+                    if (firstValidCoords) {
+                        map.setView(firstValidCoords, 13);
+                    }
 
-            // 1. Set the maximum radius limit (5 miles)
-            const maxRadiusMiles = activeRadiusMiles;
-            
-            // 2. Convert that maximum limit to geographic degrees
-            const maxRadiusDegrees = maxRadiusMiles / 69; 
+                } catch (error) {
+                    console.error("Fetch failed:", error);
+                } finally {
+                    isSearching = false;
+                }
+            }
+            /* ==========================================================================
+            SEARCH HANDLER (Updated: Complete Geocoding Eradication)
+            ========================================================================== */
 
-            // 3. FIX: Randomize the radius for each item so they scatter INSIDE the circle
-            // Using Math.sqrt ensures an even spread across the circle's surface area
-            const radiusOffset = Math.sqrt(Math.random()) * maxRadiusDegrees;
+            function searchLocation() {
+                if (isSearching) return;
 
-            const lat =
-                targetLat + (Math.sin(angle) * radiusOffset);
+                const searchBar = document.getElementById('searchBar');
+                if (!searchBar) return;
 
-            const lon =
-                targetLon + (Math.cos(angle) * radiusOffset);
+                const input = searchBar.value.trim();
+                if (!input) return;
 
-            const currentPrice =
-                parseFloat(
-                    station.price_cash ||
-                    station.price_credit ||
-                    'n/a'
-                );
+                // Dismiss mobile keyboard
+                searchBar.blur();
 
-            const stationName =
-                station.name || "Gas Station";
+                // 🚀 DIRECT HAND-OFF: Skip all frontend lookup APIs entirely!
+                // We send the raw text query directly down the single pipeline to the backend.
+                getPricesNow(input, null, null);
+            }
 
-            const streetAddress =
-                station.address_line1 || "Address unavailable";
+            /* ==========================================================================
+            DOM READY
+            ========================================================================== */
 
-            const locality =
-                station.address_locality || "";
+            document.addEventListener("DOMContentLoaded", function() {
 
-            const priceIcon = L.divIcon({
-                className: 'gas-price-marker',
-                html: `$${currentPrice.toFixed(2)}`
+                // 🎯 Uses your exact HTML ID hooks for ultra-precise element matching
+                const bar = document.getElementById("searchBar");
+                const icon = document.getElementById("extSearchIcon");
+
+                // iOS & Mobile Safe Enter Key Handling
+                if (bar) {
+                    bar.addEventListener("keydown", function(event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            bar.blur(); // 📱 Pulls down mobile keyboards so users can instantly see the Leaflet map!
+                            searchLocation();
+                        }
+                    });
+                }
+
+                // Universal Mobile/Desktop Click Handler (Completely safe from scroll-drag glitches)
+                if (icon) {
+                    icon.addEventListener("click", function(event) {
+                        event.preventDefault();
+                        if (bar) bar.blur(); // 📱 Retracts keyboard if they choose to tap the glass icon instead
+                        searchLocation();
+                    });
+                }
+
+                // ⚡ INSTANT ENGINE BOOT: Renders your '#map' layout container seamlessly
+                requestAnimationFrame(() => {
+                    map.invalidateSize(true);
+                    initApp(); 
+                });
             });
 
-            const marker = L.marker([lat, lon], {
-                icon: priceIcon
-            });
+            /* ==========================================================================
+            FILTER FORM SUBMIT
+            ========================================================================== */
 
-            marker.bindPopup(`
-                <div class="custom-popup">
-                    <h3>${stationName}</h3>
-                    <p>${streetAddress}, ${locality}</p>
-                    <div class="price-tag">
-                        Regular: $${currentPrice.toFixed(2)}
-                    </div>
-                </div>
-            `);
 
-            
 
-            marker.addTo(map);
+</script>
 
-            markers.push(marker);
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Error fetching gas prices.");
-
-    } finally {
-
-        isSearching = false;
-
-        if (searchField) {
-            searchField.placeholder =
-                "Search city or ZIP code...";
-        }
-    }
-}
-
+<script id="preferences_and_skins_script">
 /* ==========================================================================
-   ZIP SEARCH
-========================================================================== */
-
-async function searchByZipcode(zipcode) {
-
-    try {
-
-        const response =
-            await fetchWithTimeout(
-                `https://api.zippopotam.us/us/${zipcode}`
-            );
-
-        if (!response.ok) {
-            throw new Error("ZIP code not found.");
-        }
-
-        const data = await response.json();
-
-        const latitude =
-            parseFloat(data.places[0]["latitude"]);
-
-        const longitude =
-            parseFloat(data.places[0]["longitude"]);
-
-        moveMapSafely(latitude, longitude);
-
-        getPricesNow(zipcode, latitude, longitude);
-
-    } catch (error) {
-
-        alert(error.message);
-    }
-}
-
-/* ==========================================================================
-   PLACE SEARCH
-========================================================================== */
-
-async function searchByPlaceName(placeName) {
-
-    try {
-
-        const url =
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeName)}&format=json&limit=1`;
-
-        const response =
-            await fetchWithTimeout(url);
-
-        if (!response.ok) {
-            throw new Error("Location search failed.");
-        }
-
-        const data = await response.json();
-
-        if (!data.length) {
-            throw new Error("Location not found.");
-        }
-
-        const latitude = parseFloat(data[0].lat);
-        const longitude = parseFloat(data[0].lon);
-
-        moveMapSafely(latitude, longitude);
-
-        getPricesNow(placeName, latitude, longitude);
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(error.message);
-    }
-}
-
-/* ==========================================================================
-   SEARCH HANDLER
-========================================================================== */
-
-function searchLocation() {
-
-    if (isSearching) return;
-
-    const searchBar =
-        document.getElementById('searchBar');
-
-    if (!searchBar) return;
-
-    const input =
-        searchBar.value.trim();
-
-    if (!input) return;
-
-    // Dismiss mobile keyboard
-    searchBar.blur();
-
-    clearMarkers();
-
-    if (/^\d{5}$/.test(input)) {
-
-        searchByZipcode(input);
-
-    } else {
-
-        searchByPlaceName(input);
-    }
-}
-
-/* ==========================================================================
-   DOM READY
-========================================================================== */
+   USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED)
+   ========================================================================== */
 
 document.addEventListener("DOMContentLoaded", function() {
+    
+    // --- 1. LOCAL STORAGE REFERENCE KEYS ---
+    const PREF_KEYS = {
+        fuel: 'gasWatch_prefFuel',
+        radius: 'gasWatch_prefRadius',
+        maxPrice: 'gasWatch_prefMaxPrice',
+        sort: 'gasWatch_prefSort',
+        skin: 'gasWatch_mapTheme', 
+        text: 'gasWatch_prefText',
+        contrast: 'gasWatch_prefMarkerContrast'
+    };
 
-    const bar =
-        document.getElementById("searchBar");
+// --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX (JAWG PRESET VARIATION) ---
+    const MAP_THEME_TILES = {
+        google: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        
+        midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
+        matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
+        
+        navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
+    };
 
-    if (bar) {
+    const MAP_THEME_ATTRIBUTIONS = {
+        google: 'Map data © Google',
+        iphone: '© OpenStreetMap contributors, © CARTO',
+        midnight: '© OpenStreetMap contributors, © JawgMaps',
+        matrix: '© OpenStreetMap contributors, © JawgMaps',
+        navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
+    };
 
-        // iOS-safe Enter handling
-        bar.addEventListener("keydown", function(event) {
+    // --- 3. INITIALIZE AND APPLY USER PARAMETERS ON RUNTIME BOOT ---
+    initUserPreferences();
 
-            if (event.key === "Enter") {
+    function initUserPreferences() {
+        // A. Load Persistent Fuel Profile Choice
+        const savedFuel = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
+        const fuelSelect = document.getElementById('prefDefaultFuel');
+        if (fuelSelect) fuelSelect.value = savedFuel;
+        
+        const mainFuelFilter = document.getElementById('fuelType');
+        if (mainFuelFilter) mainFuelFilter.value = savedFuel;
 
-                event.preventDefault();
+        // B. Load Search Radius Preference
+        const savedRadius = localStorage.getItem(PREF_KEYS.radius) || '5';
+        const radiusSelect = document.getElementById('prefDefaultRadius');
+        if (radiusSelect) radiusSelect.value = savedRadius;
+        
+        const mainRadiusSlider = document.getElementById('distanceRange');
+        const mainRadiusValue = document.getElementById('distanceValue');
+        if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
+        if (mainRadiusValue) mainRadiusValue.value = savedRadius;
 
-                searchLocation();
+        const savedMaxPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
+        const maxPriceInput = document.getElementById('prefMaxPrice');
+        if (maxPriceInput) maxPriceInput.value = savedMaxPrice;
+
+        // Sync it straight into your primary filter panel input field if it exists
+        const mainPriceFilter = document.getElementById('priceValue');
+        if (mainPriceFilter) mainPriceFilter.value = savedMaxPrice;
+
+
+        // C. Load List Sort Ordering Metrics
+        const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
+        const sortSelect = document.getElementById('prefDefaultSort');
+        if (sortSelect) sortSelect.value = savedSort;
+
+        // D. Load and Render Selected Map Canvas Skin Theme
+        const savedSkin = localStorage.getItem(PREF_KEYS.skin) || 'google';
+        const skinSelect = document.getElementById('prefMapSkin'); 
+        if (skinSelect) skinSelect.value = savedSkin;
+        
+        // Load Marker Contrast Preference
+        const savedContrast = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
+        const contrastSelect = document.getElementById('prefMarkerContrast');
+        if (contrastSelect) contrastSelect.value = savedContrast;
+        applyMarkerContrast(savedContrast);
+
+
+        // Let the primary map script boot natively first, then modify tile layouts if necessary
+        requestAnimationFrame(() => {
+            if (savedSkin !== 'google') {
+                switchMapTheme(savedSkin);
+            }
+        });
+
+        // E. Load Font Bubble Scaling Settings
+        const savedText = localStorage.getItem(PREF_KEYS.text) || 'normal';
+        const textSelect = document.getElementById('prefTextSize');
+        if (textSelect) textSelect.value = savedText;
+        applyTextScaling(savedText);
+    }
+
+    // --- 4. INTERACTIVE EVENT HANDLER CONNECTIONS ---
+
+    // Grade Dropdown Changes
+    document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.fuel, this.value);
+        const mainFuelFilter = document.getElementById('fuelType');
+        if (mainFuelFilter) mainFuelFilter.value = this.value;
+        triggerMapDataRefresh();
+    });
+
+    // Distance Radius Matrix Changes
+    document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.radius, this.value);
+        const mainRadiusSlider = document.getElementById('distanceRange');
+        const mainRadiusValue = document.getElementById('distanceValue');
+        if (mainRadiusSlider) mainRadiusSlider.value = this.value;
+        if (mainRadiusValue) mainRadiusValue.value = this.value;
+        triggerMapDataRefresh();
+    });
+
+    document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
+        const freshValue = this.value.trim();
+        localStorage.setItem(PREF_KEYS.maxPrice, freshValue);
+        
+        // Sync to the primary sidebar filter form variable array natively
+        const mainPriceFilter = document.getElementById('priceValue');
+        if (mainPriceFilter) mainPriceFilter.value = freshValue;
+        
+        // Trigger immediate map repaint frames as they edit the threshold
+        triggerMapDataRefresh();
+    });
+
+
+    // Sorting Logic Changes
+    document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.sort, this.value);
+        triggerMapDataRefresh();
+    });
+
+    // Map Theme Skin Changes
+    document.getElementById('prefMapSkin')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.skin, this.value);
+        switchMapTheme(this.value);
+    });
+
+    // Typography Sizing Changes
+    document.getElementById('prefTextSize')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.text, this.value);
+        applyTextScaling(this.value);
+    });
+
+    // --- 5. VISUAL REPAINT TRANSFORM MECHANISMS ---
+
+    /**
+     * 🗺️ switchMapTheme
+     * Modifies the already-initialized global 'map' instance as necessary
+     */
+    function switchMapTheme(themeName) {
+        if (typeof map === 'undefined' || !map) return;
+
+        const activeTheme = themeName || 'google';
+        const selectedUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
+        const selectedAttr = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
+
+        // Strip previous tile layers cleanly from beneath your emerald capsules
+        map.eachLayer(function(layer) {
+            if (layer instanceof L.TileLayer) {
+                map.removeLayer(layer);
+            }
+        });
+
+        // Initialize and bind the fresh graphic backdrop
+        L.tileLayer(selectedUrl, {
+            subdomains: activeTheme === 'google' ? '0123' : 'abc',
+            maxZoom: 20,
+            minZoom: 4,
+            updateWhenIdle: true,
+            attribution: selectedAttr
+        }).addTo(map);
+
+        // Dark Theme Specific Card Adjustments
+        const dynamicStyleId = 'dynamic-dark-popup-override';
+        let popupStyleElement = document.getElementById(dynamicStyleId);
+        
+        if (!popupStyleElement) {
+            popupStyleElement = document.createElement('style');
+            popupStyleElement.id = dynamicStyleId;
+            document.head.appendChild(popupStyleElement);
+        }
+        
+        if (activeTheme === 'midnight') {
+            popupStyleElement.innerHTML = `
+                .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
+                .custom-popup h3 { color: #f5f8ff !important; }
+                .custom-popup p { color: #dee0e3 !important; }
+                .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
+            `;
+        } else {
+            popupStyleElement.innerHTML = ''; // Reverts cleanly to standard white styles
+        }
+    }
+
+    /**
+     * 🔍 applyTextScaling
+     * Controls CSS micro-variables to expand marker sizing variables on the fly
+     */
+    function applyTextScaling(scale) {
+        if (scale === 'large') {
+            document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
+            document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
+        } else {
+            document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
+            document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
+        }
+    }
+
+    function applyMarkerContrast(mode) {
+        const contrastStyleId = 'dynamic-marker-contrast-override';
+        let styleEl = document.getElementById(contrastStyleId);
+        
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = contrastStyleId;
+            document.head.appendChild(styleEl);
+        }
+        
+        if (mode === 'high') {
+            styleEl.innerHTML = `
+                .gas-price-marker { 
+                    box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
+                    font-weight: 800 !important;
+                    border: 2px solid #000 !important; /* Harsh black contrast border */
+                }
+            `;
+        } else {
+            styleEl.innerHTML = ''; // Restores your pristine emerald glow configuration layout
+        }
+    }
+
+    /**
+     * ⚡ triggerMapDataRefresh
+     * Safety valve ensuring map displays adapt instantly to sorting choices
+     */
+    function triggerMapDataRefresh() {
+        if (typeof applyClientSideMapFilters === "function") {
+            applyClientSideMapFilters();
+        }
+    }
+});
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+    
+    // --- 1. DOM SELECTOR REFERENCES ---
+    const filterForm = document.querySelector(".filterForm");
+    const distanceSlider = document.getElementById("distanceRange");
+    const distanceLabel = document.getElementById("distanceValue");
+    const clearButton = document.getElementById("clearFiltersBtn");
+    const filterDisplayPanel = document.getElementById("filterDisplay");
+
+    // --- 2. LIVE SLIDER COUNT SYNCING ---
+    if (distanceSlider && distanceLabel) {
+        // Force initial state matching on boot frames
+        distanceLabel.value = distanceSlider.value;
+
+        // Redraw numeric text dynamically as the user slides the control knob
+        distanceSlider.addEventListener("input", function() {
+            distanceLabel.value = this.value;
+        });
+    }
+
+    // --- 3. UNIVERSAL INSTANT LOCAL FORM CLEAR ENTRY ---
+    if (clearButton && filterForm) {
+        clearButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Guard against default button behaviors
+
+            // Reset text string inputs cleanly
+            document.getElementById("filterAddress").value = "";
+            document.getElementById("filterCity").value = "";
+            document.getElementById("filterState").value = "";
+            document.getElementById("filterZip").value = "";
+            document.getElementById("filterStoreName").value = "";
+            document.getElementById("prefMaxPrice").value = "";
+
+            // Revert slider variables back to default 5-mile radius baseline marks
+            if (distanceSlider && distanceLabel) {
+                distanceSlider.value = 5;
+                distanceLabel.value = 5;
+            }
+
+            // Revert dropdown index state back to Regular Unleaded option
+            const fuelSelect = document.getElementById("fuelType");
+            if (fuelSelect) fuelSelect.value = "regular";
+
+            console.log("🧼 Map filter inputs cleared cleanly local side.");
+            
+            // OPTIONAL PRO MOVE: Trigger an un-filtered map re-fetch or redraw automatically
+            if (typeof getPricesNow === "function") {
+                getPricesNow(""); // Calls back your master tracker script to dump full area data
             }
         });
     }
 
-    const icon =
-        document.getElementById("extSearchIcon");
+    // --- 4. BACKEND CONTEXT PREPPING & FORM SUBMIT HANDOFF ---
+    if (filterForm) {
+        filterForm.addEventListener("submit", function(event) {
+            event.preventDefault(); // Block standard form post reloads to protect map canvas frame layers
 
-    if (icon) {
+            // Assemble all active entry keys tightly into a single structured payload matrix
+            const filterPayload = {
+                address: document.getElementById("filterAddress").value.trim(),
+                city: document.getElementById("filterCity").value.trim(),
+                state: document.getElementById("filterState").value.trim(),
+                zipCode: document.getElementById("filterZip").value.trim(),
+                brandName: document.getElementById("filterStoreName").value.trim(),
+                radiusMiles: parseInt(distanceSlider ? distanceSlider.value : 5),
+                maxPriceLimit: parseFloat(document.getElementById("prefMaxPrice").value) || null,
+                fuelGradeSelection: document.getElementById("fuelType") ? document.getElementById("fuelType").value : "regular"
+            };
 
-        // Universal mobile-safe handler
-        icon.addEventListener("pointerup", function(event) {
+            // 🚀 THE READY ENGINE LINE: Data payload is fully staged for server.js!
+            console.log("🛰️ Filters packaged and prepped for backend delivery:", filterPayload);
 
-            event.preventDefault();
+            /* 
+               ==========================================================================
+               UNIFIED BACKEND FETCH STRING HOOK (READY FOR NEXT STAGE)
+               ==========================================================================
+               This is the exact connection format we will use when linking up server.js:
 
-            searchLocation();
+               fetch("/api/gas-prices/filter", {
+                   method: "POST",
+                   headers: { "Content-Type": "application/json" },
+                   body: JSON.stringify(filterPayload)
+               })
+               .then(response => response.json())
+               .then(filteredData => {
+                   // Clean old indicators and paint fresh filtered search results onto map canvas
+                   if (typeof clearMarkers === "function" && typeof markers !== "undefined") {
+                       clearMarkers();
+                       // (Map renderer call array loops sit here)
+                   }
+               })
+               .catch(err => console.error("Filter connection fault:", err));
+            */
+
+            // Retract the sliding overlay panel display smoothly once values pass through submission triggers
+            if (filterDisplayPanel) {
+                filterDisplayPanel.style.display = "none";
+            }
         });
     }
-
-    // Allow viewport to stabilize before Leaflet sizing
-    setTimeout(() => {
-
-        map.invalidateSize(true);
-
-        initApp();
-
-    }, 500);
 });
-
-/* ==========================================================================
-   FILTER FORM SUBMIT
-========================================================================== */
-
-const filterForm =
-    document.querySelector('.filterForm');
-
-if (filterForm) {
-
-    filterForm.addEventListener(
-        'submit',
-        applyFilters
-    );
-}
-
 </script>
+
 
     </body>
 </html>

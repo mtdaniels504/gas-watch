@@ -1,62 +1,46 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const compression = require('compression'); 
-const path = require('path'); 
-require('dotenv').config(); 
-
-// 🛡️ BARE BONES ROUTING PROFILE: Replace 'gas-watch' with your exact Vercel project dashboard name prefix
-const PROJECT_NAME = 'gas-watch'; 
-
-// 🛸 Pull in your independent route file
-const gasPricesRoute = require('./routes/gasPrices');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
+app.use(express.json());
 
-app.use(compression()); 
-app.use(express.json()); 
+// Initialize with the PUBLIC anon key
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
-// 🛡️ SECURITY SCHEMA (UNIVERSAL SKELETON)
-const allowedOrigins = [
-    'https://gas-watch.com', 
-    'http://localhost:5500',        
-    'http://localhost:3000'         
-]; 
+// The consolidated gas prices endpoint
+app.post('/api/gas-prices', async (req, res) => {
+    try {
+        const { search } = req.body;
+        // Normalize city to lowercase to match your database
+        const city = (search || "denver").toLowerCase().trim();
 
-app.use(cors({
-    origin: function (origin, callback) {
-        // 1. Allow internal/local requests or empty testing origins
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            return callback(null, true);
-        }
+        // 1. Query Supabase
+        const { data, error } = await supabase
+            .from('gas_stations')
+            .select('*')
+            .eq('city', city)
+            .order('price', { ascending: true }); // Cheapest first for best UX
 
-        // 2. BULLETPROOF DOMAIN SHIELD: Checks if the request contains your project name
-        // This catches gas-watch.com, www.gas-watch.com, and all *.vercel.app deployment URLs instantly!
-        const isProjectDomain = origin.includes(PROJECT_NAME);
+        if (error) throw error;
 
-        if (isProjectDomain) {
-            callback(null, true);
-        } else {
-            callback(new Error('Blocked by CORS policy: Unauthorized domain request.'));
-        }
+        // 2. Safe Defaults: Prevent frontend crashes if no data exists
+        const defaultOrigin = { lat: 39.7392, lon: -104.9903 };
+        const origin = (data && data.length > 0) 
+            ? { lat: data[0].lat, lon: data[0].lon } 
+            : defaultOrigin;
+
+        // 3. Return clean JSON
+        res.json({ 
+            origin: origin, 
+            stations: data || [] 
+        });
+
+    } catch (err) {
+        console.error("🔴 Database Route Error:", err);
+        res.status(500).json({ error: "Failed to fetch station data" });
     }
-}));
-
-
-// 🗺️ Tell Express where your static assets live so it can serve index.html!
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 🔌 Mount it instantly onto your server routing path
-app.use('/api/gas-prices', gasPricesRoute);
-
-// ✅ PASTE THIS BULLETPROOF REGEX LINE INSTEAD:
-app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// local server port configuration
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => console.log(`Secure gateway running locally on port ${PORT}`));
-}
-
-module.exports = app; // Required by Vercel serverless functions
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
