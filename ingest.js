@@ -5,7 +5,6 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// I assume you have this helper function already defined in your file
 async function geocodeAddress(address) {
     try {
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, {
@@ -24,7 +23,7 @@ async function geocodePending() {
         .from('gas_stations')
         .select('external_id, address')
         .is('lat', null)
-        .eq('geocoding_failed', false) // Use your new SQL column
+        .eq('geocoding_failed', false)
         .limit(50);
 
     if (!pending || pending.length === 0) return console.log("✅ Nothing to geocode!");
@@ -38,7 +37,6 @@ async function geocodePending() {
                 .update({ lat: coords.lat, lon: coords.lon })
                 .eq('external_id', item.external_id);
         } else {
-            // Mark as failed so we don't retry forever
             await supabase.from('gas_stations')
                 .update({ geocoding_failed: true })
                 .eq('external_id', item.external_id);
@@ -75,6 +73,4 @@ async function runIngestion(searchQuery) {
     else console.log(`✅ Ingested ${rawData.length} stations for ${searchQuery}.`);
 }
 
-// REMOVED the auto-run call at the bottom.
-// Only export the functions for cron.js to use.
 module.exports = { runIngestion, geocodePending };
