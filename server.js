@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const { smartIngestion } = require('./ingest.js');
 
 const app = express();
 app.use(express.json());
@@ -14,13 +13,9 @@ app.post('/api/gas-prices', async (req, res) => {
         const { search } = req.body;
         if (!search) return res.status(400).json({ error: "Search parameter is required" });
 
-        // Normalize city: "New York, NY" -> "new york"
         const normalizedCity = search.split(',')[0].trim().toLowerCase();
 
-        // 1. Run smartIngestion (Only scrapes if data is > 48h old or missing)
-        await smartIngestion(search); 
-
-        // 2. Query Supabase using the normalized city
+        // 1. READ ONLY: Just query the database
         const { data, error } = await supabase
             .from('gas_stations')
             .select('*')
@@ -29,16 +24,20 @@ app.post('/api/gas-prices', async (req, res) => {
 
         if (error) throw error;
 
-        // 3. Safe Defaults: Prevent frontend crashes
-        const defaultOrigin = { lat: 39.7392, lon: -104.9903 }; // Denver default
-        const origin = (data && data.length > 0) 
+        // 2. CHECK IF DATA IS MISSING
+        // If data is empty, we tell the frontend it's "pending"
+        const isDataMissing = !data || data.length === 0;
+
+        // 3. Safe Defaults
+        const defaultOrigin = { lat: 39.7392, lon: -104.9903 }; 
+        const origin = (!isDataMissing) 
             ? { lat: data[0].lat, lon: data[0].lon } 
             : defaultOrigin;
 
-        // 4. Return clean JSON
         res.json({ 
             origin: origin, 
-            stations: data || [] 
+            stations: data || [],
+            status: isDataMissing ? "PENDING" : "OK"
         });
 
     } catch (err) {
