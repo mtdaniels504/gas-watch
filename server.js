@@ -2,30 +2,22 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+// 1. Import your ingestion functions
+const { smartIngestion } = require('./ingest.js'); 
 
 const app = express();
 app.use(express.json());
 
-// Initialize with the PUBLIC anon key
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
-// 1. Static file serving
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. API Routes
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search } = req.body;
-        console.log("🔍 Search requested for:", search);
-
         if (!search) return res.status(400).json({ error: "Search parameter is required" });
 
         const normalizedCity = search.split(',')[0].trim().toLowerCase();
-
-        // Debug: Check if variables are loaded
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-            throw new Error("Missing Supabase environment variables");
-        }
 
         const { data, error } = await supabase
             .from('gas_stations')
@@ -33,30 +25,34 @@ app.post('/api/gas-prices', async (req, res) => {
             .or(`city.ilike.%${normalizedCity}%,address.ilike.%${normalizedCity}%`)
             .order('price', { ascending: true });
 
-        if (error) {
-            console.error("❌ Supabase Query Error:", error);
-            throw error;
-        }
+        if (error) throw error;
 
         const isDataMissing = !data || data.length === 0;
 
         if (isDataMissing) {
-            console.warn(`⚠️ No gas stations found for: ${normalizedCity}`);
-        } else {
-            console.log(`✅ Found ${data.length} stations.`);
+            console.warn(`⚠️ No data found for: ${normalizedCity}. Triggering background sync...`);
+            
+            // 2. TRIGGER BACKGROUND SYNC
+            // We do NOT await this, so the API response isn't delayed
+            smartIngestion(search).catch(err => console.error("Background scrape failed:", err));
+            
+            return res.json({ 
+                origin: { lat: 39.7392, lon: -104.9903 }, 
+                stations: [], 
+                status: "PENDING",
+                message: "We're fetching fresh prices for this area. Please wait a moment."
+            });
         }
 
-        const defaultOrigin = { lat: 39.7392, lon: -104.9903 }; 
-        const origin = (!isDataMissing) ? { lat: data[0].lat, lon: data[0].lon } : defaultOrigin;
-
         res.json({ 
-            origin: origin, 
-            stations: data || [],
-            status: isDataMissing ? "PENDING" : "OK"
+            origin: { lat: data[0].lat, lon: data[0].lon }, 
+            stations: data,
+            status: "OK"
         });
+
     } catch (err) {
         console.error("🔴 Database Route Error:", err);
-        res.status(500).json({ error: "Failed to fetch station data" });
+        res.status(500).json({ error: "Failed to fetch data" });
     }
 });
 
