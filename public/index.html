@@ -4519,69 +4519,81 @@
 
 
 /* ==========================================================================
-   STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION
+   STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (CACHED)
    ========================================================================== */
 async function getPricesNow(searchQuery) {
     if (window.isSearching) return;
     
-    // 1. Prepare UI immediately
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
     if (searchBar) searchBar.classList.add("loading");
 
-    // 2. OPTIMISTIC UI: Move the map immediately
-    // If we have a cached location, use it while we wait for the fresh data
-    const lastLat = localStorage.getItem('gasWatch_prefLat');
-    const lastLon = localStorage.getItem('gasWatch_prefLon');
-    
-    if (lastLat && lastLon) {
-        window.map?.flyTo([parseFloat(lastLat), parseFloat(lastLon)], 12);
-    }
-
+    // 1. ANTICIPATORY UI: Clear UI
     clearMarkers();
     window.globalRawStations = [];
     if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
-    // URL Setup
+    const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
+                           (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80204");
+
+    // 2. ANTICIPATORY MAP PAN (With Caching to protect Nominatim and boost speed)
+    const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
+    const cachedCoords = localStorage.getItem(cacheKey);
+
+    if (cachedCoords) {
+        const { lat, lon } = JSON.parse(cachedCoords);
+        window.map?.flyTo([lat, lon], 12);
+    } else {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data[0]) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    localStorage.setItem(cacheKey, JSON.stringify({ lat, lon }));
+                    window.map?.flyTo([lat, lon], 12);
+                }
+            })
+            .catch(err => console.warn("Geocoding fetch skipped or failed:", err));
+    }
+
+    // 3. NETWORK LAYER: Backend Fetch
     let BACKEND_URL = "/api/gas-prices"; 
     if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
         BACKEND_URL = "http://localhost:3000/api/gas-prices"; 
     }
 
-    // Query Sanitization
-    const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                           (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80204");
-
-    const payloadBody = {
-        search: sanitizedQuery,
-        fuelGradeSelection: window.activeFuelType || "regular"
-    };
-
     try {
         const response = await fetch(BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payloadBody)
+            body: JSON.stringify({ search: sanitizedQuery, fuelGradeSelection: window.activeFuelType || "regular" })
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
         const responseData = await response.json();
 
-        console.log("🔍 RAW API DATA RECEIVED:", responseData);
+        // --- THE HYBRID HANDSHAKE ---
+        if (responseData.status === "PENDING") {
+            console.log("⏳ Data pending. Retrying in 5 seconds...");
+            if (searchBar) searchBar.value = "Fetching fresh data...";
+            
+            setTimeout(() => {
+                window.isSearching = false; 
+                getPricesNow(sanitizedQuery);
+            }, 5000);
+            return; 
+        }
+
+        // --- SUCCESS CASE ---
+        console.log("✅ API DATA RECEIVED:", responseData);
         
-        // 3. UPDATED MAP: Move to the *true* origin if it's different from the optimistic one
         const stations = responseData.stations || [];
         const searchOrigin = responseData.origin || null;
-
         if (searchOrigin?.lat && searchOrigin?.lon) {
-            localStorage.setItem('gasWatch_prefLat', searchOrigin.lat);
-            localStorage.setItem('gasWatch_prefLon', searchOrigin.lon);
-            // Use flyTo for a smoother "endorphin" effect than setView
             window.map?.flyTo([searchOrigin.lat, searchOrigin.lon], 12);
         }
 
-        // Change this in Stage 5:
         window.globalRawStations = stations.map(s => ({
             lat: parseFloat(s.lat),
             lon: parseFloat(s.lon),
@@ -4590,7 +4602,6 @@ async function getPricesNow(searchQuery) {
             price: parseFloat(s.price) || 0,
             displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
             postedTime: s.last_updated || null,
-            // Add this to help the filter find the zip code within the address string
             zip: s.zip || (s.address ? s.address.match(/\d{5}/)?.[0] : ""), 
             distance: 0
         })).filter(s => !isNaN(s.lat) && !isNaN(s.lon));
@@ -4604,7 +4615,7 @@ async function getPricesNow(searchQuery) {
         window.isSearching = false;
         if (searchBar) searchBar.classList.remove("loading");
     }
-}     
+}
 
     /* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
