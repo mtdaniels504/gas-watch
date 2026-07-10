@@ -4567,6 +4567,8 @@ async function getPricesNow(searchQuery) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const responseData = await response.json();
+
+        console.log("🔍 RAW API DATA RECEIVED:", responseData);
         
         // 3. UPDATED MAP: Move to the *true* origin if it's different from the optimistic one
         const stations = responseData.stations || [];
@@ -4579,7 +4581,7 @@ async function getPricesNow(searchQuery) {
             window.map?.flyTo([searchOrigin.lat, searchOrigin.lon], 12);
         }
 
-        // Map the clean database rows directly
+        // Change this in Stage 5:
         window.globalRawStations = stations.map(s => ({
             lat: parseFloat(s.lat),
             lon: parseFloat(s.lon),
@@ -4588,6 +4590,8 @@ async function getPricesNow(searchQuery) {
             price: parseFloat(s.price) || 0,
             displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
             postedTime: s.last_updated || null,
+            // Add this to help the filter find the zip code within the address string
+            zip: s.zip || (s.address ? s.address.match(/\d{5}/)?.[0] : ""), 
             distance: 0
         })).filter(s => !isNaN(s.lat) && !isNaN(s.lon));
 
