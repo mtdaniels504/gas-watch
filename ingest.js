@@ -82,14 +82,19 @@ const CITIES = [
 
 async function geocodeAddress(address) {
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+        const response = await fetch(url, {
             headers: { 'User-Agent': 'GasWatch-App/1.0' }
         });
+        
         const data = await response.json();
+        
         if (data && data.length > 0) {
             return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
         }
-    } catch (err) { console.error("Geocoding failed:", err.message); }
+    } catch (err) { 
+        console.error("❌ Geocoding fetch error:", err.message); 
+    }
     return { lat: null, lon: null };
 }
 
@@ -120,6 +125,7 @@ async function geocodePending() {
 }
 
 async function runIngestion(searchQuery) {
+    console.log(`📡 Fetching data for ${searchQuery}...`);
     const response = await fetch(`https://api.apify.com/v2/actors/johnvc~fuelprices/run-sync-get-dataset-items?token=${process.env.APIFY_TOKEN}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,20 +135,36 @@ async function runIngestion(searchQuery) {
     const rawApifyItems = await response.json();
     if (!Array.isArray(rawApifyItems)) return;
 
-    const rawData = rawApifyItems.map(s => ({
-        external_id: s.id.toString(),
-        name: s.name,
-        address: `${s.address_line1}, ${s.address_locality}, ${s.address_region} ${s.address_postalCode}`,
-        city: s.address_locality.toLowerCase(),
-        price: parseFloat(s.price_cash || s.price_credit) || null,
-        last_updated: new Date().toISOString(),
-        geocoding_failed: false
-    }));
+    // Process stations one-by-one to geocode them before insertion
+    const processedData = [];
+    for (const s of rawApifyItems) {
+        const address = `${s.address_line1}, ${s.address_locality}, ${s.address_region} ${s.address_postalCode}`;
+        
+        // 1. Geocode
+        const coords = await geocodeAddress(address);
+        
+        // 2. Add to batch
+        processedData.push({
+            external_id: s.id.toString(),
+            name: s.name,
+            address: address,
+            city: s.address_locality.toLowerCase(),
+            zip: s.address_postalCode,
+            price: parseFloat(s.price_cash || s.price_credit) || null,
+            last_updated: new Date().toISOString(),
+            lat: coords.lat,
+            lon: coords.lon,
+            geocoding_failed: coords.lat === null
+        });
 
-    const { error } = await supabase.from('gas_stations').upsert(rawData, { onConflict: 'external_id' });
+        // 3. Respect Rate Limits (Crucial for Nominatim)
+        await delay(1100); 
+    }
+
+    const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
 
     if (error) console.error("❌ Upsert Error:", error);
-    else console.log(`✅ Ingested ${rawData.length} stations for ${searchQuery}.`);
+    else console.log(`✅ Ingested ${processedData.length} stations with coordinates.`);
 }
 
 async function needsUpdate(city) {
