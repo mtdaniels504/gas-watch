@@ -8,7 +8,7 @@ const { smartIngestion } = require('./ingest.js');
 const app = express();
 app.use(express.json());
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
