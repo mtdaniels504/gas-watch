@@ -12,8 +12,6 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241743795999309"
-            crossorigin="anonymous"></script>
 
         <style id="General">
 
@@ -706,7 +704,7 @@
 
             /* -- General Page -- */
 
-            .container {
+            .extContainer {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -1105,7 +1103,7 @@
 
             /* -- SubNav -- */
 
-            .headNav, .subNavMore, .subNavMoreBox, .subNavConten {
+            .headNav, .subNavMore, .subNavMoreBox, .subNavContent {
                 background: transparent;
                 border: none;
                 box-shadow: none;
@@ -1134,6 +1132,10 @@
                 max-height: 100%;
                 overflow-y: auto;
                 overflow-x: hidden;
+            }
+
+            .subNavContent {
+                width: 100%;
             }
             
             .subNav a, .sideBar a, .subNavGroup {
@@ -1191,6 +1193,14 @@
                 max-width: calc(100% - 8px);
                 margin-left: 8px;
             }
+
+            .prefHomeBaseDiv {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
 
             .subNavMore {
                 display: flex;
@@ -1289,6 +1299,13 @@
                 padding: 4px;
                 gap: 4px;
                 width: 100%;
+            }
+
+            .setDefault {
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 0 5px;
+                gap: 5px;
             }
 
             .filterRowDuo {
@@ -1901,7 +1918,7 @@
             /* ----- Ext Section ----- */
 
             #Extended {
-                z-index: 800;
+                z-index: 975;
                 position: fixed;
                 min-width: calc(100% - 4px);
                 width: 99.5dvw;
@@ -1927,7 +1944,6 @@
                 padding: 0;
             }
 
-
             /*extNavSearch*/       
 
             .extHeadPopUp {
@@ -1948,6 +1964,16 @@
                 justify-content: flex-start;
                 align-items: center;
                 width: 95%;
+            }
+
+            .extPageContent {
+                flex-grow: 1;
+                justify-content: flex-start;
+                width: 100%;
+                height: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+                gap: 2px;
             }
 
             #extPageTail {
@@ -2174,7 +2200,7 @@
                 <div class="IconAs">
                     <!-- navIcon -->
                     <div class="IconAs navHeadIcons">
-                        <i class="IconA fa-solid fa-bars"
+                        <i class="nav-trigger IconA fa-solid fa-bars"
                             data-sub="subNav" data-section="Nav"
                         ></i>
                     </div>
@@ -2193,7 +2219,7 @@
                 <!-- extSearchBar -->
                 <div class="search">
                     <input class="userInput" id="searchBar" placeholder="Search Zip Codes or Cities"
-                        data-function="searchFunction" data-self="searchBar" data-searchListener="true"
+                        data-function="searchLocation" data-self="searchBar" data-searchListener="true"
                     >
                     <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
                 </div>
@@ -2202,7 +2228,9 @@
                 <!-- NavIcons (left(A)) -->
                 <div class="IconAs">
                     <div class="IconA">
-                        <i class="fa-solid fa-sort"></i>
+                        <i class="nav-trigger fa-solid fa-earth-africa"
+                            data-sub="Extended" data-section="plane2"
+                        ></i>
                     </div>
                     <div class="IconA">
                         <i class="fa-solid fa-filter" data-target="filterDisplay"></i>
@@ -2225,20 +2253,338 @@
 
             <div class="Tail">
                 <div class="adBox">
-                    <!-- Horizontal Body -->
-                    <ins class="adsbygoogle"
-                        style="display:block"
-                        data-ad-client="ca-pub-2241743795999309"
-                        data-ad-slot="5685627432"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
                 </div>
             </div>
 
             <!-- Extended -->
+
+            <section id="Extended" style="display: none;">
+                <div class="extContainer">
+
+                    <!-- Extended Nav -->
+                    
+                    <div class="Nav part" id="extNav">
+                        <!-- Ext Logo -->
+                        <div class="logoTitleCont logoTitleContN">
+                            <div class="logoTitleBox">
+                                <img class="logoTitle" src="TWMM_LogoTitle.png">
+                            </div>
+                        </div>
+                        <div class="navExitCont">
+                        <!-- Ext Nav Links -->
+                        <div class="navLinksBox">
+                            <div class="navLinks">
+                                <button class="navLink">Map</button>
+                                <div class="navLinksShadows">
+                                    <hr class="vertHr shadow navLinksHr">
+                                </div>
+                                <button class="navLink">World</button>
+                                <div class="navLinksShadows">
+                                    <hr class="vertHr shadow navLinksHr">
+                                </div>
+                                <button class="navLink">Watch</button>
+                                <div class="navLinksShadows">
+                                    <hr class="vertHr shadow navLinksHr">
+                                </div>
+                                <button class="navLink">Help</button>
+                            </div>
+                            <div class="navLinksBoxShadows">
+                            <hr class="navLinksBoxShadow shadow">
+                            <hr class="navLinksBoxShadow shadow">
+                            <hr class="navLinksBoxShadow shadow">
+                            <hr class="navLinksBoxShadow shadow">
+                            </div>
+                        </div>
+                        <!-- Ext Exit -->
+                        <i class="exitButton IconD fa-solid fa-xmark" data-cont="Extended"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Extended Head -->
+
+                    <div class="Head part">
+                        <!-- Ext Head Nav -->
+                        <div class="headNav part">
+
+                            <!-- NavIcons (left(A)) -->
+                            <div class="IconAs navIcons">
+                                <i class="nav-trigger IconA fa-solid fa-bars"
+                                    data-sub="extSubNav" data-section="Extended"
+                                ></i>
+
+                                <!--extSubNav(Head)-->
+                                <div class="subNav" id="extSubNav" style="display: none;">
+
+                                    <!--subNavHome-->
+                                    <div class="subNavRow">
+                                        <span class="subNavItem">Home</span>
+                                        <i class="subNavButton subHomeButton fa-solid fa-home"></i>
+                                    </div>
+
+                                    <!--subNavFriends-->
+                                    <div class="subNavRow" data-target="#extSubNav-friends" data-slug="#extSubMore-friends">
+                                        <span class="subNavItem">Friends</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-friends"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-friends" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Find Friends</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Follows</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!--subNavHelp-->
+                                    <div class="subNavRow" data-target="#extSubNav-help" data-slug="#extSubMore-help">
+                                        <span class="subNavItem">Help</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-help"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-help" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">FAQs</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>         
+                                    
+                                    <!--subNavSettings-->
+                                    <div class="subNavRow" data-target="#extSubNav-settings" data-slug="#extSubMore-settings">
+                                        <span class="subNavItem">Settings</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-settings"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-settings" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Accessibility</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Preferences</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!--subNavAccount-->
+                                    <div class="subNavRow" data-target="#extSubNav-account" data-slug="#extSubMore-account">
+                                        <span class="subNavItem">Account</span>
+                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-account"></i>
+                                    </div>
+                                    <!--subNavMore-->
+                                    <div class="subNavMore" id="extSubNav-account" style="display: none;">
+                                        <hr class="subNavHr">
+                                        <div class="subNavMoreBox">
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">My Account</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Create Account</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                            <div class="subNavRow2">
+                                                <span class="subNavItem">Sign In</span>
+                                                <i class="subNavButton subPlusButton">+</i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- extTitle -->
+                            <div class="sectionHead extSectionHead">
+                                <h2 class="sectionHeadH2" id="extSectionHeadH2" data-section="Extended">Extended Page</h2>
+                            </div>
+
+                            <!-- extSearchBar -->
+                            <div class="search">
+                                <input class="userInput" id="extSearchBar" placeholder="Search Extended Section Here!"
+                                    data-function="extSearchFunction" data-self="extSearchBar" data-searchListener="true"
+                                >
+                                <i class="IconB searchIcon fa-solid fa-magnifying-glass" id="extSearchIcon"></i>
+                            </div>
+
+                            <!-- extNavIcons (right) -->
+                            <div class="IconAs" id="extNavSI" style="display: none;">
+                                <div class="IconA">
+                                    <i class="fa-solid fa-filter" data-target="filterDisplay"></i>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="part navTabs" id="extNavTabs" style="display: none;">
+                            <button class="navTab extNavTab" 
+                                data-section="Extended" data-target="extPage-member"
+                                data-h2="extSectionHeadH2" data-h="My Account">
+                                Member
+                            </button>
+                            <hr class="vertHr shadow">
+                            <button class="navTab extNavTab active" 
+                                data-section="Extended" data-target="extPage-full"
+                                data-h2="extSectionHeadH2" data-h="Extended Page">
+                                Full
+                            </button>
+                            <hr class="vertHr shadow">
+                            <button class="navTab extNavTab" id="extNavTab-search" 
+                                data-section="Extended" data-target="extPage-search"
+                                data-h2="extSectionHeadH2" data-h="Search Results">
+                                Search
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- Extended Body -->
+                    <div class="Body part" id="extBody">
+                        <div class="page" id="extPage-full" data-slug="Extended">
+                            <!-- ==========================================================================
+                                EXTENDED MACRO-DATA HUB (AAA FUEL DASHBOARD CHALLENGER)
+                                ========================================================================== -->
+                            <div class="column extPageContent">
+                                
+                                <!-- Hero Block: Top-Line National Averages -->
+                                <section class="part" style="width: 100%; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+                                    <div class="row" style="justify-content: space-between; width: 100%; background: transparent; border: none; box-shadow: none;">
+                                        <h2>Fuel Market Intelligence</h2>
+                                        <span class="fineP Bold2" style="opacity: 0.6;">⚡ Live Feed</span>
+                                    </div>
+                                    <hr>
+                                    <!-- Fluid Data Grid Matrix -->
+                                    <div class="row" style="width: 100%; justify-content: space-evenly; align-items: space-between; gap: 6px; margin: 0 auto; margin-bottom: 4px; background: transparent; border: none; box-shadow: none;">
+                                        <div class="column" style="flex: 1; padding: 6px; text-align: center;">
+                                            <span class="fineP Bold3">Regular</span>
+                                            <h1 style="margin: 2px 0;">$3.95</h1>
+                                            <span class="fineP" style="color: #ef4444; font-weight: 600;">▲ +0.02</span>
+                                        </div>
+                                        <div class="vertHr" style="background: rgba(0,0,0,0.1); height: 35px; align-self: center;"></div>
+                                        <div class="column" style="flex: 1; padding: 6px; text-align: center;">
+                                            <span class="fineP Bold3">Premium</span>
+                                            <h1 style="margin: 2px 0;">$4.42</h1>
+                                            <span class="fineP" style="color: #10b981; font-weight: 600;">▼ -0.01</span>
+                                        </div>
+                                        <div class="vertHr" style="background: rgba(0,0,0,0.1); height: 35px; align-self: center;"></div>
+                                        <div class="column" style="flex: 1; padding: 6px; text-align: center;">
+                                            <span class="fineP Bold3">Diesel</span>
+                                            <h1 style="margin: 2px 0;">$4.15</h1>
+                                            <span class="fineP" style="color: #ef4444; font-weight: 600;">▲ +0.05</span>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <!-- Split Deck Layout Frame: Historical Shifts vs Regional Extremes -->
+                                <div class="row" style="width: 100%; justify-content: space-between; align-items: stretch; gap: 8px; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                    
+                                    <!-- Left Sub-Card: Historical Price Shifts Matrix -->
+                                    <section class="part" style="flex: 1; padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+                                        <h3>Historical Comparison</h3>
+                                        <hr style="width: 100%; margin-bottom: 2px;">
+                                        <div class="column" style="width: 100%; gap: 3px; background: transparent; border: none; box-shadow: none;">
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Yesterday's Avg</span>
+                                                <span class="lesserP Bold2">$3.93</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Last Week Avg</span>
+                                                <span class="lesserP Bold2">$3.88</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Last Month Avg</span>
+                                                <span class="lesserP Bold2">$3.75</span>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <!-- Right Sub-Card: Regional Spikes (Highs vs Lows) -->
+                                    <section class="part" style="flex: 1; padding: 8px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+                                        <h3>Market Extremes</h3>
+                                        <hr style="width: 100%; margin-bottom: 2px;">
+                                        <div class="column" style="width: 100%; gap: 3px; background: transparent; border: none; box-shadow: none;">
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">🟢 Lowest State</span>
+                                                <span class="lesserP Bold2" style="color: #10b981;">TX ($3.32)</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">🔴 Highest State</span>
+                                                <span class="lesserP Bold2" style="color: #ef4444;">CA ($4.89)</span>
+                                            </div>
+                                            <div class="row" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none;">
+                                                <span class="lesserP textMuted">Area Median</span>
+                                                <span class="lesserP Bold2">$3.91</span>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <!-- Editorial Block: Fuel Market Trends & News Ticker -->
+                                <section class="part" style="width: 100%; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                    <h3>Crude Analysis & Trends</h3>
+                                    <hr>
+                                    <div class="column" style="width: 100%; align-items: flex-start; gap: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
+                                        <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; padding: 2px;">
+                                            <span class="lesserP Bold2" style="color: var(--cobalt1, #0060b5);">Refinery Maintenance Squeezes Spring Supplies</span>
+                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; margin-top: 1px;">Seasonal refining transitions and unexpected line checks along the Gulf coast are forcing wholesale terminals to compress localized gas volumes, applying short-term upward cost pressure across midwest transport pipelines.</p>
+                                        </div>
+                                        <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; padding: 2px;">
+                                            <span class="lesserP Bold2" style="color: var(--cobalt1, #0060b5);">Global Crude Volatility Settles Near $78 Barrel</span>
+                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; margin-top: 1px;">International oil metrics balanced out late yesterday as localized production boosts offset shipping lane concerns, suggesting fuel price lines at local neighborhood pumps should begin trading flat over the upcoming week frames.</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                            </div>
+                        </div>
+                        <div class="page" id="extPage-member"  data-slug="Member" style="display: none;">
+                            <div class="extSection">
+                            </div>
+                            <div class="extSection"></div>
+                            <div class="extSection"></div>
+                        </div>
+                        <div class="page" id="extPage-search"  data-slug="Search" data-listener="true" style="display: none;">
+                            <div class="sectionHead extSection extSectionHead">
+                                <div class="searchIcons">
+                                    <div class="IconA searchIcon">
+                                        <i class="fa-solid fa-filter"></i>
+                                    </div>
+                                    <div class="IconA searchIcon">
+                                        <i class="fa-solid fa-sort"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="extSection extSectionBody">
+                                <p id="extSearchResult"></p>
+                            </div>
+                            <div class="extSection">
+                                <div class="IconAs pageNumbers">
+                                    <i class="IconA pageNumber">&lt;&lt;</i>
+                                    <i class="IconA pageNumber fa-solid fa-minus"></i>
+                                    <i class="IconA pageNumber">1</i>
+                                    <i class="IconA pageNumber">2</i>
+                                    <i class="IconA pageNumber">3</i>
+                                    <i class="IconA pageNumber">4</i>
+                                    <i class="IconA pageNumber">5</i>
+                                    <i class="IconA pageNumber fa-solid fa-plus"></i>
+                                    <i class="IconA pageNumber">>></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <div class="subNav" id="subNav" style="display: none;">
 
@@ -2384,10 +2730,20 @@
                                 <hr class="subNavHr">
                                 <div class="subNavMoreBox">
                                     
+                                    <!-- 🏠 NEW Feature 0: Persistent Home Base Anchor String -->
+                                    <div class="subNavRow2 prefHomeBaseDiv" style="width: 100%; display: flex; flex-direction: row; align-items: flex-start; gap: 2px;">
+                                        <span class="lesserP subNavItem prefHomeBaseSpan" style="font-weight: 600;">Home Base</span>
+                                        <input type="text" 
+                                            id="prefHomeBase" 
+                                            class="lesserP" 
+                                            placeholder="e.g., Austin, TX or 90210" 
+                                            style="width: 100%; box-sizing: border-box; padding: 4px 6px; height: calc(18px + 0.5vw);">
+                                    </div>
+
                                     <!-- Feature 1: Persistent Fuel Type Choice -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Default Grade</span>
-                                        <select class="lesserP" id="prefDefaultFuel" class="subSmallSelect">
+                                        <select class="lesserP subSmallSelect" id="prefDefaultFuel">
                                             <option value="regular">Regular</option>
                                             <option value="midgrade">Midgrade</option>
                                             <option value="premium">Premium</option>
@@ -2398,7 +2754,7 @@
                                     <!-- Feature 2: Default Search Radius Boundary -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Search Radius</span>
-                                        <select class="lesserP" id="prefDefaultRadius" class="subSmallSelect">
+                                        <select class="lesserP subSmallSelect" id="prefDefaultRadius">
                                             <option value="5">5 Miles</option>
                                             <option value="10">10 Miles</option>
                                             <option value="15">15 Miles</option>
@@ -2406,17 +2762,15 @@
                                         </select>
                                     </div>
 
-
                                     <!-- Feature 3: Sorting Preference Hierarchy -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Primary Sort</span>
-                                        <select class="lesserP" id="prefDefaultSort" class="subSmallSelect">
+                                        <select class="lesserP subSmallSelect" id="prefDefaultSort">
                                             <option value="price">Cheapest First</option>
                                             <option value="distance">Closest First</option>
                                         </select>
                                     </div>
 
-                                    
                                     <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Max Price Cap</span>
@@ -2521,15 +2875,6 @@
                 </div>
 
                 <div class="subNav-adBox">
-                    <ins class="adsbygoogle"
-                        style="display:block"
-                        data-ad-client="ca-pub-2241743795999309"
-                        data-ad-slot="1016744364"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
                 </div>
             </div>
 
@@ -2575,25 +2920,21 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                                 <label class="lesserP" for="distanceRange" style="font-weight: 600; margin: 0;">Distance (miles):</label>
                                 <!-- Read-only numerical display window syncing to slider tracking shifts -->
-                                <input class="lesserP" type="text" id="distanceValue" name="distanceValue" placeholder="5" readonly style="width: 30px; text-align: center; border: none; background: transparent; box-shadow: none; font-weight: 700; height: auto; min-height: unset; padding: 0;">
+                                <input class="lesserP" type="text" id="distanceValue" name="distanceValue" placeholder="10" readonly style="width: 30px; text-align: center; border: none; background: transparent; box-shadow: none; font-weight: 700; height: auto; min-height: unset; padding: 0;">
                             </div>
-                            <input type="range" id="distanceRange" name="distanceRange" min="1" max="25" step="1" value="5" style="width: 100%; cursor: pointer; box-shadow: none;">
+                            <input type="range" id="distanceRange" name="distanceRange" min="1" max="25" step="1" value="10" style="width: 100%; cursor: pointer; box-shadow: none;">
                         </div>
                     </div>
                     
-                    <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
-                    <div class="subNavRow2" style="width: 100%;">
+                    <div class="subNavRow" style="width: 100%;">
                         <span class="lesserP subNavItem">Max Price Cap</span>
-                        
-                        <!-- Unified structural row holding the currency sticker anchor -->
                         <div style="display: flex; align-items: center;">
                             <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
                             <input type="number" 
                                 step="0.01" 
                                 min="0.00" 
                                 class="lesserP" 
-                                id="prefMaxPrice" 
-                                placeholder="3.50" 
+                                id="filterMaxPrice" placeholder="3.50" 
                                 style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
                         </div>
                     </div>
@@ -2608,6 +2949,12 @@
                             <option value="diesel">Diesel Fuel</option>
                         </select>
                     </div>
+
+                    <!-- 🎯 Checkbox to explicitly toggle persistent saving -->
+                    <div class="filterRow setDefault" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; margin-bottom: 6px;">
+                        <input type="checkbox" id="saveFiltersAsPrefs" style="cursor: pointer; width: 14px; height: 14px; margin: 0;">
+                        <label class="lesserP" for="saveFiltersAsPrefs" style="font-weight: 600; cursor: pointer; user-select: none; margin: 0;">Set as default preference</label>
+                    </div>
                     
                     <!-- Action Row: Dual submission trigger setup split horizontally via flex utility rules -->
                     <div style="display: flex; gap: 4px; margin-top: 8px; width: 100%; background: transparent; border: none; box-shadow: none; padding: 0;">
@@ -2615,19 +2962,9 @@
                         <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
                     </div>
                 </form>
-                <!-- Reserved isolated layout placeholder slot block for your AdSense invocation frames -->
                 <div class="filter-adBox">
-                    <!-- SubNav Ad -->
-                    <ins class="adsbygoogle"
-                        style="display:block"
-                        data-ad-client="ca-pub-2241743795999309"
-                        data-ad-slot="8240628269"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
+
+            </div>
             </div>
 
 
@@ -3157,24 +3494,25 @@
 
             /* User Inputs */
 
-            //Submit Inputs on 'Enter'            
+            /* User Inputs Execution Loop */
             const viableInputs = document.querySelectorAll('.userInput');
-            
-            viableInputs.forEach(input => {
 
-                //viableInput Dataset (searchListener, Function)
+            viableInputs.forEach(input => {
                 const dataFunction = input.getAttribute('data-function');
                 const dataSelf = input.getAttribute('data-self');
-                const searchListener = input.getAttribute('data-listener');
 
-                //On Keydown, If 'Enter', Run dataFunction (w/resp to dataSelf)
                 input.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter') {
-                        window[dataFunction](dataSelf);
+                        event.preventDefault(); // Stop form submission / page reloads
+                        
+                        // Ensure the target function exists globally before execution
+                        if (typeof window[dataFunction] === 'function') {
+                            // Pass the actual string identifier safely
+                            window[dataFunction](dataSelf);
+                        }
                     }
                 });
             });
-
 
 
             /* Exit Button */
@@ -3193,55 +3531,59 @@
             });
 
 
-
-            /* NavBars & SubNav */
-
-            const navBars = document.querySelectorAll('.fa-bars');
-
-            navBars.forEach(navBar => {
-
-                //navBar Dataset (Section, Sub)
-                const dataSection = document.getElementById(navBar.getAttribute('data-section'));
-                const subNav = document.getElementById(navBar.getAttribute('data-sub'));
-                                        
-                navBar.addEventListener('click', () => {
-
-                    if (subNav.style.display === 'none') {
-                        subNav.style.display = 'block';
-                    } else {
-                        subNav.style.display = 'none';
-                    }
-
-
-                    function blurSubNav(event) {
+            /* bodySubNav */
                         
-                        //If Not Bars or subNav OR toggle: Display None
-                        if (!navBar.contains(event.target) && !subNav.contains(event.target)
-                            && !dataSection.querySelector('.tabToggles').contains(event.target)
-                           ) {
+            document.addEventListener("DOMContentLoaded", function () {
 
-                            //subNav
+                const bodySubIcons = document.querySelectorAll('.nav-trigger');
+
+                bodySubIcons.forEach(icon => {
+
+                    //icon Dataset (Section, Sub)
+                    const dataSection = document.getElementById(icon.getAttribute('data-section'));
+                    const subNav = document.getElementById(icon.getAttribute('data-sub'));
+                                            
+                    icon.addEventListener('click', () => {
+
+                        if (subNav.style.display === 'none' || subNav.style.display === '') {
+                            subNav.style.display = 'flex';
+                        } else {
                             subNav.style.display = 'none';
+                        }
+
+                        console.log(subNav.style.display);
+
+                        function blurbodySubNav(event) {
                             
-                            //subMore
-                            const subMoreBoxes = document.querySelectorAll('.subNavMore');                
-                            const subMoreToggles = document.querySelectorAll('.subMoreToggle');
+                            //If Not Bars or subNav OR toggle: Display None
+                            if (!icon.contains(event.target) && !subNav.contains(event.target)
+                            ) {
 
-                            //Display None More Box, Turn More Icon
-                            subMoreBoxes.forEach(box => {box.style.display = 'none'});
-                            subMoreToggles.forEach(t => {t.style.transform = 'rotate(-90deg)'});
+                                //subNav
+                                subNav.style.display = 'none';
+                                
+                                //subMore
+                                const subMoreBoxes = document.querySelectorAll('.subNavMore');                
+                                const subMoreToggles = document.querySelectorAll('.subMoreToggle');
 
-                            document.addEventListener('click', blur);
+                                //Display None More Box, Turn More Icon
+                                subMoreBoxes.forEach(box => {box.style.display = 'none'});
+                                subMoreToggles.forEach(t => {t.style.transform = 'rotate(-90deg)'});
+
+                                document.removeEventListener('click', blurbodySubNav);
+
+                                return;
+                            }
 
                             return;
                         }
 
-                        return;
-                    }
-
-                    document.addEventListener('click', blurSubNav);
+                        document.addEventListener('click', blurbodySubNav);
+                    });
                 });
+
             });
+
 
             //SubNav
 
@@ -3302,7 +3644,7 @@
                         return;
                     }
 
-                    document.addEventListener('click', blurSubNav);
+                    document.addEventListener('click', blurFilterDisplay);
 
                 });
 
@@ -3823,324 +4165,26 @@
         <script src="https://unpkg.com/@popperjs/core@^2.0.0"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
-        <!-- Include your custom JavaScript code -->
-        <script id="map_script">
+<script>
+    /* ==========================================================================
+        STAGE 1: GLOBAL APP STATE & DICTIONARY MATRIX CONTAINERS
+        ========================================================================== */
+    window.map = window.map || null;
+    window.currentTileLayer = window.currentTileLayer || null;
+    window.isSearching = false;
+    window.markers = [];
+    window.globalRawStations = [];
 
-            let isSearching = false;
-            let initialLoadTriggered = false;
-            let markers = [];
+    // Unified Global Runtime Application Sync States
+    window.activeRadiusMiles = 10; 
+    window.maxPriceAllowed = null;
+    window.activeFuelType = 'regular';
+    window.activeHomeBaseLocation = "";
+    window.activeSortPreference = 'price';
 
-            let activeRadiusMiles = 5;
-            let maxPriceAllowed = null;
-
-            /* ==========================================================================
-            MAP INIT
-            ========================================================================== */
-
-            const map = L.map('map', {
-                zoomControl: true,
-                tap: false // iOS Safari touch fix
-            }).setView([39.7392, -104.9903], 12);
-
-            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                subdomains: '0123',                // ⚡ Distributes downloads across mt0, mt1, mt2, mt3
-                maxZoom: 20,
-                minZoom: 4,                        // 🛑 Prevents zooming out into infinite world loops
-                updateWhenIdle: true,
-                attribution: 'Map data © Google'
-            }).addTo(map);
-
-            /* ==========================================================================
-            FETCH WITH TIMEOUT
-            ========================================================================== */
-
-            async function fetchWithTimeout(resource, options = {}) {
-                const timeout = options.timeout || 15000;
-
-                const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), timeout);
-
-                try {
-                    const response = await fetch(resource, {
-                        ...options,
-                        signal: controller.signal
-                    });
-
-                    clearTimeout(id); // Clean up the timer if the server responded quickly
-                    return response;
-
-                } catch (err) {
-                    clearTimeout(id); // Clean up the timer if an immediate network error happened
-
-                    // Check if the error was caused by our 15-second countdown kill-switch
-                    if (err.name === 'AbortError') {
-                        throw new Error(`Request timed out after ${timeout / 1000} seconds.`);
-                    }
-                    
-                    throw err;
-                }
-            }
-
-            /* ==========================================================================
-            APP INIT
-            ========================================================================== */
-
-            function initApp() {
-                // 🚀 Directly routes to immediate default load without blocking for hardware GPS prompts
-                loadDefaultLocation();
-            }
-
-            /* ==========================================================================
-            DEFAULT MAIN LOADER
-            ========================================================================== */
-
-            function loadDefaultLocation() {
-                if (initialLoadTriggered) return;
-                initialLoadTriggered = true;
-
-                const lat = 39.7392;
-                const lon = -104.9903;
-
-                // Create the center marker and push it to our global array so clearMarkers() can remove it later
-                const centerMarker = L.marker([lat, lon], {
-                    icon: L.divIcon({
-                        className: 'black-marker-icon'
-                    })
-                }).addTo(map);
-                
-                centerMarker.bindPopup("<b>Hello, Denver!</b>").openPopup();
-                markers.push(centerMarker);
-
-                // Immediately fetch initial data to populate the user's screen
-                getPricesNow("80204");
-            }
-
-            /* ==========================================================================
-            SAFE MAP MOVEMENT
-            ========================================================================== */
-
-            function moveMapSafely(lat, lon) {
-                // 🗺️ Pro-move: Use flyTo for an elegant cinematic glide animation to the new spot
-                map.flyTo([lat, lon], map.getZoom(), {
-                    animate: true,
-                    duration: 0.8 // Buttery smooth 800ms transition
-                });
-
-                // Forces immediate tile recalculation on the next browser redraw frame without setTimeout delays
-                requestAnimationFrame(() => {
-                    map.invalidateSize({ debounceMove: true });
-                });
-            }
-
-            /* ==========================================================================
-            CLEAR MARKERS
-            ========================================================================== */
-
-            function clearMarkers() {
-                markers.forEach(marker => map.removeLayer(marker));
-                markers = [];
-            }
-
-
-            async function getPricesNow(searchQuery) {
-                if (isSearching) return;
-                isSearching = true;
-
-                const BACKEND_URL = "/api/gas-prices";
-                clearMarkers();
-
-                try {
-                    const response = await fetchWithTimeout(BACKEND_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ search: searchQuery })
-                    });
-
-                    const datasetItems = await response.json();
-                    if (!datasetItems || datasetItems.length === 0) return;
-
-                    // ⚡ EFFICIENT UPGRADE: Map each station to an independent, parallel promise
-                    const geocodePromises = datasetItems.map(async (station, index) => {
-                        const name = station.name || "Gas Station";
-                        const address = station.address_line1 || "Unknown Address";
-                        const locality = station.address_locality || "";
-                        const region = station.address_region || "";
-                        
-                        const cash = parseFloat(station.price_cash || 0);
-                        const credit = parseFloat(station.price_credit || 0);
-                        const finalPrice = cash > 0 ? cash : credit;
-                        const displayPrice = finalPrice > 0 ? `$${finalPrice.toFixed(2)}` : "N/A";
-
-                        const fullTextAddress = `${address}, ${locality}, ${region}`;
-
-                        try {
-                            // ✅ FIXED: Changed domain to nominatim and added the missing /search API route string// ✅ THE CORRECT LIVE WORKING URL STRING
-                            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullTextAddress)}&limit=1`;
-
-                            const geoResponse = await fetch(geocodeUrl, {
-                                headers: { "User-Agent": "GasWatchApp" }
-                            });
-                            const geoData = await geoResponse.json();
-
-                            // ✅ FIXED: Accurately checks the array and pulls data from the first element [0]
-                            if (geoData && geoData.length > 0) {
-                                const lat = parseFloat(geoData[0].lat);
-                                const lon = parseFloat(geoData[0].lon);
-
-                                return { lat, lon, name, address, displayPrice, index };
-                            }
-                        } catch (geoError) {
-                            console.error(`Could not locate address: ${fullTextAddress}`, geoError);
-                        }
-                        return null; // Return null if the lookup completely failed
-                    });
-
-                    // ⚡ EFFICIENT UPGRADE: Process all network operations concurrently
-                    const resolvedStations = await Promise.all(geocodePromises);
-
-                    let firstValidCoords = null;
-
-                            // 3. Drop all working markers instantly onto your map instance
-                    resolvedStations.forEach(station => {
-                        if (!station) return; // Skip failed lookups
-
-                        // Track coordinates of the cheapest station
-                        if (station.index === 0) {
-                            firstValidCoords = [station.lat, station.lon];
-                        }
-
-                        // Injects your CSS pill style dynamically into Leaflet
-                        const priceIcon = L.divIcon({
-                            className: 'gas-price-marker', 
-                            html: station.displayPrice,     
-                            iconSize: null,                
-                            iconAnchor: null            
-                        });
-
-                        // 🕒 EXTRACT & CLEAN THE TIME FIELD NATIVELY
-                        // Grabs the raw data or defaults to a safe string if unavailable
-                        const rawTime = station.rawStationData?.postedTime || "Recently"; 
-                        let displayTime = "Date unknown";
-
-                        if (rawTime && rawTime !== "Recently") {
-                            try {
-                                // Turn it into a beautiful, localized text string (e.g. "June 12, 4:44 PM")
-                                const dateObj = new Date(rawTime);
-                                displayTime = dateObj.toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-                            } catch(e) {
-                                displayTime = rawTime; // Fallback to raw string if formatting slips
-                            }
-                        } else {
-                            displayTime = "Updated recently";
-                        }
-
-                        // Creates the marker using your custom green price pill style
-                        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(map);
-                        
-                        // ✅ INJECTED: Added a clean, muted time badge at the very bottom of the click popup
-                        marker.bindPopup(`
-                            <b>${station.name}</b><br>
-                            ${station.address}<br>
-                            <b>${station.displayPrice}</b><br>
-                            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
-                                🕒 ${displayTime}
-                            </div>
-                        `);
-                        markers.push(marker);
-                    });
-
-
-                    // 🗺️ MOVE THE MAP: Center the viewport over the cheapest results area
-                    if (firstValidCoords) {
-                        map.setView(firstValidCoords, 13);
-                    }
-
-                } catch (error) {
-                    console.error("Fetch failed:", error);
-                } finally {
-                    isSearching = false;
-                }
-            }
-            /* ==========================================================================
-            SEARCH HANDLER (Updated: Complete Geocoding Eradication)
-            ========================================================================== */
-
-            function searchLocation() {
-                if (isSearching) return;
-
-                const searchBar = document.getElementById('searchBar');
-                if (!searchBar) return;
-
-                const input = searchBar.value.trim();
-                if (!input) return;
-
-                // Dismiss mobile keyboard
-                searchBar.blur();
-
-                // 🚀 DIRECT HAND-OFF: Skip all frontend lookup APIs entirely!
-                // We send the raw text query directly down the single pipeline to the backend.
-                getPricesNow(input, null, null);
-            }
-
-            /* ==========================================================================
-            DOM READY
-            ========================================================================== */
-
-            document.addEventListener("DOMContentLoaded", function() {
-
-                // 🎯 Uses your exact HTML ID hooks for ultra-precise element matching
-                const bar = document.getElementById("searchBar");
-                const icon = document.getElementById("extSearchIcon");
-
-                // iOS & Mobile Safe Enter Key Handling
-                if (bar) {
-                    bar.addEventListener("keydown", function(event) {
-                        if (event.key === "Enter") {
-                            event.preventDefault();
-                            bar.blur(); // 📱 Pulls down mobile keyboards so users can instantly see the Leaflet map!
-                            searchLocation();
-                        }
-                    });
-                }
-
-                // Universal Mobile/Desktop Click Handler (Completely safe from scroll-drag glitches)
-                if (icon) {
-                    icon.addEventListener("click", function(event) {
-                        event.preventDefault();
-                        if (bar) bar.blur(); // 📱 Retracts keyboard if they choose to tap the glass icon instead
-                        searchLocation();
-                    });
-                }
-
-                // ⚡ INSTANT ENGINE BOOT: Renders your '#map' layout container seamlessly
-                requestAnimationFrame(() => {
-                    map.invalidateSize(true);
-                    initApp(); 
-                });
-            });
-
-            /* ==========================================================================
-            FILTER FORM SUBMIT
-            ========================================================================== */
-
-
-
-</script>
-
-<script id="preferences_and_skins_script">
-/* ==========================================================================
-   USER PREFERENCES & MULTI-SKIN THEME ENGINE (FULLY UNIFIED)
-   ========================================================================== */
-
-document.addEventListener("DOMContentLoaded", function() {
-    
-    // --- 1. LOCAL STORAGE REFERENCE KEYS ---
+    // Baseline Storage Reference Profile Keys
     const PREF_KEYS = {
+        homeBase: 'gasWatch_prefHomeBase',
         fuel: 'gasWatch_prefFuel',
         radius: 'gasWatch_prefRadius',
         maxPrice: 'gasWatch_prefMaxPrice',
@@ -4150,168 +4194,491 @@ document.addEventListener("DOMContentLoaded", function() {
         contrast: 'gasWatch_prefMarkerContrast'
     };
 
-// --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX (JAWG PRESET VARIATION) ---
+    // --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
     const MAP_THEME_TILES = {
-        google: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        google: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', // Swapped out broken fallback for a valid, stable tile routing block
         iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        
         midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
         matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
-        
         navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
     };
 
     const MAP_THEME_ATTRIBUTIONS = {
-        google: 'Map data © Google',
+        google: '© OpenStreetMap contributors',
         iphone: '© OpenStreetMap contributors, © CARTO',
         midnight: '© OpenStreetMap contributors, © JawgMaps',
         matrix: '© OpenStreetMap contributors, © JawgMaps',
         navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
     };
 
-    // --- 3. INITIALIZE AND APPLY USER PARAMETERS ON RUNTIME BOOT ---
-    initUserPreferences();
+    // Baseline Fallback Coordinates (Denver, CO)
+    const FALLBACK_LAT = 39.7392;
+    const FALLBACK_LON = -104.9903;
+    const FALLBACK_ZIP = "80204";
 
-    function initUserPreferences() {
-        // A. Load Persistent Fuel Profile Choice
-        const savedFuel = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
-        const fuelSelect = document.getElementById('prefDefaultFuel');
-        if (fuelSelect) fuelSelect.value = savedFuel;
-        
-        const mainFuelFilter = document.getElementById('fuelType');
-        if (mainFuelFilter) mainFuelFilter.value = savedFuel;
-
-        // B. Load Search Radius Preference
-        const savedRadius = localStorage.getItem(PREF_KEYS.radius) || '5';
-        const radiusSelect = document.getElementById('prefDefaultRadius');
-        if (radiusSelect) radiusSelect.value = savedRadius;
-        
-        const mainRadiusSlider = document.getElementById('distanceRange');
-        const mainRadiusValue = document.getElementById('distanceValue');
-        if (mainRadiusSlider) mainRadiusSlider.value = savedRadius;
-        if (mainRadiusValue) mainRadiusValue.value = savedRadius;
-
-        const savedMaxPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
-        const maxPriceInput = document.getElementById('prefMaxPrice');
-        if (maxPriceInput) maxPriceInput.value = savedMaxPrice;
-
-        // Sync it straight into your primary filter panel input field if it exists
-        const mainPriceFilter = document.getElementById('priceValue');
-        if (mainPriceFilter) mainPriceFilter.value = savedMaxPrice;
+    /* --- PERFORMANCE UTILITY: High Efficiency Input Debouncer --- */
+    function debounce(func, delay = 200) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+    const debouncedClientFilter = debounce(() => applyClientSideMapFilters(), 200);
 
 
-        // C. Load List Sort Ordering Metrics
-        const savedSort = localStorage.getItem(PREF_KEYS.sort) || 'price';
-        const sortSelect = document.getElementById('prefDefaultSort');
-        if (sortSelect) sortSelect.value = savedSort;
+    /* ==========================================================================
+       STAGE 2: MASTER ORCHESTRATION ENGINE (DOM LIFECYCLE)
+       ========================================================================== */
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("⚙️ Orchestration Engine: Initializing...");
 
-        // D. Load and Render Selected Map Canvas Skin Theme
-        const savedSkin = localStorage.getItem(PREF_KEYS.skin) || 'google';
-        const skinSelect = document.getElementById('prefMapSkin'); 
-        if (skinSelect) skinSelect.value = savedSkin;
-        
-        // Load Marker Contrast Preference
-        const savedContrast = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
-        const contrastSelect = document.getElementById('prefMarkerContrast');
-        if (contrastSelect) contrastSelect.value = savedContrast;
-        applyMarkerContrast(savedContrast);
+        // 1. Ensure the map container actually exists before proceeding
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+            console.error("❌ Fatal Error: #map container not found in DOM.");
+            return;
+        }
 
+        // 2. Hydrate State BEFORE initializing components
+        hydrateRuntimeState();
 
-        // Let the primary map script boot natively first, then modify tile layouts if necessary
-        requestAnimationFrame(() => {
-            if (savedSkin !== 'google') {
-                switchMapTheme(savedSkin);
+        const startLat = parseFloat(localStorage.getItem('gasWatch_prefLat')) || FALLBACK_LAT;
+        const startLon = parseFloat(localStorage.getItem('gasWatch_prefLon')) || FALLBACK_LON;
+        const hasSavedHome = !!localStorage.getItem(PREF_KEYS.homeBase);
+
+        // 3. Initialize Map
+        window.map = L.map('map', {
+            zoomControl: true,
+            tap: false 
+        }).setView([startLat, startLon], 12);
+
+        // 4. Setup Theme and UI Mirrors
+        const runtimeSkinToken = localStorage.getItem(PREF_KEYS.skin) || 'google';
+        switchMapTheme(runtimeSkinToken);
+
+        mirrorStateToUIForms();
+        setupInteractiveComponentsListeners();
+
+        // 5. Data Fetching via Leaflet Life-cycle
+        window.map.whenReady(() => {
+            console.log("📍 Map engine ready. Initializing data fetch...");
+            
+            // Critical: Force size recalculation immediately upon readiness
+            window.map.invalidateSize();
+            
+            // Logic check: Validate existence of Home Base location before triggering API
+            if (hasSavedHome && window.activeHomeBaseLocation && window.activeHomeBaseLocation.trim() !== "") {
+                console.log("🚀 Fetching data for saved home:", window.activeHomeBaseLocation);
+                getPricesNow(window.activeHomeBaseLocation);
+            } else {
+                console.log("📍 No home set. Using fallback:", FALLBACK_ZIP);
+                dropDenverWelcomeMarker();
+                getPricesNow(FALLBACK_ZIP);
             }
         });
+    });
 
-        // E. Load Font Bubble Scaling Settings
-        const savedText = localStorage.getItem(PREF_KEYS.text) || 'normal';
-        const textSelect = document.getElementById('prefTextSize');
-        if (textSelect) textSelect.value = savedText;
-        applyTextScaling(savedText);
+
+    /* ==========================================================================
+        STAGE 3: RUNTIME STATE STORAGE HYDRATION & MIRRORING
+        ========================================================================= */
+    function hydrateRuntimeState() {
+        const resolveState = (sessKey, localKey, defaultVal) => {
+            const sess = sessionStorage.getItem(sessKey);
+            if (sess !== null) return sess;
+            const local = localStorage.getItem(localKey);
+            return local !== null ? local : defaultVal;
+        };
+
+        window.activeRadiusMiles = parseInt(resolveState('gasWatch_sessRadius', PREF_KEYS.radius, '10'), 10) || 10;
+        window.activeFuelType = resolveState('gasWatch_sessFuel', PREF_KEYS.fuel, 'regular');
+        window.activeSortPreference = localStorage.getItem(PREF_KEYS.sort) || 'price';
+        window.activeHomeBaseLocation = localStorage.getItem(PREF_KEYS.homeBase) || "";
+
+        const rawMaxPrice = resolveState('gasWatch_sessMaxPrice', PREF_KEYS.maxPrice, '');
+        window.maxPriceAllowed = rawMaxPrice !== '' ? parseFloat(rawMaxPrice) : null;
+
+        const activeTextSize = localStorage.getItem(PREF_KEYS.text) || 'normal';
+        applyTextScaling(activeTextSize, false);
+
+        const activeContrastMode = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
+        applyMarkerContrast(activeContrastMode, false);
     }
 
-    // --- 4. INTERACTIVE EVENT HANDLER CONNECTIONS ---
+    function mirrorStateToUIForms() {
+        const syncVal = (elementId, val) => {
+            const el = document.getElementById(elementId);
+            if (el) el.value = val || '';
+        };
 
-    // Grade Dropdown Changes
-    document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.fuel, this.value);
-        const mainFuelFilter = document.getElementById('fuelType');
-        if (mainFuelFilter) mainFuelFilter.value = this.value;
-        triggerMapDataRefresh();
-    });
-
-    // Distance Radius Matrix Changes
-    document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.radius, this.value);
-        const mainRadiusSlider = document.getElementById('distanceRange');
-        const mainRadiusValue = document.getElementById('distanceValue');
-        if (mainRadiusSlider) mainRadiusSlider.value = this.value;
-        if (mainRadiusValue) mainRadiusValue.value = this.value;
-        triggerMapDataRefresh();
-    });
-
-    document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
-        const freshValue = this.value.trim();
-        localStorage.setItem(PREF_KEYS.maxPrice, freshValue);
+        syncVal('fuelType', window.activeFuelType);
+        syncVal('filterMaxPrice', window.maxPriceAllowed);
         
-        // Sync to the primary sidebar filter form variable array natively
-        const mainPriceFilter = document.getElementById('priceValue');
-        if (mainPriceFilter) mainPriceFilter.value = freshValue;
+        const distanceSlider = document.getElementById("distanceRange");
+        const distanceLabel = document.getElementById("distanceValue");
+        if (distanceSlider) distanceSlider.value = window.activeRadiusMiles;
+        if (distanceLabel) {
+            if (distanceLabel.tagName === "INPUT") distanceLabel.value = window.activeRadiusMiles;
+            else distanceLabel.textContent = window.activeRadiusMiles;
+        }
+
+        syncVal('filterAddress', sessionStorage.getItem('gasWatch_sessAddress'));
+        syncVal('filterCity', sessionStorage.getItem('gasWatch_sessCity'));
+        syncVal('filterState', sessionStorage.getItem('gasWatch_sessState'));
+        syncVal('filterZip', sessionStorage.getItem('gasWatch_sessZip'));
+        syncVal('filterStoreName', sessionStorage.getItem('gasWatch_sessStoreName'));
+
+        syncVal('prefHomeBase', window.activeHomeBaseLocation);
+        syncVal('prefDefaultFuel', window.activeFuelType);
+        syncVal('prefDefaultRadius', window.activeRadiusMiles);
+        syncVal('prefMaxPrice', window.maxPriceAllowed !== null ? window.maxPriceAllowed : '');
+        syncVal('prefDefaultSort', window.activeSortPreference);
+        syncVal('prefMapSkin', localStorage.getItem(PREF_KEYS.skin) || 'google');
+        syncVal('prefTextSize', localStorage.getItem(PREF_KEYS.text) || 'normal');
+        syncVal('prefMarkerContrast', localStorage.getItem(PREF_KEYS.contrast) || 'normal');
+    }
+
+
+    /* ==========================================================================
+        STAGE 4: CLIENT INTERACTIVE HANDLERS & EVENTS CONTROLLER
+        ========================================================================== */
+    function setupInteractiveComponentsListeners() {
+        const searchBar = document.getElementById("searchBar");
+        searchBar?.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") { e.preventDefault(); searchLocation(); }
+        });
+        document.getElementById("extSearchIcon")?.addEventListener("click", function(e) {
+            e.preventDefault(); searchLocation();
+        });
+
+        document.getElementById("distanceRange")?.addEventListener("input", function() {
+            const distanceLabel = document.getElementById("distanceValue");
+            if (distanceLabel) {
+                if (distanceLabel.tagName === "INPUT") distanceLabel.value = this.value;
+                else distanceLabel.textContent = this.value;
+            }
+            window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+            applyClientSideMapFilters();
+        });
+
+        document.getElementById("fuelType")?.addEventListener("change", function() {
+            window.activeFuelType = this.value;
+            triggerNetworkOrClientRefresh();
+        });
+
+        document.getElementById("filterMaxPrice")?.addEventListener("input", function() {
+            const parsedVal = this.value.trim();
+            window.maxPriceAllowed = parsedVal !== "" ? parseFloat(parsedVal) : null;
+            applyClientSideMapFilters();
+        });
+
+        ['filterAddress', 'filterCity', 'filterZip', 'filterStoreName'].forEach(fieldId => {
+            document.getElementById(fieldId)?.addEventListener("input", debouncedClientFilter);
+        });
+
+        document.getElementById('prefHomeBase')?.addEventListener('change', function() {
+            const freshHome = this.value.trim();
+            localStorage.setItem(PREF_KEYS.homeBase, freshHome);
+            window.activeHomeBaseLocation = freshHome;
+            if (freshHome) getPricesNow(freshHome);
+        });
+
+        document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
+            localStorage.setItem(PREF_KEYS.fuel, this.value);
+            window.activeFuelType = this.value;
+            const quickFuel = document.getElementById('fuelType');
+            if (quickFuel) quickFuel.value = this.value;
+            triggerNetworkOrClientRefresh();
+        });
+
+        document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
+            localStorage.setItem(PREF_KEYS.radius, this.value);
+            window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+            
+            const quickSlider = document.getElementById('distanceRange');
+            const quickLabel = document.getElementById('distanceValue');
+            if (quickSlider) quickSlider.value = this.value;
+            if (quickLabel) {
+                if (quickLabel.tagName === "INPUT") quickLabel.value = this.value;
+                else quickLabel.textContent = this.value;
+            }
+            triggerNetworkOrClientRefresh();
+        });
+
+        document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
+            const freshMax = this.value.trim();
+            localStorage.setItem(PREF_KEYS.maxPrice, freshMax);
+            window.maxPriceAllowed = freshMax !== '' ? parseFloat(freshMax) : null;
+
+            const quickPrice = document.getElementById('filterMaxPrice');
+            if (quickPrice) quickPrice.value = freshMax;
+            applyClientSideMapFilters();
+        });
+
+        document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
+            localStorage.setItem(PREF_KEYS.sort, this.value);
+            window.activeSortPreference = this.value;
+            applyClientSideMapFilters();
+        });
+
+        document.getElementById('prefMapSkin')?.addEventListener('change', function() {
+            localStorage.setItem(PREF_KEYS.skin, this.value);
+            switchMapTheme(this.value);
+        });
+
+        document.getElementById('prefTextSize')?.addEventListener('change', function() {
+            localStorage.setItem(PREF_KEYS.text, this.value);
+            applyTextScaling(this.value, true);
+        });
         
-        // Trigger immediate map repaint frames as they edit the threshold
-        triggerMapDataRefresh();
-    });
+        document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
+            localStorage.setItem(PREF_KEYS.contrast, this.value);
+            applyMarkerContrast(this.value, true);
+        });
+
+        const filterForm = document.querySelector(".filterForm");
+        if (filterForm) {
+            filterForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const rawAddress = document.getElementById("filterAddress")?.value.trim() || "";
+                const rawCity = document.getElementById("filterCity")?.value.trim() || "";
+                const rawState = document.getElementById("filterState")?.value.trim() || "";
+                const rawZip = document.getElementById("filterZip")?.value.trim() || "";
+                const rawStore = document.getElementById("filterStoreName")?.value.trim() || "";
+                const quickSliderVal = document.getElementById("distanceRange")?.value || "10";
+                const quickPriceVal = document.getElementById("filterMaxPrice")?.value.trim() || "";
+
+                sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
+                sessionStorage.setItem('gasWatch_sessCity', rawCity);
+                sessionStorage.setItem('gasWatch_sessState', rawState);
+                sessionStorage.setItem('gasWatch_sessZip', rawZip);
+                sessionStorage.setItem('gasWatch_sessStoreName', rawStore);
+                sessionStorage.setItem('gasWatch_sessRadius', quickSliderVal);
+                sessionStorage.setItem('gasWatch_sessFuel', window.activeFuelType);
+                sessionStorage.setItem('gasWatch_sessMaxPrice', quickPriceVal);
+
+                if (document.getElementById('saveFiltersAsPrefs')?.checked) {
+                    localStorage.setItem(PREF_KEYS.radius, quickSliderVal);
+                    localStorage.setItem(PREF_KEYS.fuel, window.activeFuelType);
+                    localStorage.setItem(PREF_KEYS.maxPrice, quickPriceVal);
+                    mirrorStateToUIForms();
+                }
+
+                let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : "");
+                if (!composedLocation) {
+                    composedLocation = document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_ZIP;
+                }
+
+                getPricesNow(composedLocation);
+
+                const displayPanel = document.getElementById("filterDisplay");
+                if (displayPanel) displayPanel.style.display = "none";
+            });
+        }
+
+        document.getElementById("clearFiltersBtn")?.addEventListener("click", function(e) {
+            e.preventDefault();
+            sessionStorage.clear();
+
+            window.activeRadiusMiles = parseInt(localStorage.getItem(PREF_KEYS.radius) || '10', 10) || 10;
+            window.activeFuelType = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
+            const rawLocalPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
+            window.maxPriceAllowed = rawLocalPrice !== '' ? parseFloat(rawLocalPrice) : null;
+
+            const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
+            if (saveCheckbox) saveCheckbox.checked = false;
+
+            mirrorStateToUIForms();
+            
+            const targetQuery = window.activeHomeBaseLocation || document.getElementById("searchBar")?.value.trim() || FALLBACK_ZIP;
+            getPricesNow(targetQuery);
+        });
+    }
+
+    function searchLocation(customTargetId) {
+        if (window.isSearching) return;
+        
+        const targetId = (typeof customTargetId === 'string') ? customTargetId : 'searchBar';
+        const bar = document.getElementById(targetId);
+        const input = bar ? bar.value.trim() : "";
+        
+        if (!input) return;
+        bar.blur();
+        
+        window.activeHomeBaseLocation = input;
+        getPricesNow(input);
+    }
+
+    function triggerNetworkOrClientRefresh() {
+        const currentSearch = document.getElementById("searchBar")?.value.trim() || "";
+        const targetQuery = currentSearch || window.activeHomeBaseLocation || FALLBACK_ZIP;
+        getPricesNow(targetQuery);
+    }
 
 
-    // Sorting Logic Changes
-    document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.sort, this.value);
-        triggerMapDataRefresh();
-    });
+/* ==========================================================================
+   STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION
+   ========================================================================== */
+async function getPricesNow(searchQuery) {
+    if (window.isSearching) return;
+    
+    // 1. Prepare UI immediately
+    window.isSearching = true;
+    const searchBar = document.getElementById("searchBar");
+    if (searchBar) searchBar.classList.add("loading");
 
-    // Map Theme Skin Changes
-    document.getElementById('prefMapSkin')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.skin, this.value);
-        switchMapTheme(this.value);
-    });
+    // 2. OPTIMISTIC UI: Move the map immediately
+    // If we have a cached location, use it while we wait for the fresh data
+    const lastLat = localStorage.getItem('gasWatch_prefLat');
+    const lastLon = localStorage.getItem('gasWatch_prefLon');
+    
+    if (lastLat && lastLon) {
+        window.map?.flyTo([parseFloat(lastLat), parseFloat(lastLon)], 12);
+    }
 
-    // Typography Sizing Changes
-    document.getElementById('prefTextSize')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.text, this.value);
-        applyTextScaling(this.value);
-    });
+    clearMarkers();
+    window.globalRawStations = [];
+    if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
-    // --- 5. VISUAL REPAINT TRANSFORM MECHANISMS ---
+    // URL Setup
+    let BACKEND_URL = "/api/gas-prices"; 
+    if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+        BACKEND_URL = "http://localhost:3000/api/gas-prices"; 
+    }
 
-    /**
-     * 🗺️ switchMapTheme
-     * Modifies the already-initialized global 'map' instance as necessary
-     */
+    // Query Sanitization
+    const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
+                           (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80204");
+
+    const payloadBody = {
+        search: sanitizedQuery,
+        fuelGradeSelection: window.activeFuelType || "regular"
+    };
+
+    try {
+        const response = await fetch(BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadBody)
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const responseData = await response.json();
+        
+        // 3. UPDATED MAP: Move to the *true* origin if it's different from the optimistic one
+        const stations = responseData.stations || [];
+        const searchOrigin = responseData.origin || null;
+
+        if (searchOrigin?.lat && searchOrigin?.lon) {
+            localStorage.setItem('gasWatch_prefLat', searchOrigin.lat);
+            localStorage.setItem('gasWatch_prefLon', searchOrigin.lon);
+            // Use flyTo for a smoother "endorphin" effect than setView
+            window.map?.flyTo([searchOrigin.lat, searchOrigin.lon], 12);
+        }
+
+        // Map the clean database rows directly
+        window.globalRawStations = stations.map(s => ({
+            lat: parseFloat(s.lat),
+            lon: parseFloat(s.lon),
+            name: s.name || "Gas Station",
+            address: s.address || "Unknown Address",
+            price: parseFloat(s.price) || 0,
+            displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
+            postedTime: s.last_updated || null,
+            distance: 0
+        })).filter(s => !isNaN(s.lat) && !isNaN(s.lon));
+
+        applyClientSideMapFilters();
+        window.map?.invalidateSize();
+
+    } catch (error) {
+        console.error("🔴 Sync failed:", error);
+    } finally {
+        window.isSearching = false;
+        if (searchBar) searchBar.classList.remove("loading");
+    }
+}     
+
+    /* ==========================================================================
+        STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
+        ========================================================================== */
+        function applyClientSideMapFilters() {
+            if (!window.map) return;
+
+            const filterAddress   = document.getElementById('filterAddress')?.value.trim().toLowerCase() || '';
+            const filterCity      = document.getElementById('filterCity')?.value.trim().toLowerCase() || '';
+            const filterZip       = document.getElementById('filterZip')?.value.trim() || '';
+            const filterStoreName = document.getElementById('filterStoreName')?.value.trim().toLowerCase() || '';
+
+            clearMarkers();
+
+            const matchingStations = window.globalRawStations.filter(station => {
+                if (window.maxPriceAllowed !== null && window.maxPriceAllowed > 0) {
+                    if (station.price && station.price > window.maxPriceAllowed) return false; 
+                }
+                if (station.distance && station.distance > window.activeRadiusMiles) return false;
+                if (filterAddress && !station.address?.toLowerCase().includes(filterAddress)) return false;
+                if (filterCity && !station.city?.toLowerCase().includes(filterCity)) return false;
+                if (filterZip && !station.zip?.toString().includes(filterZip)) return false;
+                if (filterStoreName && !station.name?.toLowerCase().includes(filterStoreName)) return false;
+                
+                return true; 
+            });
+
+            if (window.activeSortPreference === 'price') {
+                matchingStations.sort((a, b) => a.price - b.price);
+            } else if (window.activeSortPreference === 'distance') {
+                matchingStations.sort((a, b) => a.distance - b.distance);
+            }
+
+            matchingStations.forEach(station => renderStationMarker(station));
+
+            if (typeof rebuildSidebarStationList === "function") {
+                rebuildSidebarStationList(matchingStations);
+            }
+
+            // 🎯 FIXED: Viewport auto-bounding now cleanly calculates based only on verified matching filtered elements
+            if (window.map && matchingStations.length > 0) {
+                const bounds = matchingStations.map(s => [s.lat, s.lon]);
+                window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+            }
+        }
+
+
+    /* ==========================================================================
+        STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
+        ========================================================================== */
     function switchMapTheme(themeName) {
-        if (typeof map === 'undefined' || !map) return;
+        if (typeof window.map === 'undefined' || !window.map || typeof window.map.addLayer !== 'function') return;
+
+        if (window.currentTileLayer) window.map.removeLayer(window.currentTileLayer);
 
         const activeTheme = themeName || 'google';
-        const selectedUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
-        const selectedAttr = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
+        const targetUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
+        const targetAttribution = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
 
-        // Strip previous tile layers cleanly from beneath your emerald capsules
-        map.eachLayer(function(layer) {
+        window.map.eachLayer(function(layer) {
             if (layer instanceof L.TileLayer) {
-                map.removeLayer(layer);
+                window.map.removeLayer(layer);
             }
         });
 
-        // Initialize and bind the fresh graphic backdrop
-        L.tileLayer(selectedUrl, {
-            subdomains: activeTheme === 'google' ? '0123' : 'abc',
+        const tileOptions = {
             maxZoom: 20,
             minZoom: 4,
             updateWhenIdle: true,
-            attribution: selectedAttr
-        }).addTo(map);
+            attribution: targetAttribution
+        };
 
-        // Dark Theme Specific Card Adjustments
+        if (activeTheme !== 'google') {
+            tileOptions.subdomains = 'abc';
+        }
+
+        window.currentTileLayer = L.tileLayer(targetUrl, tileOptions).addTo(window.map);
+
         const dynamicStyleId = 'dynamic-dark-popup-override';
         let popupStyleElement = document.getElementById(dynamicStyleId);
         
@@ -4329,15 +4696,63 @@ document.addEventListener("DOMContentLoaded", function() {
                 .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
             `;
         } else {
-            popupStyleElement.innerHTML = ''; // Reverts cleanly to standard white styles
+            popupStyleElement.innerHTML = ''; 
         }
     }
 
-    /**
-     * 🔍 applyTextScaling
-     * Controls CSS micro-variables to expand marker sizing variables on the fly
-     */
-    function applyTextScaling(scale) {
+    function renderStationMarker(station) {
+        if (!window.map || !station) return;
+
+        // 🎯 FIXED: Reconfigured Leaflet Icon declaration to utilize structured center anchors to avoid marker drifting
+        const priceIcon = L.divIcon({
+            className: 'gas-price-marker', 
+            html: `<div class="marker-pin-bubble">${station.displayPrice}</div>`,     
+            iconSize: [60, 30],         // Defined default bound limits to anchor reliably
+            iconAnchor: [30, 15]        // Anchored perfectly over coordinates regardless of font scales
+        });
+
+        let displayTime = "Updated recently";
+        if (station.postedTime) {
+            try {
+                displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+            } catch(e) { displayTime = station.postedTime; }
+        }
+
+        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(window.map);
+        marker.bindPopup(`
+            <b>${station.name}</b><br>
+            ${station.address}<br>
+            <b>${station.displayPrice}</b><br>
+            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+                🕒 ${displayTime}
+            </div>
+        `);
+
+        window.markers.push(marker);
+    }
+
+    function clearMarkers() {
+        window.markers.forEach(marker => { if (window.map) window.map.removeLayer(marker); });
+        window.markers.length = 0; 
+    }
+
+    function dropDenverWelcomeMarker() {
+        const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
+            icon: L.divIcon({ className: 'black-marker-icon' })
+        }).addTo(window.map);
+        
+        centerMarker.bindPopup(`
+            <div class="custom-popup">
+                <h3>Welcome to Denver!</h3>
+                <p>Set your custom location in <b>Preferences</b> to update your default starting view area.</p>
+            </div>
+        `).openPopup();
+        window.markers.push(centerMarker);
+    }
+
+    function applyTextScaling(scale, triggerRefresh = true) {
         if (scale === 'large') {
             document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
             document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
@@ -4345,9 +4760,10 @@ document.addEventListener("DOMContentLoaded", function() {
             document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
             document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
         }
+        if (triggerRefresh) applyClientSideMapFilters();
     }
 
-    function applyMarkerContrast(mode) {
+    function applyMarkerContrast(mode, triggerRefresh = true) {
         const contrastStyleId = 'dynamic-marker-contrast-override';
         let styleEl = document.getElementById(contrastStyleId);
         
@@ -4357,134 +4773,17 @@ document.addEventListener("DOMContentLoaded", function() {
             document.head.appendChild(styleEl);
         }
         
-        if (mode === 'high') {
-            styleEl.innerHTML = `
-                .gas-price-marker { 
-                    box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
-                    font-weight: 800 !important;
-                    border: 2px solid #000 !important; /* Harsh black contrast border */
-                }
-            `;
-        } else {
-            styleEl.innerHTML = ''; // Restores your pristine emerald glow configuration layout
-        }
-    }
-
-    /**
-     * ⚡ triggerMapDataRefresh
-     * Safety valve ensuring map displays adapt instantly to sorting choices
-     */
-    function triggerMapDataRefresh() {
-        if (typeof applyClientSideMapFilters === "function") {
-            applyClientSideMapFilters();
-        }
-    }
-});
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-    
-    // --- 1. DOM SELECTOR REFERENCES ---
-    const filterForm = document.querySelector(".filterForm");
-    const distanceSlider = document.getElementById("distanceRange");
-    const distanceLabel = document.getElementById("distanceValue");
-    const clearButton = document.getElementById("clearFiltersBtn");
-    const filterDisplayPanel = document.getElementById("filterDisplay");
-
-    // --- 2. LIVE SLIDER COUNT SYNCING ---
-    if (distanceSlider && distanceLabel) {
-        // Force initial state matching on boot frames
-        distanceLabel.value = distanceSlider.value;
-
-        // Redraw numeric text dynamically as the user slides the control knob
-        distanceSlider.addEventListener("input", function() {
-            distanceLabel.value = this.value;
-        });
-    }
-
-    // --- 3. UNIVERSAL INSTANT LOCAL FORM CLEAR ENTRY ---
-    if (clearButton && filterForm) {
-        clearButton.addEventListener("click", function(event) {
-            event.preventDefault(); // Guard against default button behaviors
-
-            // Reset text string inputs cleanly
-            document.getElementById("filterAddress").value = "";
-            document.getElementById("filterCity").value = "";
-            document.getElementById("filterState").value = "";
-            document.getElementById("filterZip").value = "";
-            document.getElementById("filterStoreName").value = "";
-            document.getElementById("prefMaxPrice").value = "";
-
-            // Revert slider variables back to default 5-mile radius baseline marks
-            if (distanceSlider && distanceLabel) {
-                distanceSlider.value = 5;
-                distanceLabel.value = 5;
-            }
-
-            // Revert dropdown index state back to Regular Unleaded option
-            const fuelSelect = document.getElementById("fuelType");
-            if (fuelSelect) fuelSelect.value = "regular";
-
-            console.log("🧼 Map filter inputs cleared cleanly local side.");
+        styleEl.innerHTML = (mode === 'high') ? `
+            .gas-price-marker { 
+                box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
+                font-weight: 800 !important;
+                border: 2px solid #000 !important;
+            }` : '';
             
-            // OPTIONAL PRO MOVE: Trigger an un-filtered map re-fetch or redraw automatically
-            if (typeof getPricesNow === "function") {
-                getPricesNow(""); // Calls back your master tracker script to dump full area data
-            }
-        });
+        if (triggerRefresh) applyClientSideMapFilters();
     }
-
-    // --- 4. BACKEND CONTEXT PREPPING & FORM SUBMIT HANDOFF ---
-    if (filterForm) {
-        filterForm.addEventListener("submit", function(event) {
-            event.preventDefault(); // Block standard form post reloads to protect map canvas frame layers
-
-            // Assemble all active entry keys tightly into a single structured payload matrix
-            const filterPayload = {
-                address: document.getElementById("filterAddress").value.trim(),
-                city: document.getElementById("filterCity").value.trim(),
-                state: document.getElementById("filterState").value.trim(),
-                zipCode: document.getElementById("filterZip").value.trim(),
-                brandName: document.getElementById("filterStoreName").value.trim(),
-                radiusMiles: parseInt(distanceSlider ? distanceSlider.value : 5),
-                maxPriceLimit: parseFloat(document.getElementById("prefMaxPrice").value) || null,
-                fuelGradeSelection: document.getElementById("fuelType") ? document.getElementById("fuelType").value : "regular"
-            };
-
-            // 🚀 THE READY ENGINE LINE: Data payload is fully staged for server.js!
-            console.log("🛰️ Filters packaged and prepped for backend delivery:", filterPayload);
-
-            /* 
-               ==========================================================================
-               UNIFIED BACKEND FETCH STRING HOOK (READY FOR NEXT STAGE)
-               ==========================================================================
-               This is the exact connection format we will use when linking up server.js:
-
-               fetch("/api/gas-prices/filter", {
-                   method: "POST",
-                   headers: { "Content-Type": "application/json" },
-                   body: JSON.stringify(filterPayload)
-               })
-               .then(response => response.json())
-               .then(filteredData => {
-                   // Clean old indicators and paint fresh filtered search results onto map canvas
-                   if (typeof clearMarkers === "function" && typeof markers !== "undefined") {
-                       clearMarkers();
-                       // (Map renderer call array loops sit here)
-                   }
-               })
-               .catch(err => console.error("Filter connection fault:", err));
-            */
-
-            // Retract the sliding overlay panel display smoothly once values pass through submission triggers
-            if (filterDisplayPanel) {
-                filterDisplayPanel.style.display = "none";
-            }
-        });
-    }
-});
 </script>
 
-
+        <script type="text/javascript"> var infolinks_pid = 3446312; var infolinks_wsid = 0; </script> <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
     </body>
 </html>
