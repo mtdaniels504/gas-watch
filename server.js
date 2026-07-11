@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 // 1. Import your ingestion functions
-const { smartIngestion } = require('./ingest.js'); 
+const { smartIngestion, geocodePending } = require('./ingest.js'); 
 
 const app = express();
 app.use(express.json());
@@ -12,6 +12,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Existing Gas Prices Route
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search } = req.body;
@@ -33,7 +34,6 @@ app.post('/api/gas-prices', async (req, res) => {
             console.warn(`⚠️ No data found for: ${normalizedCity}. Triggering background sync...`);
             
             // 2. TRIGGER BACKGROUND SYNC
-            // We do NOT await this, so the API response isn't delayed
             smartIngestion(search).catch(err => console.error("Background scrape failed:", err));
             
             return res.json({ 
@@ -53,6 +53,19 @@ app.post('/api/gas-prices', async (req, res) => {
     } catch (err) {
         console.error("🔴 Database Route Error:", err);
         res.status(500).json({ error: "Failed to fetch data" });
+    }
+});
+
+// 3. NEW: Internal Task Route for Batch Geocoding
+// Call this endpoint from a CRON job service (e.g., cron-job.org)
+app.post('/api/tasks/geocode-sweep', async (req, res) => {
+    try {
+        console.log("🛠️ Starting manual geocode sweep...");
+        await geocodePending();
+        res.status(200).json({ message: "Geocode sweep triggered successfully" });
+    } catch (err) {
+        console.error("🔴 Geocode Sweep Error:", err);
+        res.status(500).json({ error: "Geocode sweep failed" });
     }
 });
 
