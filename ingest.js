@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
-const { Geocodio } = require('geocodio-library-node');
+const Geocodio = require('geocodio-library-node');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
