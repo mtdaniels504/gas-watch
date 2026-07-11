@@ -4526,7 +4526,10 @@ async function getPricesNow(searchQuery) {
     
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
-    if (searchBar) searchBar.classList.add("loading");
+    if (searchBar) {
+        searchBar.classList.add("loading");
+        searchBar.disabled = true; // Prevent multiple clicks
+    }
 
     // 1. ANTICIPATORY UI: Clear UI
     clearMarkers();
@@ -4536,7 +4539,7 @@ async function getPricesNow(searchQuery) {
     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80204");
 
-    // 2. ANTICIPATORY MAP PAN (With Caching to protect Nominatim and boost speed)
+    // 2. ANTICIPATORY MAP PAN
     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
     const cachedCoords = localStorage.getItem(cacheKey);
 
@@ -4554,7 +4557,7 @@ async function getPricesNow(searchQuery) {
                     window.map?.flyTo([lat, lon], 12);
                 }
             })
-            .catch(err => console.warn("Geocoding fetch skipped or failed:", err));
+            .catch(err => console.warn("Geocoding fetch skipped:", err));
     }
 
     // 3. NETWORK LAYER: Backend Fetch
@@ -4582,7 +4585,7 @@ async function getPricesNow(searchQuery) {
                 window.isSearching = false; 
                 getPricesNow(sanitizedQuery);
             }, 5000);
-            return; 
+            return; // Exit early: wait for the next poll
         }
 
         // --- SUCCESS CASE ---
@@ -4594,9 +4597,10 @@ async function getPricesNow(searchQuery) {
             window.map?.flyTo([searchOrigin.lat, searchOrigin.lon], 12);
         }
 
+        // Removed the .filter() that was discarding un-geocoded stations
         window.globalRawStations = stations.map(s => ({
-            lat: parseFloat(s.lat),
-            lon: parseFloat(s.lon),
+            lat: s.lat ? parseFloat(s.lat) : null,
+            lon: s.lon ? parseFloat(s.lon) : null,
             name: s.name || "Gas Station",
             address: s.address || "Unknown Address",
             price: parseFloat(s.price) || 0,
@@ -4604,7 +4608,7 @@ async function getPricesNow(searchQuery) {
             postedTime: s.last_updated || null,
             zip: s.zip || (s.address ? s.address.match(/\d{5}/)?.[0] : ""), 
             distance: 0
-        })).filter(s => !isNaN(s.lat) && !isNaN(s.lon));
+        }));
 
         applyClientSideMapFilters();
         window.map?.invalidateSize();
@@ -4613,7 +4617,10 @@ async function getPricesNow(searchQuery) {
         console.error("🔴 Sync failed:", error);
     } finally {
         window.isSearching = false;
-        if (searchBar) searchBar.classList.remove("loading");
+        if (searchBar) {
+            searchBar.classList.remove("loading");
+            searchBar.disabled = false;
+        }
     }
 }
 
