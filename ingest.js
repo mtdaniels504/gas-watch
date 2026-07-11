@@ -1,9 +1,10 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
+const { Geocodio } = require('geocodio-library-node');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
 
 // TIERED CITY CONFIGURATION
 const CITIES = [
@@ -80,50 +81,10 @@ const CITIES = [
     { name: 'Anchorage, AK', tier: 'medium' },
 ];
 
-async function geocodeAddress(address) {
-    try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-        const response = await fetch(url, {
-            headers: { 'User-Agent': 'GasWatch-App/1.0' }
-        });
-        
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-        }
-    } catch (err) { 
-        console.error("❌ Geocoding fetch error:", err.message); 
-    }
-    return { lat: null, lon: null };
-}
 
-async function geocodePending() {
-    const { data: pending } = await supabase
-        .from('gas_stations')
-        .select('external_id, address')
-        .is('lat', null)
-        .eq('geocoding_failed', false)
-        .limit(50);
-
-    if (!pending || pending.length === 0) return;
-
-    for (const item of pending) {
-        const coords = await geocodeAddress(item.address);
-        
-        if (coords.lat) {
-            await supabase.from('gas_stations')
-                .update({ lat: coords.lat, lon: coords.lon })
-                .eq('external_id', item.external_id);
-        } else {
-            await supabase.from('gas_stations')
-                .update({ geocoding_failed: true })
-                .eq('external_id', item.external_id);
-        }
-        await delay(1100);
-    }
-}
-
+/**
+ * 1. REFACTORED: Fast Ingestion (No geocoding here)
+ */
 async function runIngestion(searchQuery) {
     console.log(`📡 Fetching data for ${searchQuery}...`);
     const response = await fetch(`https://api.apify.com/v2/actors/johnvc~fuelprices/run-sync-get-dataset-items?token=${process.env.APIFY_TOKEN}`, {
@@ -135,36 +96,63 @@ async function runIngestion(searchQuery) {
     const rawApifyItems = await response.json();
     if (!Array.isArray(rawApifyItems)) return;
 
-    // Process stations one-by-one to geocode them before insertion
-    const processedData = [];
-    for (const s of rawApifyItems) {
-        const address = `${s.address_line1}, ${s.address_locality}, ${s.address_region} ${s.address_postalCode}`;
-        
-        // 1. Geocode
-        const coords = await geocodeAddress(address);
-        
-        // 2. Add to batch
-        processedData.push({
-            external_id: s.id.toString(),
-            name: s.name,
-            address: address,
-            city: s.address_locality.toLowerCase(),
-            zip: s.address_postalCode,
-            price: parseFloat(s.price_cash || s.price_credit) || null,
-            last_updated: new Date().toISOString(),
-            lat: coords.lat,
-            lon: coords.lon,
-            geocoding_failed: coords.lat === null
-        });
-
-        // 3. Respect Rate Limits (Crucial for Nominatim)
-        await delay(1100); 
-    }
+    const processedData = rawApifyItems.map(s => ({
+        external_id: s.id.toString(),
+        name: s.name,
+        address: `${s.address_line1}, ${s.address_locality}, ${s.address_region} ${s.address_postalCode}`,
+        city: s.address_locality.toLowerCase(),
+        zip: s.address_postalCode,
+        price: parseFloat(s.price_cash || s.price_credit) || null,
+        last_updated: new Date().toISOString(),
+        lat: null, // Set to null; will be filled by geocodePending
+        lon: null,
+        geocoding_failed: false
+    }));
 
     const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
 
     if (error) console.error("❌ Upsert Error:", error);
-    else console.log(`✅ Ingested ${processedData.length} stations with coordinates.`);
+    else console.log(`✅ Ingested ${processedData.length} stations. Awaiting batch geocode.`);
+}
+
+/**
+ * 2. REFACTORED: Batch Geocoding (The Sweeper)
+ */
+async function geocodePending() {
+    const { data: pending } = await supabase
+        .from('gas_stations')
+        .select('external_id, address')
+        .is('lat', null)
+        .eq('geocoding_failed', false)
+        .limit(1000); // Geocodio handles large batches easily
+
+    if (!pending || pending.length === 0) return;
+
+    console.log(`🌍 Batch geocoding ${pending.length} stations...`);
+
+    // Create a key-value map for Geocodio: { "id": "address" }
+    const batchRequest = {};
+    pending.forEach(item => batchRequest[item.external_id] = item.address);
+
+    try {
+        const response = await geocoder.geocode(batchRequest);
+        
+        const updates = response.results.map(res => {
+            const result = res.response.results[0];
+            return {
+                external_id: res.query_id,
+                lat: result?.location.lat || null,
+                lon: result?.location.lng || null,
+                geocoding_failed: !result
+            };
+        });
+
+        // Bulk update all results at once
+        await supabase.from('gas_stations').upsert(updates);
+        console.log(`✅ Batch geocode complete.`);
+    } catch (err) {
+        console.error("❌ Geocodio Batch Error:", err);
+    }
 }
 
 async function needsUpdate(city) {
