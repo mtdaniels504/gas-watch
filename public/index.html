@@ -4537,7 +4537,7 @@ async function getPricesNow(searchQuery) {
     if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                           (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80204");
+                           (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80227");
 
     // 2. ANTICIPATORY MAP PAN
     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
