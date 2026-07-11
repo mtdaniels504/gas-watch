@@ -4549,7 +4549,7 @@ async function getPricesNow(searchQuery) {
         window.map?.flyTo([lat, lon], 12);
     } else {
         // ADDED: &countrycodes=us to force US results
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1&countrycodes=us`)
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1&countrycodes=us&viewbox=-124.8,24.4,-66.9,49.4&bounded=1`)
             .then(res => res.json())
             .then(data => {
                 if (data && data[0]) {
