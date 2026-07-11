@@ -4528,7 +4528,7 @@ async function getPricesNow(searchQuery) {
     const searchBar = document.getElementById("searchBar");
     if (searchBar) {
         searchBar.classList.add("loading");
-        searchBar.disabled = true; // Prevent multiple clicks
+        searchBar.disabled = true;
     }
 
     // 1. ANTICIPATORY UI: Clear UI
@@ -4536,10 +4536,11 @@ async function getPricesNow(searchQuery) {
     window.globalRawStations = [];
     if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
+    // Determine query: prioritize passed argument, then input, then active state, then hard fallback
     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80227");
 
-    // 2. ANTICIPATORY MAP PAN
+    // 2. ANTICIPATORY MAP PAN (With US-only geocoding protection)
     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
     const cachedCoords = localStorage.getItem(cacheKey);
 
@@ -4547,7 +4548,8 @@ async function getPricesNow(searchQuery) {
         const { lat, lon } = JSON.parse(cachedCoords);
         window.map?.flyTo([lat, lon], 12);
     } else {
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1`)
+        // ADDED: &countrycodes=us to force US results
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1&countrycodes=us`)
             .then(res => res.json())
             .then(data => {
                 if (data && data[0]) {
@@ -4585,7 +4587,7 @@ async function getPricesNow(searchQuery) {
                 window.isSearching = false; 
                 getPricesNow(sanitizedQuery);
             }, 5000);
-            return; // Exit early: wait for the next poll
+            return;
         }
 
         // --- SUCCESS CASE ---
@@ -4597,7 +4599,6 @@ async function getPricesNow(searchQuery) {
             window.map?.flyTo([searchOrigin.lat, searchOrigin.lon], 12);
         }
 
-        // Removed the .filter() that was discarding un-geocoded stations
         window.globalRawStations = stations.map(s => ({
             lat: s.lat ? parseFloat(s.lat) : null,
             lon: s.lon ? parseFloat(s.lon) : null,
