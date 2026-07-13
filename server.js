@@ -17,6 +17,7 @@ app.post('/api/gas-prices', async (req, res) => {
 
         const normalizedCity = search.split(',')[0].trim().toLowerCase();
 
+        // Fetch data
         const { data, error } = await supabase
             .from('gas_stations')
             .select('*')
@@ -25,27 +26,24 @@ app.post('/api/gas-prices', async (req, res) => {
 
         if (error) throw error;
 
-        // If no data, trigger background sync
+        // 1. CASE: No Data at all
         if (!data || data.length === 0) {
-            console.warn(`⚠️ No data for: ${normalizedCity}. Triggering background sync...`);
-            
-            // Background process handles both scraping and geocoding
             smartIngestion(search).catch(err => console.error("Background sync error:", err));
-            
-            return res.json({ 
-                status: "PENDING", 
-                message: "Fetching fresh prices for this area. Please wait..." 
-            });
+            return res.json({ status: "PENDING", message: "No data found, starting fresh scrape..." });
         }
 
+        // 2. CASE: Data exists, check freshness (48hr rule)
+        const oldestEntry = new Date(data[data.length - 1].last_updated);
+        const isStale = (new Date() - oldestEntry) > (48 * 60 * 60 * 1000);
+
         res.json({ 
-            origin: { lat: data[0].lat, lon: data[0].lon }, 
-            stations: data,
-            status: "OK"
+            status: "OK",
+            isStale,
+            origin: { lat: data[0].lat, lon: data[0].lon },
+            stations: data
         });
 
     } catch (err) {
-        console.error("🔴 Database Route Error:", err);
         res.status(500).json({ error: "Failed to fetch data" });
     }
 });
