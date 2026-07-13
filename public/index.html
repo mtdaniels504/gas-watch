@@ -4521,8 +4521,8 @@
 /* ==========================================================================
    STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (CACHED)
    ========================================================================== */
-async function getPricesNow(searchQuery) {
-    if (window.isSearching) return;
+async function getPricesNow(searchQuery, forceRefresh = false) {
+    if (window.isSearching && !forceRefresh) return;
     
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
@@ -4536,11 +4536,10 @@ async function getPricesNow(searchQuery) {
     window.globalRawStations = [];
     if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
-    // Determine query: prioritize passed argument, then input, then active state, then hard fallback
     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80227");
 
-    // 2. ANTICIPATORY MAP PAN (With US-only geocoding protection)
+    // 2. ANTICIPATORY MAP PAN
     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
     const cachedCoords = localStorage.getItem(cacheKey);
 
@@ -4548,7 +4547,6 @@ async function getPricesNow(searchQuery) {
         const { lat, lon } = JSON.parse(cachedCoords);
         window.map?.flyTo([lat, lon], 12);
     } else {
-        // ADDED: &countrycodes=us to force US results
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1&countrycodes=us&viewbox=-124.8,24.4,-66.9,49.4&bounded=1`)
             .then(res => res.json())
             .then(data => {
@@ -4572,7 +4570,11 @@ async function getPricesNow(searchQuery) {
         const response = await fetch(BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ search: sanitizedQuery, fuelGradeSelection: window.activeFuelType || "regular" })
+            body: JSON.stringify({ 
+                search: sanitizedQuery, 
+                fuelGradeSelection: window.activeFuelType || "regular",
+                forceRefresh: forceRefresh // Pass this to bypass cache in server.js
+            })
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -4580,9 +4582,7 @@ async function getPricesNow(searchQuery) {
 
         // --- THE HYBRID HANDSHAKE ---
         if (responseData.status === "PENDING") {
-            console.log("⏳ Data pending. Retrying in 5 seconds...");
             if (searchBar) searchBar.value = "Fetching fresh data...";
-            
             setTimeout(() => {
                 window.isSearching = false; 
                 getPricesNow(sanitizedQuery);
@@ -4591,8 +4591,12 @@ async function getPricesNow(searchQuery) {
         }
 
         // --- SUCCESS CASE ---
-        console.log("✅ API DATA RECEIVED:", responseData);
         
+        // Handle Stale Data Prompt
+        if (responseData.isStale && !forceRefresh) {
+            triggerRefreshPrompt(sanitizedQuery);
+        }
+
         const stations = responseData.stations || [];
         const searchOrigin = responseData.origin || null;
         if (searchOrigin?.lat && searchOrigin?.lon) {
@@ -4622,6 +4626,14 @@ async function getPricesNow(searchQuery) {
             searchBar.classList.remove("loading");
             searchBar.disabled = false;
         }
+    }
+}
+
+// User-facing refresh trigger
+function triggerRefreshPrompt(query) {
+    if (confirm("New prices are available for this area. Would you like to refresh?")) {
+        alert("Fetching fresh prices. This may take a moment...");
+        getPricesNow(query, true); // Force refresh flag = true
     }
 }
 
