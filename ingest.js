@@ -8,29 +8,29 @@ const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
 
 // TIERED CITY CONFIGURATION
 const CITIES = [
-    // HIGH PRIORITY (20 Largest - Update every 12h)
+    // HIGH PRIORITY: 10 Largest (Update every 48h - 10 stations each)
     { name: 'New York, NY', tier: 'high' },
     { name: 'Los Angeles, CA', tier: 'high' },
     { name: 'Chicago, IL', tier: 'high' },
     { name: 'Houston, TX', tier: 'high' },
+    { name: 'Denver, CO', tier: 'medium' },
     { name: 'Phoenix, AZ', tier: 'high' },
     { name: 'Philadelphia, PA', tier: 'high' },
-    { name: 'San Antonio, TX', tier: 'high' },
     { name: 'San Diego, CA', tier: 'high' },
     { name: 'Dallas, TX', tier: 'high' },
     { name: 'San Jose, CA', tier: 'high' },
-    { name: 'Austin, TX', tier: 'high' },
-    { name: 'Jacksonville, FL', tier: 'high' },
-    { name: 'Fort Worth, TX', tier: 'high' },
-    { name: 'Columbus, OH', tier: 'high' },
-    { name: 'Indianapolis, IN', tier: 'high' },
-    { name: 'Charlotte, NC', tier: 'high' },
-    { name: 'San Francisco, CA', tier: 'high' },
-    { name: 'Seattle, WA', tier: 'high' },
-    { name: 'Denver, CO', tier: 'high' },
-    { name: 'Oklahoma City, OK', tier: 'high' },
 
-    // MEDIUM PRIORITY (50 Mid-Size - Update every 24h)
+    // MEDIUM PRIORITY: Next 20 Largest (Update every 7 days - 20 stations each)
+    { name: 'Austin, TX', tier: 'medium' },
+    { name: 'San Antonio, TX', tier: 'high' },
+    { name: 'Jacksonville, FL', tier: 'medium' },
+    { name: 'Fort Worth, TX', tier: 'medium' },
+    { name: 'Columbus, OH', tier: 'medium' },
+    { name: 'Indianapolis, IN', tier: 'medium' },
+    { name: 'Charlotte, NC', tier: 'medium' },
+    { name: 'San Francisco, CA', tier: 'medium' },
+    { name: 'Seattle, WA', tier: 'medium' },
+    { name: 'Oklahoma City, OK', tier: 'medium' },
     { name: 'Nashville, TN', tier: 'medium' },
     { name: 'El Paso, TX', tier: 'medium' },
     { name: 'Washington, DC', tier: 'medium' },
@@ -40,55 +40,17 @@ const CITIES = [
     { name: 'Louisville, KY', tier: 'medium' },
     { name: 'Detroit, MI', tier: 'medium' },
     { name: 'Baltimore, MD', tier: 'medium' },
-    { name: 'Milwaukee, WI', tier: 'medium' },
-    { name: 'Albuquerque, NM', tier: 'medium' },
-    { name: 'Tucson, AZ', tier: 'medium' },
-    { name: 'Fresno, CA', tier: 'medium' },
-    { name: 'Sacramento, CA', tier: 'medium' },
-    { name: 'Kansas City, MO', tier: 'medium' },
-    { name: 'Mesa, AZ', tier: 'medium' },
-    { name: 'Atlanta, GA', tier: 'medium' },
-    { name: 'Omaha, NE', tier: 'medium' },
-    { name: 'Colorado Springs, CO', tier: 'medium' },
-    { name: 'Raleigh, NC', tier: 'medium' },
-    { name: 'Virginia Beach, VA', tier: 'medium' },
-    { name: 'Long Beach, CA', tier: 'medium' },
-    { name: 'Miami, FL', tier: 'medium' },
-    { name: 'Oakland, CA', tier: 'medium' },
-    { name: 'Minneapolis, MN', tier: 'medium' },
-    { name: 'Tulsa, OK', tier: 'medium' },
-    { name: 'Bakersfield, CA', tier: 'medium' },
-    { name: 'Wichita, KS', tier: 'medium' },
-    { name: 'Arlington, TX', tier: 'medium' },
-    { name: 'Aurora, CO', tier: 'medium' },
-    { name: 'Tampa, FL', tier: 'medium' },
-    { name: 'New Orleans, LA', tier: 'medium' },
-    { name: 'Cleveland, OH', tier: 'medium' },
-    { name: 'Honolulu, HI', tier: 'medium' },
-    { name: 'Anaheim, CA', tier: 'medium' },
-    { name: 'Lexington, KY', tier: 'medium' },
-    { name: 'Stockton, CA', tier: 'medium' },
-    { name: 'Henderson, NV', tier: 'medium' },
-    { name: 'Riverside, CA', tier: 'medium' },
-    { name: 'Newark, NJ', tier: 'medium' },
-    { name: 'Saint Paul, MN', tier: 'medium' },
-    { name: 'Santa Ana, CA', tier: 'medium' },
-    { name: 'Cincinnati, OH', tier: 'medium' },
-    { name: 'Irvine, CA', tier: 'medium' },
-    { name: 'Orlando, FL', tier: 'medium' },
-    { name: 'Pittsburgh, PA', tier: 'medium' },
-    { name: 'St. Louis, MO', tier: 'medium' },
-    { name: 'Anchorage, AK', tier: 'medium' },
+    { name: 'Miami, FL', tier: 'medium' }
 ];
 
 
 /**
  * 1. REFACTORED: Ingestion + Auto-Geocode
  */
-async function runIngestion(searchQuery) {
-    console.log(`📡 Fetching data for ${searchQuery}...`);
+async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
+    console.log(`📡 Fetching data for ${searchQuery} [Strategy: ${sortStrategy}]...`);
     
-    // Add timeout to prevent 89-hour hangs
+    // Add timeout to prevent hangs
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -97,7 +59,11 @@ async function runIngestion(searchQuery) {
             signal: controller.signal,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ search: searchQuery })
+            body: JSON.stringify({ 
+                search: searchQuery,
+                sort: sortStrategy,
+                limit: limit
+            })
         });
         clearTimeout(timeout);
         
@@ -115,7 +81,7 @@ async function runIngestion(searchQuery) {
             zip: s.address_postalCode,
             price: parseFloat(s.price_cash || s.price_credit) || null,
             last_updated: new Date().toISOString(),
-            lat: null,
+            lat: null, // Initialized as null for geocoding
             lon: null,
             geocoding_failed: false
         }));
@@ -192,6 +158,23 @@ async function smartIngestion(searchQuery) {
         await runIngestion(searchQuery);
     } else {
         console.log(`✅ Data for ${searchQuery} is fresh. Skipping scrape.`);
+    }
+}
+
+async function runAllCities(tierFilter, sortStrategy) {
+    const citiesToProcess = CITIES.filter(c => c.tier === tierFilter);
+    // Define the limit based on the tier
+    const stationLimit = (tierFilter === 'high') ? 10 : 20;
+    
+    console.log(`🚀 Starting batch for ${citiesToProcess.length} cities (Tier: ${tierFilter}, Limit: ${stationLimit})...`);
+
+    for (const cityObj of citiesToProcess) {
+        try {
+            await runIngestion(cityObj.name, sortStrategy, stationLimit);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (err) {
+            console.error(`❌ Failed to process ${cityObj.name}:`, err.message);
+        }
     }
 }
 
