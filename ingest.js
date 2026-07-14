@@ -138,15 +138,16 @@ async function geocodePending() {
     }
 }
 
-async function needsUpdate(city) {
-    const { data } = await supabase
+async function needsUpdate(searchQuery) {
+    // Use the same fuzzy matching logic as smartIngestion
+    const { data, error } = await supabase
         .from('gas_stations')
         .select('last_updated')
-        .eq('city', city.split(',')[0].toLowerCase())
+        .or(`city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
         .order('last_updated', { ascending: false })
         .limit(1);
 
-    if (!data || data.length === 0) return true;
+    if (!data || data.length === 0 || error) return true;
 
     const lastUpdate = new Date(data[0].last_updated);
     const twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
@@ -154,29 +155,34 @@ async function needsUpdate(city) {
 }
 
 async function smartIngestion(searchQuery) {
-    const cityName = searchQuery.split(',')[0].toLowerCase();
+    console.log(`🔍 Checking database for: "${searchQuery}"`);
 
-    // Check if ANY records exist for this city
-    const { count, error } = await supabase
+    // 1. BROAD SEARCH: Check if ANY relevant records exist
+    // We use ilike to catch "Denver, CO", "Denver", or partial addresses.
+    const { data, error } = await supabase
         .from('gas_stations')
-        .select('*', { count: 'exact', head: true })
-        .eq('city', cityName);
+        .select('last_updated')
+        .or(`city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
+        .order('last_updated', { ascending: false })
+        .limit(1);
 
-    const dataMissing = (count === 0 || error);
+    const dataMissing = (!data || data.length === 0 || error);
 
     if (dataMissing) {
-        console.log(`🔍 No data found for ${searchQuery}. Triggering initial scrape...`);
+        console.log(`📡 No match found for "${searchQuery}". Triggering fresh scrape...`);
         await runIngestion(searchQuery);
         return;
     }
 
-    // If data exists, check if it's stale
-    const isStale = await needsUpdate(searchQuery);
-    if (isStale) {
-        console.log(`⏳ Data for ${searchQuery} is stale. Refreshing...`);
+    // 2. STALE CHECK: If data exists, check if it's older than 48 hours
+    const lastUpdate = new Date(data[0].last_updated);
+    const twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
+    
+    if (lastUpdate < twoDaysAgo) {
+        console.log(`⏳ Data for "${searchQuery}" is stale. Refreshing...`);
         await runIngestion(searchQuery);
     } else {
-        console.log(`✅ Data for ${searchQuery} is fresh. Skipping scrape.`);
+        console.log(`✅ Data for "${searchQuery}" is fresh. Skipping scrape.`);
     }
 }
 
