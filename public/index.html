@@ -4522,14 +4522,14 @@
    STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
    ========================================================================== */
 async function getPricesNow(searchQuery, forceRefresh = false) {
+    // 1. Prevent concurrent searches unless forced
     if (window.isSearching && !forceRefresh) return;
     
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
-    // Removed searchBar.disabled = true; to keep the map interactive
     searchBar?.classList.add("loading");
 
-    // 1. ANTICIPATORY UI: Clear UI
+    // 2. ANTICIPATORY UI: Clear previous state
     clearMarkers();
     window.globalRawStations = [];
     if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
@@ -4537,7 +4537,7 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "80227");
 
-    // 2. ANTICIPATORY MAP PAN
+    // 3. ANTICIPATORY MAP PAN
     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
     const cachedCoords = localStorage.getItem(cacheKey);
 
@@ -4558,11 +4558,10 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             .catch(err => console.warn("Geocoding fetch skipped:", err));
     }
 
-    // 3. NETWORK LAYER: Backend Fetch
-    let BACKEND_URL = "/api/gas-prices"; 
-    if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
-        BACKEND_URL = "http://localhost:3000/api/gas-prices"; 
-    }
+    // 4. NETWORK LAYER
+    let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
+        ? "http://localhost:3000/api/gas-prices" 
+        : "/api/gas-prices";
 
     try {
         const response = await fetch(BACKEND_URL, {
@@ -4578,29 +4577,24 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const responseData = await response.json();
 
-        // --- THE HYBRID HANDSHAKE ---
-        if (responseData.status === "PENDING") {
-            // Replace console feedback with a non-blocking toast or UI update
-            console.log("Fetching fresh data from server...");
-            setTimeout(() => {
-                window.isSearching = false; 
-                getPricesNow(sanitizedQuery);
-            }, 5000);
+        // 5. TERMINATE ON EMPTY: Fixes the infinite loop issue
+        if (responseData.status === "EMPTY") {
+            console.log("No stations found. Stopping search.");
+            window.isSearching = false;
+            searchBar?.classList.remove("loading");
             return;
         }
 
-        // --- SUCCESS CASE ---
+        // 6. SUCCESS CASE
+        window.isSearching = false; // Reset before UI updates
+        searchBar?.classList.remove("loading");
+
         if (responseData.isStale && !forceRefresh) {
-            // Replaced the blocking alert/confirm with a non-blocking trigger
             triggerRefreshPrompt(sanitizedQuery);
         }
 
         const stations = responseData.stations || [];
-        const searchOrigin = responseData.origin || null;
-        if (searchOrigin?.lat && searchOrigin?.lon) {
-            window.map?.flyTo([searchOrigin.lat, searchOrigin.lon], 12);
-        }
-
+        
         window.globalRawStations = stations.map(s => ({
             lat: s.lat ? parseFloat(s.lat) : null,
             lon: s.lon ? parseFloat(s.lon) : null,
@@ -4618,29 +4612,9 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
 
     } catch (error) {
         console.error("🔴 Sync failed:", error);
-    } finally {
         window.isSearching = false;
         searchBar?.classList.remove("loading");
     }
-}
-
-/**
- * REPLACED: Non-blocking trigger using an HTML element instead of window.confirm
- * Create a <div id="refreshToast"></div> in your HTML to use this.
- */
-function triggerRefreshPrompt(query) {
-    const toast = document.getElementById("refreshToast");
-    if (!toast) return;
-    
-    toast.style.display = "block";
-    toast.innerHTML = `
-        <div style="background:#333; color:white; padding:10px; border-radius:5px;">
-            New prices available! 
-            <button onclick="getPricesNow('${query}', true); this.parentElement.style.display='none';">
-                Refresh Now
-            </button>
-        </div>
-    `;
 }
 
     /* ==========================================================================
