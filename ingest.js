@@ -45,59 +45,50 @@ const CITIES = [
 
 
 /**
- * 1. REFACTORED: Ingestion + Auto-Geocode
+ * 1. REFACTORED: Ingestion + Auto-Geocode with Result Reporting
  */
 async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
-    console.log(`📡 Fetching data for ${searchQuery} [Strategy: ${sortStrategy}]...`);
+    console.log(`📡 Fetching data for ${searchQuery}...`);
     
-    // Add timeout to prevent hangs
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-
     try {
         const response = await fetch(`https://api.apify.com/v2/actors/johnvc~fuelprices/run-sync-get-dataset-items?token=${process.env.APIFY_TOKEN}`, {
-            signal: controller.signal,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                search: searchQuery,
-                sort: sortStrategy,
-                limit: limit
-            })
+            body: JSON.stringify({ search: searchQuery, sort: sortStrategy, limit: limit })
         });
-        clearTimeout(timeout);
         
         const rawApifyItems = await response.json();
+        
+        // STATUS: Empty result
         if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) {
             console.log(`⚠️ No stations found for ${searchQuery}.`);
-            return;
+            return { status: 'EMPTY', stations: [] };
         }
 
         const processedData = rawApifyItems.map(s => ({
             external_id: s.id.toString(),
             name: s.name,
             address: `${s.address_line1}, ${s.address_locality}, ${s.address_region} ${s.address_postalCode}`,
-            city: s.address_locality.toLowerCase(),
+            city: s.address_locality?.toLowerCase() || 'unknown',
             zip: s.address_postalCode,
             price: parseFloat(s.price_cash || s.price_credit) || null,
             last_updated: new Date().toISOString(),
-            lat: null, // Initialized as null for geocoding
+            lat: null,
             lon: null,
             geocoding_failed: false
         }));
 
         const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
 
-        if (error) {
-            console.error("❌ Upsert Error:", error);
-        } else {
-            console.log(`✅ Ingested ${processedData.length} stations. Starting background geocode...`);
-            // Trigger geocoding immediately after successful ingestion
-            await geocodePending();
-        }
+        if (error) throw error;
+
+        // Trigger geocode in background
+        geocodePending().catch(e => console.error("Geocode background task failed", e));
+        
+        return { status: 'SUCCESS', stations: processedData };
     } catch (err) {
-        clearTimeout(timeout);
         console.error(`❌ Ingestion failed for ${searchQuery}:`, err.message);
+        return { status: 'ERROR', error: err.message };
     }
 }
 
