@@ -178,4 +178,4 @@ async function runAllCities(tierFilter, sortStrategy) {
     }
 }
 
-module.exports = { runIngestion, smartIngestion, geocodePending };
+module.exports = { runIngestion, smartIngestion, geocodePending, runAllCities };
