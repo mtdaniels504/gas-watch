@@ -4646,49 +4646,50 @@ function triggerRefreshPrompt(query) {
     /* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
         ========================================================================== */
-        function applyClientSideMapFilters() {
-            if (!window.map) return;
 
-            const filterAddress   = document.getElementById('filterAddress')?.value.trim().toLowerCase() || '';
-            const filterCity      = document.getElementById('filterCity')?.value.trim().toLowerCase() || '';
-            const filterZip       = document.getElementById('filterZip')?.value.trim() || '';
-            const filterStoreName = document.getElementById('filterStoreName')?.value.trim().toLowerCase() || '';
+    function applyClientSideMapFilters() {
+        if (!window.map) return;
 
-            clearMarkers();
+        // 1. Gather Filter Data
+        const filters = {
+            address: document.getElementById('filterAddress')?.value.trim().toLowerCase(),
+            city: document.getElementById('filterCity')?.value.trim().toLowerCase(),
+            zip: document.getElementById('filterZip')?.value.trim(),
+            store: document.getElementById('filterStoreName')?.value.trim().toLowerCase(),
+            maxPrice: window.maxPriceAllowed
+        };
 
-            const matchingStations = window.globalRawStations.filter(station => {
-                if (window.maxPriceAllowed !== null && window.maxPriceAllowed > 0) {
-                    if (station.price && station.price > window.maxPriceAllowed) return false; 
-                }
-                if (station.distance && station.distance > window.activeRadiusMiles) return false;
-                if (filterAddress && !station.address?.toLowerCase().includes(filterAddress)) return false;
-                if (filterCity && !station.city?.toLowerCase().includes(filterCity)) return false;
-                if (filterZip && !station.zip?.toString().includes(filterZip)) return false;
-                if (filterStoreName && !station.name?.toLowerCase().includes(filterStoreName)) return false;
-                
-                return true; 
+        // 2. Perform Filter & Sort (Pure Data Operations)
+        const processed = window.globalRawStations
+            .filter(s => {
+                if (filters.maxPrice && s.price > filters.maxPrice) return false;
+                if (filters.address && !s.address?.toLowerCase().includes(filters.address)) return false;
+                if (filters.city && !s.city?.toLowerCase().includes(filters.city)) return false;
+                if (filters.zip && !s.zip?.includes(filters.zip)) return false;
+                if (filters.store && !s.name?.toLowerCase().includes(filters.store)) return false;
+                return true;
+            })
+            .sort((a, b) => {
+                return window.activeSortPreference === 'price' 
+                    ? (a.price - b.price) 
+                    : (a.distance - b.distance);
             });
 
-            if (window.activeSortPreference === 'price') {
-                matchingStations.sort((a, b) => a.price - b.price);
-            } else if (window.activeSortPreference === 'distance') {
-                matchingStations.sort((a, b) => a.distance - b.distance);
-            }
-
-            matchingStations.forEach(station => renderStationMarker(station));
-
-            if (typeof rebuildSidebarStationList === "function") {
-                rebuildSidebarStationList(matchingStations);
-            }
-
-            // 🎯 FIXED: Viewport auto-bounding now cleanly calculates based only on verified matching filtered elements
-            if (window.map && matchingStations.length > 0) {
-                const bounds = matchingStations.map(s => [s.lat, s.lon]);
-                window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-            }
+        // 3. UI Update (DOM Manipulation Only)
+        clearMarkers();
+        processed.forEach(s => renderStationMarker(s));
+        
+        if (typeof rebuildSidebarStationList === "function") {
+            rebuildSidebarStationList(processed);
         }
 
-
+        // 4. Smooth Viewport Adjustment
+        if (processed.length > 0) {
+            const bounds = processed.map(s => [s.lat, s.lon]);
+            window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
+        }
+    }
+        
     /* ==========================================================================
         STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
         ========================================================================== */
@@ -4774,9 +4775,15 @@ function triggerRefreshPrompt(query) {
         window.markers.push(marker);
     }
 
+    /* IMPROVED: Marker Management with Memory Protection */
     function clearMarkers() {
-        window.markers.forEach(marker => { if (window.map) window.map.removeLayer(marker); });
-        window.markers.length = 0; 
+        if (window.markers && window.markers.length > 0) {
+            window.markers.forEach(marker => {
+                if (marker && marker.off) marker.off(); // Remove internal events
+                if (window.map) window.map.removeLayer(marker);
+            });
+            window.markers = []; // Force garbage collection reference
+        }
     }
 
     function dropDenverWelcomeMarker() {
