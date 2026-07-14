@@ -104,9 +104,6 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
 /**
  * 2. Batch Geocoding (The Sweeper)
  */
-/**
- * 2. CORRECTED: Batch Geocoding
- */
 async function geocodePending() {
     const { data: pending } = await supabase
         .from('gas_stations')
@@ -119,15 +116,12 @@ async function geocodePending() {
 
     console.log(`🌍 Batch geocoding ${pending.length} stations...`);
     
-    // Geocodio batch expects an object: { "id1": "address1", "id2": "address2" }
     const batchRequest = {};
     pending.forEach(item => batchRequest[item.external_id] = item.address);
 
     try {
-        // The library returns an object where keys are the IDs you sent
         const response = await geocoder.geocode(batchRequest);
         
-        // Convert the response object into an array for Supabase upsert
         const updates = Object.keys(response.results).map(id => {
             const res = response.results[id];
             const location = res.response.results[0]?.location;
@@ -136,11 +130,15 @@ async function geocodePending() {
                 external_id: id,
                 lat: location?.lat || null,
                 lon: location?.lng || null,
-                geocoding_failed: !location // Set true if no location found
+                geocoding_failed: !location
             };
         });
 
-        const { error } = await supabase.from('gas_stations').upsert(updates);
+        // ADDED: { onConflict: 'external_id' } to prevent the crash
+        const { error } = await supabase
+            .from('gas_stations')
+            .upsert(updates, { onConflict: 'external_id' }); 
+            
         if (error) throw error;
         
         console.log(`✅ Batch geocode complete for ${updates.length} stations.`);
