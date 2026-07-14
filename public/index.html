@@ -4620,6 +4620,31 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
     }
 }
 
+function triggerRefreshPrompt(message, query) {
+    // Check if prompt already exists to avoid duplicates
+    if (document.getElementById('refresh-prompt-container')) return;
+
+    const container = document.createElement('div');
+    container.id = 'refresh-prompt-container';
+    container.style.cssText = "position:fixed; bottom:20px; right:20px; background:white; padding:15px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:1000;";
+
+    container.innerHTML = `
+        <p style="margin:0 0 10px 0; font-size:14px;">${message}</p>
+        <button id="btn-yes" style="margin-right:10px;">Refresh Prices</button>
+        <button id="btn-no">Keep Current</button>
+    `;
+
+    document.body.appendChild(container);
+
+    document.getElementById('btn-yes').onclick = () => {
+        container.remove();
+        getPricesNow(query, true); // <--- Triggers the refresh
+    };
+
+    document.getElementById('btn-no').onclick = () => {
+        container.remove();
+    };
+}
 /* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
         ========================================================================== */
