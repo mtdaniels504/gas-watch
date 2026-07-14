@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-const { smartIngestion } = require('./ingest.js');
+const { smartIngestion, runIngestion } = require('./ingest.js');
 
 const app = express();
 app.use(express.json());
