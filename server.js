@@ -47,17 +47,20 @@ app.post('/api/gas-prices', async (req, res) => {
                 return res.status(500).json({ error: "Ingestion failed" });
             }
             
-            // Re-query after ingestion
-            const { data: newData, error: newErr } = await supabase
+            // 1. Clean the search term
+            const cleanSearch = search.replace(/[^a-zA-Z0-9\s]/g, ''); 
+
+            // 2. Perform the re-query using the clean variable
+            let { data: newData, error: newErr } = await supabase
                 .from('gas_stations')
                 .select('*')
-                .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
+                .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
                 .order('price', { ascending: true });
 
             if (newErr) {
                 console.error("❌ [LOG] Supabase re-query error:", newErr);
             }
-            
+
             console.log(`📊 [LOG] Post-ingestion fetch returned ${newData ? newData.length : 0} records.`);
             return res.json({ status: "OK", stations: newData || [] });
         }
