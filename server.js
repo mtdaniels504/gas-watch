@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const { smartIngestion, runIngestion } = require('./ingest.js');
+const { runFullSweep } = require('./geocode-sweeper.js'); // Import the sweeper
 
 const app = express();
 app.use(express.json());
@@ -13,50 +14,36 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search, forceRefresh } = req.body;
-        console.log(`📥 [LOG] Request received: search="${search}", forceRefresh=${forceRefresh}`);
-
         if (!search) return res.status(400).json({ error: "Missing search" });
 
         const cleanSearch = search.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
 
-        // 1. PERFORM THE STATUS CHECK
         const status = await smartIngestion(cleanSearch); 
-        console.log(`🔍 [LOG] Data status for "${cleanSearch}": ${status}`);
 
-        // 2. CASE: MISSING - Auto-scrape and inform frontend
+        // Helper to trigger scrape + background geocoding
+        const performScrapeAndSweep = async () => {
+            await runIngestion(cleanSearch);
+            // Fire-and-forget the sweeper so it doesn't delay the API response
+            runFullSweep(5).then(count => console.log(`🌍 Sweeper finished. Items cleaned: ${count}`));
+        };
+
         if (status === 'MISSING') {
-            console.log(`📡 [LOG] Data missing. Auto-triggering scrape...`);
-            await runIngestion(cleanSearch);
-            
+            await performScrapeAndSweep();
             const { data } = await supabase.from('gas_stations').select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
                 .order('price', { ascending: true });
-                
-            return res.json({ 
-                status: "OK", 
-                info: "No local data found. Fetching new prices now...", 
-                stations: data || [] 
-            });
+            return res.json({ status: "OK", info: "Fetching new data...", stations: data || [] });
         }
 
-        // 3. CASE: STALE - Prompt the user
         if (status === 'STALE' && !forceRefresh) {
-            console.log(`⏳ [LOG] Data stale. Prompting user.`);
             const { data } = await supabase.from('gas_stations').select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
                 .order('price', { ascending: true });
-                
-            return res.json({ 
-                status: "STALE", 
-                message: "New data available. Would you like to trigger a price refresh?", 
-                stations: data 
-            });
+            return res.json({ status: "STALE", message: "New data available. Refresh?", stations: data });
         }
 
-        // 4. CASE: FRESH / FORCED REFRESH
         if (forceRefresh) {
-            console.log(`⏳ [LOG] User forced refresh. Running ingestion...`);
-            await runIngestion(cleanSearch);
+            await performScrapeAndSweep();
         }
 
         const { data, error } = await supabase.from('gas_stations').select('*')
@@ -64,16 +51,10 @@ app.post('/api/gas-prices', async (req, res) => {
             .order('price', { ascending: true });
 
         if (error) throw error;
-
-        console.log(`✅ [LOG] Returning ${data.length} records.`);
-        res.json({ 
-            status: "OK", 
-            info: forceRefresh ? "Prices updated successfully." : null,
-            stations: data 
-        });
+        res.json({ status: "OK", info: forceRefresh ? "Updated successfully." : null, stations: data });
 
     } catch (err) {
-        console.error("🚨 [LOG] Backend Final Catch Block:", err);
+        console.error("🚨 Backend Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
