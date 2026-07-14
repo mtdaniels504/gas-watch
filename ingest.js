@@ -1,236 +1,78 @@
 require('dotenv').config();
+const express = require('express');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-const Geocodio = require('geocodio-library-node');
+const { smartIngestion } = require('./ingest.js');
+
+const app = express();
+app.use(express.json());
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
+app.use(express.static(path.join(__dirname, 'public')));
 
-
-// TIERED CITY CONFIGURATION
-const CITIES = [
-    // HIGH PRIORITY: 10 Largest (Update every 48h - 10 stations each)
-    { name: 'New York, NY', tier: 'high' },
-    { name: 'Los Angeles, CA', tier: 'high' },
-    { name: 'Chicago, IL', tier: 'high' },
-    { name: 'Houston, TX', tier: 'high' },
-    { name: 'Denver, CO', tier: 'high' },
-    { name: 'Phoenix, AZ', tier: 'high' },
-    { name: 'Philadelphia, PA', tier: 'high' },
-    { name: 'San Diego, CA', tier: 'high' },
-    { name: 'Dallas, TX', tier: 'high' },
-    { name: 'San Jose, CA', tier: 'high' },
-
-    // MEDIUM PRIORITY: Next 20 Largest (Update every 7 days - 20 stations each)
-    { name: 'Austin, TX', tier: 'medium' },
-    { name: 'San Antonio, TX', tier: 'medium' },
-    { name: 'Jacksonville, FL', tier: 'medium' },
-    { name: 'Fort Worth, TX', tier: 'medium' },
-    { name: 'Columbus, OH', tier: 'medium' },
-    { name: 'Indianapolis, IN', tier: 'medium' },
-    { name: 'Charlotte, NC', tier: 'medium' },
-    { name: 'San Francisco, CA', tier: 'medium' },
-    { name: 'Seattle, WA', tier: 'medium' },
-    { name: 'Oklahoma City, OK', tier: 'medium' },
-    { name: 'Nashville, TN', tier: 'medium' },
-    { name: 'El Paso, TX', tier: 'medium' },
-    { name: 'Washington, DC', tier: 'medium' },
-    { name: 'Las Vegas, NV', tier: 'medium' },
-    { name: 'Boston, MA', tier: 'medium' },
-    { name: 'Portland, OR', tier: 'medium' },
-    { name: 'Louisville, KY', tier: 'medium' },
-    { name: 'Detroit, MI', tier: 'medium' },
-    { name: 'Baltimore, MD', tier: 'medium' },
-    { name: 'Miami, FL', tier: 'medium' }
-];
-
-
-/**
- * 1. REFACTORED: Ingestion + Auto-Geocode with Result Reporting
- */
-async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
-    console.log(`📡 Fetching data for ${searchQuery}...`);
-    
-    // NEW: Create an abort controller to kill the request after 25 seconds
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000); 
-
+app.post('/api/gas-prices', async (req, res) => {
     try {
-        const response = await fetch(`https://api.apify.com/v2/actors/johnvc~fuelprices/run-sync-get-dataset-items?token=${process.env.APIFY_TOKEN}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ search: searchQuery, sort: sortStrategy, limit: limit }),
-            signal: controller.signal // <--- THIS KILLS THE HANG
-        });
-        
-        clearTimeout(timeout); // Clear the timer if it succeeds
-        
-        console.log(`📡 Response status from Apify: ${response.status}`);
-        
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Apify returned ${response.status}: ${errText}`);
+        const { search, forceRefresh } = req.body;
+        console.log(`📥 [LOG] Request received: search="${search}", forceRefresh=${forceRefresh}`);
+
+        if (!search) {
+            console.warn("⚠️ [LOG] Missing search parameter");
+            return res.status(400).json({ error: "Missing search" });
         }
 
-        const rawApifyItems = await response.json();
-        console.log(`✅ Received ${rawApifyItems.length} items from Apify.`);
-        
-        if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) {
-            console.log(`⚠️ No stations found for ${searchQuery}.`);
-            return { status: 'EMPTY', stations: [] };
-        }
-
-        const processedData = rawApifyItems.map(s => {
-
-            // 1. Defensively pick price, prioritizing cash
-            const rawPrice = s.price_cash ?? s.price_credit ?? null;
-
-            
-            // 2. Safely build address
-            const line1 = s.address_line1 || '';
-            const city = s.address_locality || 'unknown';
-            const region = s.address_region || '';
-            const zip = s.address_postalCode || '';
-            const fullAddress = `${line1}, ${city}, ${region} ${zip}`.replace(/^, |, $/g, '');
-
-
-            return {
-                external_id: String(s.id),
-                name: s.name || "Unknown Station",
-                address: fullAddress,
-                city: city.toLowerCase(),
-                zip: zip,
-                price: rawPrice ? parseFloat(rawPrice) : null,
-                last_updated: new Date().toISOString(),
-                lat: null, // Initialized as null for geocoding
-                lon: null,
-                geocoding_failed: false
-            };
-        });
-
-        const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
-        if (error) throw error;
-        
-        return { status: 'SUCCESS', stations: processedData };
-        
-    } catch (err) {
-        clearTimeout(timeout); // Ensure timer is cleared on error
-        if (err.name === 'AbortError') {
-            console.error(`❌ CRITICAL: Fetch timed out for ${searchQuery}.`);
-        } else {
-            console.error(`❌ Ingestion failed for ${searchQuery}:`, err.message);
-        }
-        return { status: 'ERROR', error: err.message };
-    }
-}
-/**
- * 2. Batch Geocoding (The Sweeper)
- */
-async function geocodePending() {
-    const { data: pending } = await supabase
-        .from('gas_stations')
-        .select('external_id, address')
-        .is('lat', null)
-        .eq('geocoding_failed', false)
-        .limit(100);
-
-    if (!pending || pending.length === 0) return;
-
-    console.log(`🌍 Batch geocoding ${pending.length} stations...`);
-    
-    const batchRequest = {};
-    pending.forEach(item => batchRequest[item.external_id] = item.address);
-
-    try {
-        const response = await geocoder.geocode(batchRequest);
-        
-        const updates = Object.keys(response.results).map(id => {
-            const res = response.results[id];
-            const location = res.response.results[0]?.location;
-            
-            return {
-                external_id: id,
-                lat: location?.lat || null,
-                lon: location?.lng || null,
-                geocoding_failed: !location
-            };
-        });
-
-        // ADDED: { onConflict: 'external_id' } to prevent the crash
-        const { error } = await supabase
+        // 1. Database Check
+        let { data, error } = await supabase
             .from('gas_stations')
-            .upsert(updates, { onConflict: 'external_id' }); 
-            
-        if (error) throw error;
-        
-        console.log(`✅ Batch geocode complete for ${updates.length} stations.`);
-    } catch (err) {
-        console.error("❌ Geocodio Batch Error:", err.message);
-    }
-}
+            .select('*')
+            .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
+            .order('price', { ascending: true });
 
-async function needsUpdate(searchQuery) {
-    // Use the same fuzzy matching logic as smartIngestion
-    const { data, error } = await supabase
-        .from('gas_stations')
-        .select('last_updated')
-        .or(`city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
-        .order('last_updated', { ascending: false })
-        .limit(1);
-
-    if (!data || data.length === 0 || error) return true;
-
-    const lastUpdate = new Date(data[0].last_updated);
-    const twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
-    return lastUpdate < twoDaysAgo;
-}
-
-async function smartIngestion(searchQuery) {
-    console.log(`🔍 Checking database for: "${searchQuery}"`);
-
-    // 1. BROAD SEARCH: Check if ANY relevant records exist
-    // We use ilike to catch "Denver, CO", "Denver", or partial addresses.
-    const { data, error } = await supabase
-        .from('gas_stations')
-        .select('last_updated')
-        .or(`city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
-        .order('last_updated', { ascending: false })
-        .limit(1);
-
-    const dataMissing = (!data || data.length === 0 || error);
-
-    if (dataMissing) {
-        console.log(`📡 No match found for "${searchQuery}". Triggering fresh scrape...`);
-        await runIngestion(searchQuery);
-        return;
-    }
-
-    // 2. STALE CHECK: If data exists, check if it's older than 48 hours
-    const lastUpdate = new Date(data[0].last_updated);
-    const twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
-    
-    if (lastUpdate < twoDaysAgo) {
-        console.log(`⏳ Data for "${searchQuery}" is stale. Refreshing...`);
-        await runIngestion(searchQuery);
-    } else {
-        console.log(`✅ Data for "${searchQuery}" is fresh. Skipping scrape.`);
-    }
-}
-
-async function runAllCities(tierFilter, sortStrategy) {
-    const citiesToProcess = CITIES.filter(c => c.tier === tierFilter);
-    // Define the limit based on the tier
-    const stationLimit = (tierFilter === 'high') ? 10 : 20;
-    
-    console.log(`🚀 Starting batch for ${citiesToProcess.length} cities (Tier: ${tierFilter}, Limit: ${stationLimit})...`);
-
-    for (const cityObj of citiesToProcess) {
-        try {
-            await runIngestion(cityObj.name, sortStrategy, stationLimit);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        } catch (err) {
-            console.error(`❌ Failed to process ${cityObj.name}:`, err.message);
+        if (error) {
+            console.error("❌ [LOG] Supabase query error:", error);
+            throw error;
         }
-    }
-}
 
-module.exports = { runIngestion, smartIngestion, geocodePending, runAllCities };
+        // 2. Logic Check
+        const isDataEmpty = !data || data.length === 0;
+        console.log(`🔍 [LOG] Database returned ${data ? data.length : 0} records.`);
+
+        if (isDataEmpty || forceRefresh) {
+            console.log(`📡 [LOG] Triggering smartIngestion for: "${search}"`);
+            
+            try {
+                await smartIngestion(search);
+                console.log(`✅ [LOG] smartIngestion completed for: "${search}"`);
+            } catch (ingestErr) {
+                console.error(`🚨 [LOG] CRITICAL: smartIngestion failed for "${search}":`, ingestErr);
+                return res.status(500).json({ error: "Ingestion failed" });
+            }
+            
+            // 1. Clean the search term
+            const cleanSearch = search.replace(/[^a-zA-Z0-9\s]/g, ''); 
+
+            // 2. Perform the re-query using the clean variable
+            let { data: newData, error: newErr } = await supabase
+                .from('gas_stations')
+                .select('*')
+                .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
+                .order('price', { ascending: true });
+
+            if (newErr) {
+                console.error("❌ [LOG] Supabase re-query error:", newErr);
+            }
+
+            console.log(`📊 [LOG] Post-ingestion fetch returned ${newData ? newData.length : 0} records.`);
+            return res.json({ status: "OK", stations: newData || [] });
+        }
+
+        console.log(`✅ [LOG] Returning existing data from database.`);
+        res.json({ status: "OK", stations: data });
+
+    } catch (err) {
+        console.error("🚨 [LOG] Backend Final Catch Block:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
