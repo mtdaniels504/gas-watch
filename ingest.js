@@ -57,9 +57,17 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
             body: JSON.stringify({ search: searchQuery, sort: sortStrategy, limit: limit })
         });
         
-        const rawApifyItems = await response.json();
+        // ADDED LOGS
+        console.log(`📡 Response status from Apify: ${response.status}`);
         
-        // STATUS: Empty result
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Apify returned ${response.status}: ${errText}`);
+        }
+
+        const rawApifyItems = await response.json();
+        console.log(`✅ Received ${rawApifyItems.length} items from Apify.`);
+        
         if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) {
             console.log(`⚠️ No stations found for ${searchQuery}.`);
             return { status: 'EMPTY', stations: [] };
@@ -78,10 +86,16 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
             geocoding_failed: false
         }));
 
+        console.log(`💾 Attempting to upsert ${processedData.length} stations to Supabase...`);
         const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
 
-        if (error) throw error;
+        if (error) {
+            console.error("❌ Supabase Upsert Error:", error);
+            throw error;
+        }
 
+        console.log(`💾 Upsert successful.`);
+        
         // Trigger geocode in background
         geocodePending().catch(e => console.error("Geocode background task failed", e));
         
@@ -91,7 +105,6 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
         return { status: 'ERROR', error: err.message };
     }
 }
-
 /**
  * 2. Batch Geocoding (The Sweeper)
  */
