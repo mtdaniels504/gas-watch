@@ -13,7 +13,7 @@ const CITIES = [
     { name: 'Los Angeles, CA', tier: 'high' },
     { name: 'Chicago, IL', tier: 'high' },
     { name: 'Houston, TX', tier: 'high' },
-    { name: 'Denver, CO', tier: 'medium' },
+    { name: 'Denver, CO', tier: 'high' },
     { name: 'Phoenix, AZ', tier: 'high' },
     { name: 'Philadelphia, PA', tier: 'high' },
     { name: 'San Diego, CA', tier: 'high' },
@@ -22,7 +22,7 @@ const CITIES = [
 
     // MEDIUM PRIORITY: Next 20 Largest (Update every 7 days - 20 stations each)
     { name: 'Austin, TX', tier: 'medium' },
-    { name: 'San Antonio, TX', tier: 'high' },
+    { name: 'San Antonio, TX', tier: 'medium' },
     { name: 'Jacksonville, FL', tier: 'medium' },
     { name: 'Fort Worth, TX', tier: 'medium' },
     { name: 'Columbus, OH', tier: 'medium' },
