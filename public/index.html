@@ -4519,17 +4519,15 @@
 
 
 /* ==========================================================================
-   STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (CACHED)
+   STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
    ========================================================================== */
 async function getPricesNow(searchQuery, forceRefresh = false) {
     if (window.isSearching && !forceRefresh) return;
     
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
-    if (searchBar) {
-        searchBar.classList.add("loading");
-        searchBar.disabled = true;
-    }
+    // Removed searchBar.disabled = true; to keep the map interactive
+    searchBar?.classList.add("loading");
 
     // 1. ANTICIPATORY UI: Clear UI
     clearMarkers();
@@ -4573,7 +4571,7 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             body: JSON.stringify({ 
                 search: sanitizedQuery, 
                 fuelGradeSelection: window.activeFuelType || "regular",
-                forceRefresh: forceRefresh // Pass this to bypass cache in server.js
+                forceRefresh: forceRefresh 
             })
         });
 
@@ -4582,7 +4580,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
 
         // --- THE HYBRID HANDSHAKE ---
         if (responseData.status === "PENDING") {
-            if (searchBar) searchBar.value = "Fetching fresh data...";
+            // Replace console feedback with a non-blocking toast or UI update
+            console.log("Fetching fresh data from server...");
             setTimeout(() => {
                 window.isSearching = false; 
                 getPricesNow(sanitizedQuery);
@@ -4591,9 +4590,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         }
 
         // --- SUCCESS CASE ---
-        
-        // Handle Stale Data Prompt
         if (responseData.isStale && !forceRefresh) {
+            // Replaced the blocking alert/confirm with a non-blocking trigger
             triggerRefreshPrompt(sanitizedQuery);
         }
 
@@ -4622,19 +4620,27 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         console.error("🔴 Sync failed:", error);
     } finally {
         window.isSearching = false;
-        if (searchBar) {
-            searchBar.classList.remove("loading");
-            searchBar.disabled = false;
-        }
+        searchBar?.classList.remove("loading");
     }
 }
 
-// User-facing refresh trigger
+/**
+ * REPLACED: Non-blocking trigger using an HTML element instead of window.confirm
+ * Create a <div id="refreshToast"></div> in your HTML to use this.
+ */
 function triggerRefreshPrompt(query) {
-    if (confirm("New prices are available for this area. Would you like to refresh?")) {
-        alert("Fetching fresh prices. This may take a moment...");
-        getPricesNow(query, true); // Force refresh flag = true
-    }
+    const toast = document.getElementById("refreshToast");
+    if (!toast) return;
+    
+    toast.style.display = "block";
+    toast.innerHTML = `
+        <div style="background:#333; color:white; padding:10px; border-radius:5px;">
+            New prices available! 
+            <button onclick="getPricesNow('${query}', true); this.parentElement.style.display='none';">
+                Refresh Now
+            </button>
+        </div>
+    `;
 }
 
     /* ==========================================================================
