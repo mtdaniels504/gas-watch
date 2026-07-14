@@ -79,7 +79,33 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
             return { status: 'EMPTY', stations: [] };
         }
 
-        // ... (Keep your existing processedData mapping code here)
+        const processedData = rawApifyItems.map(s => {
+
+            // 1. Defensively pick price, prioritizing cash
+            const rawPrice = s.price_cash ?? s.price_credit ?? null;
+
+            
+            // 2. Safely build address
+            const line1 = s.address_line1 || '';
+            const city = s.address_locality || 'unknown';
+            const region = s.address_region || '';
+            const zip = s.address_postalCode || '';
+            const fullAddress = `${line1}, ${city}, ${region} ${zip}`.replace(/^, |, $/g, '');
+
+
+            return {
+                external_id: String(s.id),
+                name: s.name || "Unknown Station",
+                address: fullAddress,
+                city: city.toLowerCase(),
+                zip: zip,
+                price: rawPrice ? parseFloat(rawPrice) : null,
+                last_updated: new Date().toISOString(),
+                lat: null, // Initialized as null for geocoding
+                lon: null,
+                geocoding_failed: false
+            };
+        });
 
         const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
         if (error) throw error;
