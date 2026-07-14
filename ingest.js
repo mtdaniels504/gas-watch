@@ -198,8 +198,6 @@ async function needsUpdate(searchQuery) {
 async function smartIngestion(searchQuery) {
     console.log(`🔍 Checking database for: "${searchQuery}"`);
 
-    // 1. BROAD SEARCH: Check if ANY relevant records exist
-    // We use ilike to catch "Denver, CO", "Denver", or partial addresses.
     const { data, error } = await supabase
         .from('gas_stations')
         .select('last_updated')
@@ -207,24 +205,12 @@ async function smartIngestion(searchQuery) {
         .order('last_updated', { ascending: false })
         .limit(1);
 
-    const dataMissing = (!data || data.length === 0 || error);
-
-    if (dataMissing) {
-        console.log(`📡 No match found for "${searchQuery}". Triggering fresh scrape...`);
-        await runIngestion(searchQuery);
-        return;
-    }
-
-    // 2. STALE CHECK: If data exists, check if it's older than 48 hours
+    if (error || !data || data.length === 0) return 'MISSING';
+    
     const lastUpdate = new Date(data[0].last_updated);
     const twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
     
-    if (lastUpdate < twoDaysAgo) {
-        console.log(`⏳ Data for "${searchQuery}" is stale. Refreshing...`);
-        await runIngestion(searchQuery);
-    } else {
-        console.log(`✅ Data for "${searchQuery}" is fresh. Skipping scrape.`);
-    }
+    return lastUpdate < twoDaysAgo ? 'STALE' : 'FRESH';
 }
 
 async function runAllCities(tierFilter, sortStrategy) {
