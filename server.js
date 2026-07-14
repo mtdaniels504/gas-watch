@@ -14,47 +14,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search, forceRefresh } = req.body;
-        if (!search) return res.status(400).json({ error: "Search parameter is required" });
+        if (!search) return res.status(400).json({ error: "Missing search" });
 
-        // 1. DATABASE CHECK
+        // 1. Just check the DB once.
         let { data, error } = await supabase
             .from('gas_stations')
             .select('*')
             .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
             .order('price', { ascending: true });
 
-        // 2. EXPLICIT TRIGGER
-        // If data is empty OR forceRefresh is true, we MUST trigger smartIngestion
+        // 2. If empty OR forceRefresh, trigger the scraper
         if (!data || data.length === 0 || forceRefresh) {
-            console.log(`🔍 No local data found for "${search}". Forcing smartIngestion...`);
+            console.log(`📡 Triggering smartIngestion for: ${search}`);
+            await smartIngestion(search); // This now handles the scrape AND the write to DB
             
-            // This MUST log "📡 Fetching data for..." if smartIngestion/runIngestion work
-            await smartIngestion(search); 
-            
-            // Re-fetch after the potential scrape
-            const { data: newData, error: newErr } = await supabase
+            // Re-query once
+            const { data: newData } = await supabase
                 .from('gas_stations')
                 .select('*')
                 .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
                 .order('price', { ascending: true });
-
-            if (newErr) throw newErr;
-            
-            // If it's STILL empty, THEN we return empty
-            if (!newData || newData.length === 0) {
-                console.log(`⚠️ Scraper returned no results for: ${search}`);
-                return res.json({ status: "EMPTY", stations: [] });
-            }
-            
-            return res.json({ status: "OK", stations: newData });
+                
+            return res.json({ status: "OK", stations: newData || [] });
         }
 
-        // Data found!
         res.json({ status: "OK", stations: data });
-
     } catch (err) {
-        console.error("Backend Error:", err);
-        res.status(500).json({ error: "Failed to fetch data" });
+        res.status(500).json({ error: err.message });
     }
 });
 
