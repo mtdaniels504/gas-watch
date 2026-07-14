@@ -15,43 +15,36 @@ app.post('/api/gas-prices', async (req, res) => {
         const { search, forceRefresh } = req.body;
         if (!search) return res.status(400).json({ error: "Search parameter is required" });
 
-        const normalizedCity = search.split(',')[0].trim().toLowerCase();
-
-        // 1. Initial Fetch (check if we even need to scrape)
+        // Use the RAW search string to query Supabase (ilike is your best friend here)
         let { data, error } = await supabase
             .from('gas_stations')
             .select('*')
-            .or(`city.ilike.%${normalizedCity}%,address.ilike.%${normalizedCity}%`)
+            // This now checks against the full string provided by the user
+            .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
             .order('price', { ascending: true });
 
         if (error) throw error;
 
-        // 2. Logic: Scrape if no data OR if user specifically requested a force refresh
         if (!data || data.length === 0 || forceRefresh) {
-            console.log(`🔍 ${forceRefresh ? 'Manual refresh' : 'No local data'} for ${search}. Running ingestion...`);
+            console.log(`🔍 No local data for "${search}". Triggering ingestion...`);
             
             await smartIngestion(search); 
             
-            // Re-fetch after Ingestion
             const { data: newData, error: newErr } = await supabase
                 .from('gas_stations')
                 .select('*')
-                .or(`city.ilike.%${normalizedCity}%,address.ilike.%${normalizedCity}%`)
+                .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
                 .order('price', { ascending: true });
 
             if (newErr) throw newErr;
             
-            // If it's STILL empty, tell the frontend to STOP the search loop
             if (!newData || newData.length === 0) {
                 return res.json({ status: "EMPTY" });
             }
-            
             return res.json({ status: "OK", stations: newData });
         }
 
-        // 3. Return existing/fresh data
         res.json({ status: "OK", stations: data });
-
     } catch (err) {
         console.error("Backend Error:", err);
         res.status(500).json({ error: "Failed to fetch data" });
