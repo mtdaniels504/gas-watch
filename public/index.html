@@ -4537,7 +4537,7 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
 
-    // 3. ANTICIPATORY MAP PAN (Same as before)
+    // 3. ANTICIPATORY MAP PAN
     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
     const cachedCoords = localStorage.getItem(cacheKey);
 
@@ -4577,16 +4577,25 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const responseData = await response.json();
 
-        // 5. SUCCESS / STALE LOGIC
+        // 5. COMMUNICATE STATUS TO USER
+        
+        // Handle background auto-fetch/force-refresh messages
+        if (responseData.info) {
+            // Assuming you have a standard alert or toast UI function
+            alert(responseData.info); 
+        }
+
+        // Handle STALE case
+        if (responseData.status === "STALE") {
+            // This triggers your custom prompt logic
+            triggerRefreshPrompt(responseData.message, sanitizedQuery);
+            // We still render the existing (stale) data so the map isn't blank
+        }
+
+        // 6. RENDER DATA
         window.isSearching = false;
         searchBar?.classList.remove("loading");
 
-        // If backend says data is STALE, show the prompt
-        if (responseData.status === "STALE") {
-            triggerRefreshPrompt(sanitizedQuery);
-        }
-
-        // Always render the stations provided (whether they are fresh or stale)
         const stations = responseData.stations || [];
         
         window.globalRawStations = stations.map(s => ({
@@ -4610,7 +4619,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         searchBar?.classList.remove("loading");
     }
 }
-    /* ==========================================================================
+
+/* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
         ========================================================================== */
 
