@@ -10,36 +10,63 @@ app.use(express.json());
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Inside server.js
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search, forceRefresh } = req.body;
-        if (!search) return res.status(400).json({ error: "Missing search" });
+        console.log(`📥 [LOG] Request received: search="${search}", forceRefresh=${forceRefresh}`);
 
-        // 1. Just check the DB once.
+        if (!search) {
+            console.warn("⚠️ [LOG] Missing search parameter");
+            return res.status(400).json({ error: "Missing search" });
+        }
+
+        // 1. Database Check
         let { data, error } = await supabase
             .from('gas_stations')
             .select('*')
             .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
             .order('price', { ascending: true });
 
-        // 2. If empty OR forceRefresh, trigger the scraper
-        if (!data || data.length === 0 || forceRefresh) {
-            console.log(`📡 Triggering smartIngestion for: ${search}`);
-            await smartIngestion(search); // This now handles the scrape AND the write to DB
+        if (error) {
+            console.error("❌ [LOG] Supabase query error:", error);
+            throw error;
+        }
+
+        // 2. Logic Check
+        const isDataEmpty = !data || data.length === 0;
+        console.log(`🔍 [LOG] Database returned ${data ? data.length : 0} records.`);
+
+        if (isDataEmpty || forceRefresh) {
+            console.log(`📡 [LOG] Triggering smartIngestion for: "${search}"`);
             
-            // Re-query once
-            const { data: newData } = await supabase
+            try {
+                await smartIngestion(search);
+                console.log(`✅ [LOG] smartIngestion completed for: "${search}"`);
+            } catch (ingestErr) {
+                console.error(`🚨 [LOG] CRITICAL: smartIngestion failed for "${search}":`, ingestErr);
+                return res.status(500).json({ error: "Ingestion failed" });
+            }
+            
+            // Re-query after ingestion
+            const { data: newData, error: newErr } = await supabase
                 .from('gas_stations')
                 .select('*')
                 .or(`city.ilike.%${search}%,address.ilike.%${search}%`)
                 .order('price', { ascending: true });
-                
+
+            if (newErr) {
+                console.error("❌ [LOG] Supabase re-query error:", newErr);
+            }
+            
+            console.log(`📊 [LOG] Post-ingestion fetch returned ${newData ? newData.length : 0} records.`);
             return res.json({ status: "OK", stations: newData || [] });
         }
 
+        console.log(`✅ [LOG] Returning existing data from database.`);
         res.json({ status: "OK", stations: data });
+
     } catch (err) {
+        console.error("🚨 [LOG] Backend Final Catch Block:", err);
         res.status(500).json({ error: err.message });
     }
 });
