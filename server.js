@@ -19,34 +19,43 @@ app.post('/api/gas-prices', async (req, res) => {
 
         const cleanSearch = search.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
 
-        // 1. PERFORM THE STATUS CHECK (This replaces your internal stale logic)
+        // 1. PERFORM THE STATUS CHECK
         const status = await smartIngestion(cleanSearch); 
         console.log(`🔍 [LOG] Data status for "${cleanSearch}": ${status}`);
 
-        // 2. CASE: MISSING - Auto-scrape immediately
+        // 2. CASE: MISSING - Auto-scrape and inform frontend
         if (status === 'MISSING') {
             console.log(`📡 [LOG] Data missing. Auto-triggering scrape...`);
             await runIngestion(cleanSearch);
-            // Re-fetch after scrape
+            
             const { data } = await supabase.from('gas_stations').select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
                 .order('price', { ascending: true });
-            return res.json({ status: "OK", stations: data || [] });
+                
+            return res.json({ 
+                status: "OK", 
+                info: "No local data found. Fetching new prices now...", 
+                stations: data || [] 
+            });
         }
 
-        // 3. CASE: STALE - If NOT forcing, tell frontend to prompt user
+        // 3. CASE: STALE - Prompt the user
         if (status === 'STALE' && !forceRefresh) {
             console.log(`⏳ [LOG] Data stale. Prompting user.`);
             const { data } = await supabase.from('gas_stations').select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
                 .order('price', { ascending: true });
-            // Send status "STALE" so the frontend knows to show your prompt
-            return res.json({ status: "STALE", message: "New data available. Refresh?", stations: data });
+                
+            return res.json({ 
+                status: "STALE", 
+                message: "New data available. Would you like to trigger a price refresh?", 
+                stations: data 
+            });
         }
 
-        // 4. CASE: FRESH (or User chose to force refresh)
+        // 4. CASE: FRESH / FORCED REFRESH
         if (forceRefresh) {
-            console.log(`⏳ [LOG] User forced refresh.`);
+            console.log(`⏳ [LOG] User forced refresh. Running ingestion...`);
             await runIngestion(cleanSearch);
         }
 
@@ -57,7 +66,11 @@ app.post('/api/gas-prices', async (req, res) => {
         if (error) throw error;
 
         console.log(`✅ [LOG] Returning ${data.length} records.`);
-        res.json({ status: "OK", stations: data });
+        res.json({ 
+            status: "OK", 
+            info: forceRefresh ? "Prices updated successfully." : null,
+            stations: data 
+        });
 
     } catch (err) {
         console.error("🚨 [LOG] Backend Final Catch Block:", err);
