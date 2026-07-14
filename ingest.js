@@ -163,8 +163,26 @@ async function needsUpdate(city) {
 }
 
 async function smartIngestion(searchQuery) {
+    const cityName = searchQuery.split(',')[0].toLowerCase();
+
+    // Check if ANY records exist for this city
+    const { count, error } = await supabase
+        .from('gas_stations')
+        .select('*', { count: 'exact', head: true })
+        .eq('city', cityName);
+
+    const dataMissing = (count === 0 || error);
+
+    if (dataMissing) {
+        console.log(`🔍 No data found for ${searchQuery}. Triggering initial scrape...`);
+        await runIngestion(searchQuery);
+        return;
+    }
+
+    // If data exists, check if it's stale
     const isStale = await needsUpdate(searchQuery);
     if (isStale) {
+        console.log(`⏳ Data for ${searchQuery} is stale. Refreshing...`);
         await runIngestion(searchQuery);
     } else {
         console.log(`✅ Data for ${searchQuery} is fresh. Skipping scrape.`);
