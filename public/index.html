@@ -4577,12 +4577,20 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const responseData = await response.json();
 
-        // 5. TERMINATE ON EMPTY: Fixes the infinite loop issue
+        // 5. TERMINATE ON EMPTY / TRIGGER REFRESH:
         if (responseData.status === "EMPTY") {
-            console.log("No stations found. Stopping search.");
-            window.isSearching = false;
-            searchBar?.classList.remove("loading");
-            return;
+            console.log("No local data found. Forcing a one-time remote refresh...");
+            
+            // Check if we already tried to refresh this session to avoid infinite loops
+            if (!forceRefresh) {
+                // CALL IT AGAIN WITH forceRefresh: true
+                return getPricesNow(sanitizedQuery, true); 
+            } else {
+                console.log("Remote refresh also yielded no results. Stopping.");
+                window.isSearching = false;
+                searchBar?.classList.remove("loading");
+                return;
+            }
         }
 
         // 6. SUCCESS CASE
