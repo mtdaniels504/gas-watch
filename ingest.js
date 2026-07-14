@@ -107,10 +107,21 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
             };
         });
 
-        const { error } = await supabase.from('gas_stations').upsert(processedData, { onConflict: 'external_id' });
-        if (error) throw error;
-        
-        return { status: 'SUCCESS', stations: processedData };
+        console.log(`🔍 Preparing to upsert ${processedData.length} records...`);
+
+        // ADDED: .select() to return the records that were saved
+        const { data: savedData, error: upsertError } = await supabase
+            .from('gas_stations')
+            .upsert(processedData, { onConflict: 'external_id' })
+            .select(); 
+
+        if (upsertError) {
+            console.error("❌ SUPABASE UPSERT ERROR DETAILS:", JSON.stringify(upsertError, null, 2));
+            throw upsertError;
+        }
+
+        console.log(`✅ Successfully upserted ${savedData.length} records to Supabase.`);
+        return { status: 'SUCCESS', stations: savedData };
         
     } catch (err) {
         clearTimeout(timeout); // Ensure timer is cleared on error
