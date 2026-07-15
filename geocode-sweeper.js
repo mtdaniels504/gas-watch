@@ -1,8 +1,3 @@
-/**
- * GEOCODE SWEEPER
- * Optimized to batch-process null coordinates from Supabase
- * via Geocodio. Use: "node geocode-sweeper.js"
- */
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const Geocodio = require('geocodio-library-node');
@@ -56,7 +51,7 @@ async function runFullSweep(maxBatches = 50) {
                 };
             });
 
-            // 4. UPSERT UPDATES - Fixed with onConflict to avoid unique constraint errors
+            // 4. UPSERT UPDATES
             const { error: upsertError } = await supabase
                 .from('gas_stations')
                 .upsert(updates, { onConflict: 'external_id' });
@@ -74,13 +69,6 @@ async function runFullSweep(maxBatches = 50) {
         }
     }
     console.log(`🏁 Session Finished. Total records updated: ${totalProcessed}`);
-    process.exit(0);
 }
-
-// Start the process
-runFullSweep().catch(err => {
-    console.error("❌ Fatal Error:", err);
-    process.exit(1);
-});
 
 module.exports = { runFullSweep };
