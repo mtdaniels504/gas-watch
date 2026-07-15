@@ -40,6 +40,8 @@ async function runFullSweep(maxBatches = 50) {
 
         try {
             const response = await geocoder.geocode(batchRequest);
+            console.log("DEBUG: Geocodio responded. Result keys:", Object.keys(response.results));
+            
             const updates = Object.keys(response.results).map(id => {
                 const res = response.results[id];
                 const location = res.response.results[0]?.location;
