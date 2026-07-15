@@ -46,9 +46,12 @@ const CITIES = [
 ];
 
 
-function triggerGeocodeSweeper() {
-    console.log("🚀 Triggering background geocoding sweep...");
-    runFullSweep().catch(err => console.error("Sweeper Error:", err));
+async function triggerGeocodeSweeper() {
+    console.log("🚀 Triggering background geocoding sweep in 3 seconds...");
+    // Give the DB a moment to finish the upsert
+    await new Promise(resolve => setTimeout(resolve, 3000)); 
+    
+    runFullSweep().catch(err => console.error("❌ Sweeper Background Error:", err));
 }
 
 
