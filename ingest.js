@@ -49,7 +49,7 @@ function triggerGeocodeSweeper() {
     console.log("🚀 Triggering background geocoding sweep...");
     const child = spawn('node', ['geocode-sweeper.js'], {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'inherent'
     });
     child.unref(); // Allows the parent process to exit without waiting for this
 }
