@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
+const { runFullSweep } = require('./geocode-sweeper.js');
 const Geocodio = require('geocodio-library-node');
 const { spawn } = require('child_process');
 
@@ -47,11 +48,7 @@ const CITIES = [
 
 function triggerGeocodeSweeper() {
     console.log("🚀 Triggering background geocoding sweep...");
-    const child = spawn('node', ['geocode-sweeper.js'], {
-        detached: true,
-        stdio: 'inherit'
-    });
-    child.unref(); // Allows the parent process to exit without waiting for this
+    runFullSweep().catch(err => console.error("Sweeper Error:", err));
 }
 
 async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
