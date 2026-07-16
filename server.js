@@ -19,19 +19,15 @@ app.post('/api/gas-prices', async (req, res) => {
 
         const status = await smartIngestion(cleanSearch);
 
-        // 1. CASE: MISSING DATA
-        if (status === 'MISSING') {
+        // 1. MISSING: Run ingestion and return immediately
+        if (status === 'MISSING' || forceRefresh) {
             const result = await runIngestion(cleanSearch);
-            
             if (result.status === 'EMPTY') {
-                // This message DOES NOT contain "Geocoding", so polling will NOT trigger
                 return res.json({ 
                     status: "OK", 
-                    info: "No Stations Were Found for the Searched Location, Please Review the Search Query or Add a Gas Station for Review" 
+                    info: "No Stations Found. Please check your search." 
                 });
             }
-            
-            // This message contains "Geocoding", so polling WILL trigger
             return res.json({ 
                 status: "OK", 
                 info: "Gas Prices Successfully Updated, Geocoding New Locations...", 
@@ -39,33 +35,33 @@ app.post('/api/gas-prices', async (req, res) => {
             });
         }
 
-        // 2. CASE: STALE DATA
+        // 2. STALE: Inform the user
         if (status === 'STALE' && !forceRefresh) {
-            const { data } = await supabase.from('gas_stations').select('*')
+            const { data } = await supabase.from('gas_stations')
+                .select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
-                
+            
             return res.json({ 
                 status: "STALE", 
-                message: "New data available. Would you like to trigger a price refresh?", 
+                message: "New data available. Refresh prices?", 
                 stations: data 
             });
         }
 
-        // 3. CASE: REFRESH TRIGGERED (From STALE-Yes or Forced)
-        if (forceRefresh) {
-            const result = await runIngestion(cleanSearch);
-            return res.json({ 
-                status: "OK", 
-                info: "Gas Prices Successfully Updated, Geocoding New Locations...", 
-                stations: result.stations 
-            });
-        }
-
-        // 4. CASE: FRESH DATA
-        const { data } = await supabase.from('gas_stations').select('*')
+        // 3. FRESH: Fetch and include all, even if some are still geocoding
+        const { data } = await supabase.from('gas_stations')
+            .select('*')
             .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
 
-        res.json({ status: "OK", stations: data });
+        // Check if we need to show the polling UI even for 'FRESH'
+        const hasNulls = data.some(s => s.lat === null || s.lon === null);
+        
+        res.json({ 
+            status: "OK", 
+            stations: data,
+            // If they are fresh but still have nulls, trigger the poller
+            info: hasNulls ? "Geocoding New Locations..." : null 
+        });
 
     } catch (err) {
         console.error("🚨 Backend Error:", err);
