@@ -4523,6 +4523,19 @@
    ========================================================================== */
 
 /**
+ * GLOBAL STATE MANAGEMENT
+ * Prevents multiple intervals from overlapping
+ */
+window.activePollInterval = null;
+
+function clearExistingPoll() {
+    if (window.activePollInterval) {
+        clearInterval(window.activePollInterval);
+        window.activePollInterval = null;
+    }
+}
+
+/**
  * Unified Status UI: Displays centered, non-disruptive notifications
  */
 function updateStatusUI(message, options = {}) {
@@ -4549,7 +4562,7 @@ function updateStatusUI(message, options = {}) {
         const btnStyle = "border:none; background:#007bff; color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:600;";
         
         const btnYes = document.createElement('button');
-        btnYes.innerText = "Refresh Prices";
+        btnYes.innerText = options.isMapRefresh ? "Update Map" : "Refresh Prices";
         btnYes.style.cssText = btnStyle;
         btnYes.onclick = () => { options.onYes(); container.remove(); };
 
@@ -4567,21 +4580,23 @@ function updateStatusUI(message, options = {}) {
 }
 
 async function pollForCompletion(query) {
-    const interval = setInterval(async () => {
+    clearExistingPoll();
+    window.activePollInterval = setInterval(async () => {
         try {
             const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
             const { hasNulls } = await res.json();
             
             if (!hasNulls) {
-                clearInterval(interval);
+                clearExistingPoll();
                 updateStatusUI("Geocoding complete! New prices now available.", {
+                    isMapRefresh: true,
                     onYes: () => getPricesNow(query, false),
                     onNo: () => console.log("User dismissed final refresh")
                 });
             }
         } catch (err) {
             console.error("Polling failed:", err);
-            clearInterval(interval);
+            clearExistingPoll();
         }
     }, 5000);
 }
@@ -4589,29 +4604,31 @@ async function pollForCompletion(query) {
 async function getPricesNow(searchQuery, forceRefresh = false) {
     if (window.isSearching && !forceRefresh) return;
     
+    // Reset state before starting
+    clearExistingPoll();
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
     searchBar?.classList.add("loading");
 
-    clearMarkers();
-    window.globalRawStations = [];
-    if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
-
-    const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                        (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
-
-    // 3. Geocoding helper (keeps map responsive)
-    const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
-    const cachedCoords = localStorage.getItem(cacheKey);
-    if (cachedCoords) {
-        const { lat, lon } = JSON.parse(cachedCoords);
-        window.map?.flyTo([lat, lon], 12);
-    }
-
-    let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
-        ? "http://localhost:3000/api/gas-prices" : "/api/gas-prices";
-
     try {
+        clearMarkers();
+        window.globalRawStations = [];
+        if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
+
+        const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
+                               (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
+
+        // Geocoding Helper
+        const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
+        const cachedCoords = localStorage.getItem(cacheKey);
+        if (cachedCoords) {
+            const { lat, lon } = JSON.parse(cachedCoords);
+            window.map?.flyTo([lat, lon], 12);
+        }
+
+        let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
+            ? "http://localhost:3000/api/gas-prices" : "/api/gas-prices";
+
         const response = await fetch(BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -4622,30 +4639,26 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             })
         });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Server returned ${response.status}: ${errText}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const responseData = await response.json();
 
-        // Handle States
+        // 1. Handle STALE (Requires Backend Ingestion)
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
                 onYes: () => getPricesNow(sanitizedQuery, true),
                 onNo: () => console.log("User kept current data")
             });
-        } else if (responseData.info) {
+        } 
+        // 2. Handle INFO (Geocoding progress)
+        else if (responseData.info) {
             updateStatusUI(responseData.info, { persistent: true });
-            if (responseData.info.includes("Geocoding New Locations")) {
+            if (responseData.info.includes("Geocoding")) {
                 pollForCompletion(sanitizedQuery);
             }
         }
 
-        // 6. RENDER DATA
-        window.isSearching = false;
-        searchBar?.classList.remove("loading");
-
+        // 3. Render Stations
         const stations = responseData.stations || [];
         window.globalRawStations = stations.map(s => ({
             lat: s.lat ? parseFloat(s.lat) : null,
@@ -4658,21 +4671,18 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             zip: s.zip || ""
         }));
 
-        // IMPORTANT: Ensure your applyClientSideMapFilters function 
-        // does not hide stations just because lat/lon is null!
-        if (typeof applyClientSideMapFilters === "function") {
-            applyClientSideMapFilters();
-        }
+        if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
         window.map?.invalidateSize();
 
     } catch (error) {
         console.error("🔴 Sync failed:", error);
+        updateStatusUI("Sync failed. Please try again.", { persistent: false });
+    } finally {
+        // ALWAYS reset state
         window.isSearching = false;
         searchBar?.classList.remove("loading");
-        updateStatusUI("Sync failed. Please try again.", { persistent: false });
     }
 }
-
 /* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
         ========================================================================== */
