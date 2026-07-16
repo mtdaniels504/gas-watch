@@ -4580,36 +4580,36 @@ function updateStatusUI(message, options = {}) {
 
 async function pollForCompletion(query) {
     clearExistingPoll();
+    const startTime = Date.now(); // 1. Record start time
+    
     window.activePollInterval = setInterval(async () => {
         try {
+            // 2. Buffer: Do not check until at least 8-10 seconds have passed
+            if (Date.now() - startTime < 10000) return;
+
             const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error("Server error");
+            
             const { hasNulls } = await res.json();
             
             if (!hasNulls) {
                 clearExistingPoll();
                 updateStatusUI("Geocoding complete! New prices now available.", {
                     isMapRefresh: true,
-                    // Inside pollForCompletion
                     onYes: () => {
-                        // 1. Force removal of ALL UI elements to avoid DOM conflicts
                         const container = document.getElementById('status-container');
                         if (container) container.remove();
-                        
-                        // 2. Explicitly stop the spinner before starting the final refresh
                         const searchBar = document.getElementById("searchBar");
                         searchBar?.classList.remove("loading");
-                        
-                        // 3. Trigger final fetch
                         getPricesNow(query, true); 
                     },
                     onNo: () => console.log("User dismissed final refresh")
                 });
             }
         } catch (err) {
-            console.error("Polling failed:", err);
-            clearExistingPoll();
+            console.warn("Polling attempt failed, retrying in 5s...", err.message);
         }
-    }, 5000);
+    }, 1000);
 }
 
 async function getPricesNow(searchQuery, forceRefresh = false) {
