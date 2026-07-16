@@ -73,4 +73,16 @@ async function runFullSweep(maxBatches = 50) {
     console.log(`🏁 Session Finished. Total records updated: ${totalProcessed}`);
 }
 
+if (require.main === module) {
+    runFullSweep()
+        .then(() => {
+            console.log("✅ Script execution successful.");
+            process.exit(0);
+        })
+        .catch(err => {
+            console.error("❌ Fatal Error in Cron Job:", err);
+            process.exit(1);
+        });
+}
+
 module.exports = { runFullSweep };
