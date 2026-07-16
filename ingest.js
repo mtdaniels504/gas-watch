@@ -46,19 +46,29 @@ const CITIES = [
 ];
 
 
-async function triggerGeocodeSweeper() {
-    console.log("🚀 Triggering background geocoding sweep in 3 seconds...");
-    // Give the DB a moment to finish the upsert
-    await new Promise(resolve => setTimeout(resolve, 3000)); 
+/**
+ * Triggers the remote Render Cron Job via Render's API (Fire-and-Forget)
+ */
+function triggerRemoteGeocode() {
+    console.log("🚀 Requesting remote Geocoding trigger from Render...");
     
-    runFullSweep().catch(err => console.error("❌ Sweeper Background Error:", err));
+    fetch(`https://api.render.com/v1/cron-jobs/${process.env.RENDER_CRON_JOB_ID}/trigger`, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${process.env.RENDER_API_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => {
+        if (!res.ok) console.error(`❌ Render Trigger failed with status: ${res.status}`);
+        else console.log("✅ Remote Render Cron Job triggered successfully.");
+    })
+    .catch(err => console.error("❌ Failed to contact Render:", err.message));
 }
-
-
 
 async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
     console.log(`📡 Fetching data for ${searchQuery}...`);
-   
+    
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
@@ -69,42 +79,38 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
             body: JSON.stringify({ search: searchQuery, sort: sortStrategy, limit: limit }),
             signal: controller.signal
         });
-       
+        
         clearTimeout(timeout);
         if (!response.ok) throw new Error(`Apify returned ${response.status}`);
 
         const rawApifyItems = await response.json();
-        if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) return { status: 'EMPTY', stations: [] };
+        if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) {
+            return { status: 'EMPTY', stations: [] };
+        }
 
-        // --- NEW: LOOKUP EXISTING COORDINATES ---
+        // --- LOOKUP EXISTING COORDINATES ---
         const externalIds = rawApifyItems.map(s => String(s.id));
         const { data: existingData } = await supabase
             .from('gas_stations')
             .select('external_id, lat, lon')
             .in('external_id', externalIds);
 
-        // Create a Map for O(1) lookup
         const coordMap = new Map(existingData?.map(item => [item.external_id, { lat: item.lat, lon: item.lon }]) || []);
 
         const processedData = rawApifyItems.map(s => {
             const id = String(s.id);
             const existing = coordMap.get(id);
             const rawPrice = s.price_cash ?? s.price_credit ?? null;
-            const line1 = s.address_line1 || '';
-            const city = s.address_locality || 'unknown';
-            const region = s.address_region || '';
-            const zip = s.address_postalCode || '';
-            const fullAddress = `${line1}, ${city}, ${region} ${zip}`.replace(/^, |, $/g, '');
+            const fullAddress = `${s.address_line1 || ''}, ${s.address_locality || 'unknown'}, ${s.address_region || ''} ${s.address_postalCode || ''}`.replace(/^, |, $/g, '');
 
             return {
                 external_id: id,
                 name: s.name || "Unknown Station",
                 address: fullAddress,
-                city: city.toLowerCase(),
-                zip: zip,
+                city: (s.address_locality || 'unknown').toLowerCase(),
+                zip: s.address_postalCode || '',
                 price: rawPrice ? parseFloat(rawPrice) : null,
                 last_updated: new Date().toISOString(),
-                // If it exists in the DB, use those values; otherwise, default to null
                 lat: existing?.lat || null,
                 lon: existing?.lon || null,
                 geocoding_failed: false
@@ -119,11 +125,15 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
 
         if (upsertError) throw upsertError;
 
-        // Only trigger sweeper if there might be *new* nulls (for truly new stations)
-        triggerGeocodeSweeper();
+        // --- FIRE AND FORGET ---
+        triggerRemoteGeocode();
 
-        return { status: 'SUCCESS', stations: savedData };
-       
+        return { 
+            status: 'SUCCESS', 
+            info: 'Prices updated. Background geocoding triggered.', 
+            stations: savedData 
+        };
+        
     } catch (err) {
         clearTimeout(timeout);
         console.error(`❌ Ingestion failed for ${searchQuery}:`, err.message);
