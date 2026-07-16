@@ -49,21 +49,30 @@ const CITIES = [
 /**
  * Triggers the remote Render Cron Job via Render's API (Fire-and-Forget)
  */
-function triggerRemoteGeocode() {
+async function triggerRemoteGeocode() {
     console.log("🚀 Requesting remote Geocoding trigger from Render...");
     
-    fetch(`https://api.render.com/v1/cron-jobs/${process.env.RENDER_CRON_JOB_ID}/trigger`, {
-        method: 'POST',
-        headers: { 
-            'Authorization': `Bearer ${process.env.RENDER_API_KEY}`,
-            'Content-Type': 'application/json'
+    // Make sure the URL ends with /runs
+    const url = `https://api.render.com/v1/cron-jobs/${process.env.RENDER_CRON_JOB_ID}/runs`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${process.env.RENDER_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Render API failed: ${response.status} - ${errorText}`);
         }
-    })
-    .then(res => {
-        if (!res.ok) console.error(`❌ Render Trigger failed with status: ${res.status}`);
-        else console.log("✅ Remote Render Cron Job triggered successfully.");
-    })
-    .catch(err => console.error("❌ Failed to contact Render:", err.message));
+
+        console.log("✅ Remote Render Cron Job triggered successfully.");
+    } catch (err) {
+        console.error("❌ Failed to trigger remote Render Cron:", err.message);
+    }
 }
 
 async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
