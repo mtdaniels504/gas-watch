@@ -40,10 +40,11 @@ app.post('/api/gas-prices', async (req, res) => {
             const { data } = await supabase.from('gas_stations')
                 .select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
-            
+
+            // Only return the prompt if NOT forced
             return res.json({ 
                 status: "STALE", 
-                message: "New data available. Refresh prices?", 
+                message: "Prices are over 48h old. Would you like to fetch new prices from the network?", 
                 stations: data 
             });
         }
