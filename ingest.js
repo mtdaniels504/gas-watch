@@ -78,6 +78,9 @@ async function triggerRemoteGeocode() {
 async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
     console.log(`📡 Fetching data for ${searchQuery}...`);
     
+    // NOTE: Signal to server that fetch has begun
+    // We handle this via the object returned below
+    
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
@@ -93,11 +96,16 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
         if (!response.ok) throw new Error(`Apify returned ${response.status}`);
 
         const rawApifyItems = await response.json();
+        
+        // CASE: MISSING / NO RESULTS
         if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) {
-            return { status: 'EMPTY', stations: [] };
+            return { 
+                status: 'EMPTY', 
+                uiSignal: 'NO_STATIONS_FOUND' 
+            };
         }
 
-        // --- LOOKUP EXISTING COORDINATES ---
+        // --- LOOKUP & PROCESS ---
         const externalIds = rawApifyItems.map(s => String(s.id));
         const { data: existingData } = await supabase
             .from('gas_stations')
@@ -134,19 +142,20 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
 
         if (upsertError) throw upsertError;
 
-        // --- FIRE AND FORGET ---
+        // --- TRIGGER GEOCODING ---
         triggerRemoteGeocode();
 
+        // CASE: SUCCESS
         return { 
             status: 'SUCCESS', 
-            info: 'Prices updated. Background geocoding triggered.', 
+            uiSignal: 'GEOCODING_STARTED', 
             stations: savedData 
         };
         
     } catch (err) {
         clearTimeout(timeout);
         console.error(`❌ Ingestion failed for ${searchQuery}:`, err.message);
-        return { status: 'ERROR', error: err.message };
+        return { status: 'ERROR', message: err.message };
     }
 }
 
