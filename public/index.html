@@ -4521,199 +4521,157 @@
 /* ==========================================================================
    STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
    ========================================================================== */
-    /**
-     * Unified Status UI: Displays centered, non-disruptive notifications
-     * at the bottom of the screen.
-     */
-    function updateStatusUI(message, options = {}) {
-        // 1. Clean up old UI elements
-        const existing = document.getElementById('status-container');
-        if (existing) existing.remove();
 
-        // 2. Create the container
-        const container = document.createElement('div');
-        container.id = 'status-container';
+/**
+ * Unified Status UI: Displays centered, non-disruptive notifications
+ */
+function updateStatusUI(message, options = {}) {
+    const existing = document.getElementById('status-container');
+    if (existing) existing.remove();
 
-        // Modern "Pill" styling: Centered, floating at the bottom
-        container.style.cssText = `
-            position: fixed; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 9999; 
-            background: #ffffff; 
-            padding: 12px 24px; 
-            border-radius: 50px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            border: 1px solid #eee; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            min-width: 300px;
-            justify-content: center;
-        `;
+    const container = document.createElement('div');
+    container.id = 'status-container';
 
-        // 3. Set content
-        const msgEl = document.createElement('p');
-        msgEl.style.cssText = "margin:0; font-size:14px; color:#333; text-align:center;";
-        msgEl.innerText = message;
-        container.appendChild(msgEl);
+    container.style.cssText = `
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+        z-index: 9999; background: #ffffff; padding: 12px 24px; border-radius: 50px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #eee; 
+        display: flex; align-items: center; gap: 15px; min-width: 300px;
+        justify-content: center;
+    `;
 
-        // 4. If this is a PROMPT (has buttons), add them
-        if (options.onYes) {
-            const btnStyle = "border:none; background:#007bff; color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:600;";
-            
-            const btnYes = document.createElement('button');
-            btnYes.innerText = "Refresh Prices";
-            btnYes.style.cssText = btnStyle;
-            btnYes.onclick = () => { options.onYes(); container.remove(); };
+    const msgEl = document.createElement('p');
+    msgEl.style.cssText = "margin:0; font-size:14px; color:#333; text-align:center;";
+    msgEl.innerText = message;
+    container.appendChild(msgEl);
 
-            const btnNo = document.createElement('button');
-            btnNo.innerText = "Keep Current";
-            btnNo.style.cssText = btnStyle.replace("#007bff", "#6c757d");
-            btnNo.onclick = () => { if(options.onNo) options.onNo(); container.remove(); };
-
-            container.appendChild(btnYes);
-            container.appendChild(btnNo);
-        }
-        // 5. If it's just a STATUS, auto-remove after 5s unless persistent
-        else if (!options.persistent) {
-            setTimeout(() => { if (container) container.remove(); }, 5000);
-        }
-
-        document.body.appendChild(container);
-    }
-
-    async function pollForCompletion(query) {
-        const interval = setInterval(async () => {
-            try {
-                const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
-                const { hasNulls } = await res.json();
-                
-                if (!hasNulls) {
-                    clearInterval(interval);
-                    // The final UI trigger!
-                    updateStatusUI("Geocoding complete! New prices now available.", {
-                        onYes: () => getPricesNow(query, false), // Re-run to refresh map
-                        onNo: () => console.log("User dismissed final refresh")
-                    });
-                }
-            } catch (err) {
-                console.error("Polling failed:", err);
-                clearInterval(interval);
-            }
-        }, 5000); // Check every 5s
-    }
-
-    async function getPricesNow(searchQuery, forceRefresh = false) {
-        // 1. Prevent concurrent searches unless forced
-        if (window.isSearching && !forceRefresh) return;
+    if (options.onYes) {
+        const btnStyle = "border:none; background:#007bff; color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:600;";
         
-        window.isSearching = true;
-        const searchBar = document.getElementById("searchBar");
-        searchBar?.classList.add("loading");
+        const btnYes = document.createElement('button');
+        btnYes.innerText = "Refresh Prices";
+        btnYes.style.cssText = btnStyle;
+        btnYes.onclick = () => { options.onYes(); container.remove(); };
 
-        // 2. ANTICIPATORY UI: Clear previous state
-        clearMarkers();
-        window.globalRawStations = [];
-        if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
+        const btnNo = document.createElement('button');
+        btnNo.innerText = "Keep Current";
+        btnNo.style.cssText = btnStyle.replace("#007bff", "#6c757d");
+        btnNo.onclick = () => { if(options.onNo) options.onNo(); container.remove(); };
 
-        const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
-
-        // 3. ANTICIPATORY MAP PAN (Geocoding helper)
-        const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
-        const cachedCoords = localStorage.getItem(cacheKey);
-
-        if (cachedCoords) {
-            const { lat, lon } = JSON.parse(cachedCoords);
-            window.map?.flyTo([lat, lon], 12);
-        } else {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedQuery)}&limit=1&countrycodes=us&viewbox=-124.8,24.4,-66.9,49.4&bounded=1`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data[0]) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
-                        localStorage.setItem(cacheKey, JSON.stringify({ lat, lon }));
-                        window.map?.flyTo([lat, lon], 12);
-                    }
-                })
-                .catch(err => console.warn("Geocoding fetch skipped:", err));
-        }
-
-        // 4. NETWORK LAYER
-        let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
-            ? "http://localhost:3000/api/gas-prices" 
-            : "/api/gas-prices";
-
-        try {
-            const response = await fetch(BACKEND_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    search: sanitizedQuery, 
-                    fuelGradeSelection: window.activeFuelType || "regular",
-                    forceRefresh: forceRefresh 
-                })
-            });
-
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const responseData = await response.json();
-
-            // 5. COMMUNICATE STATUS TO USER (Unified UI)
-            
-            // Handle STALE case (Prompt)
-            if (responseData.status === "STALE") {
-                updateStatusUI(responseData.message, {
-                    onYes: () => getPricesNow(sanitizedQuery, true),
-                    onNo: () => console.log("User kept current data")
-                });
-            } 
-            // Handle MISSING or FORCED refresh info (Status + Poller)
-            else if (responseData.info) {
-                updateStatusUI(responseData.info, { persistent: true });
-                
-                // Change this block in your getPricesNow function:
-                if (responseData.status === "OK" && responseData.info) {
-                    updateStatusUI(responseData.info, { persistent: true });
-                    
-                    // STRICT TRIGGER: Only poll if this specific success message is returned
-                    const isGeocodingStarted = responseData.info.includes("Geocoding New Locations");
-                    
-                    if (isGeocodingStarted) {
-                        pollForCompletion(sanitizedQuery);
-                    }
-                }
-            }
-
-            // 6. RENDER DATA
-            window.isSearching = false;
-            searchBar?.classList.remove("loading");
-
-            const stations = responseData.stations || [];
-            window.globalRawStations = stations.map(s => ({
-                lat: s.lat ? parseFloat(s.lat) : null,
-                lon: s.lon ? parseFloat(s.lon) : null,
-                name: s.name || "Gas Station",
-                address: s.address || "Unknown Address",
-                price: parseFloat(s.price) || 0,
-                displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
-                postedTime: s.last_updated || null,
-                zip: s.zip || (s.address ? s.address.match(/\d{5}/)?.[0] : ""), 
-                distance: 0
-            }));
-
-            applyClientSideMapFilters();
-            window.map?.invalidateSize();
-
-        } catch (error) {
-            console.error("🔴 Sync failed:", error);
-            window.isSearching = false;
-            searchBar?.classList.remove("loading");
-            updateStatusUI("Sync failed. Please try again.", { persistent: false });
-        }
+        container.appendChild(btnYes);
+        container.appendChild(btnNo);
+    } else if (!options.persistent) {
+        setTimeout(() => { if (container) container.remove(); }, 5000);
     }
+    document.body.appendChild(container);
+}
+
+async function pollForCompletion(query) {
+    const interval = setInterval(async () => {
+        try {
+            const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
+            const { hasNulls } = await res.json();
+            
+            if (!hasNulls) {
+                clearInterval(interval);
+                updateStatusUI("Geocoding complete! New prices now available.", {
+                    onYes: () => getPricesNow(query, false),
+                    onNo: () => console.log("User dismissed final refresh")
+                });
+            }
+        } catch (err) {
+            console.error("Polling failed:", err);
+            clearInterval(interval);
+        }
+    }, 5000);
+}
+
+async function getPricesNow(searchQuery, forceRefresh = false) {
+    if (window.isSearching && !forceRefresh) return;
+    
+    window.isSearching = true;
+    const searchBar = document.getElementById("searchBar");
+    searchBar?.classList.add("loading");
+
+    clearMarkers();
+    window.globalRawStations = [];
+    if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
+
+    const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
+                        (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
+
+    // 3. Geocoding helper (keeps map responsive)
+    const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
+    const cachedCoords = localStorage.getItem(cacheKey);
+    if (cachedCoords) {
+        const { lat, lon } = JSON.parse(cachedCoords);
+        window.map?.flyTo([lat, lon], 12);
+    }
+
+    let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
+        ? "http://localhost:3000/api/gas-prices" : "/api/gas-prices";
+
+    try {
+        const response = await fetch(BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                search: sanitizedQuery, 
+                fuelGradeSelection: window.activeFuelType || "regular",
+                forceRefresh: forceRefresh 
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server returned ${response.status}: ${errText}`);
+        }
+        
+        const responseData = await response.json();
+
+        // Handle States
+        if (responseData.status === "STALE") {
+            updateStatusUI(responseData.message, {
+                onYes: () => getPricesNow(sanitizedQuery, true),
+                onNo: () => console.log("User kept current data")
+            });
+        } else if (responseData.info) {
+            updateStatusUI(responseData.info, { persistent: true });
+            if (responseData.info.includes("Geocoding New Locations")) {
+                pollForCompletion(sanitizedQuery);
+            }
+        }
+
+        // 6. RENDER DATA
+        window.isSearching = false;
+        searchBar?.classList.remove("loading");
+
+        const stations = responseData.stations || [];
+        window.globalRawStations = stations.map(s => ({
+            lat: s.lat ? parseFloat(s.lat) : null,
+            lon: s.lon ? parseFloat(s.lon) : null,
+            name: s.name || "Gas Station",
+            address: s.address || "Unknown Address",
+            price: parseFloat(s.price) || 0,
+            displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
+            postedTime: s.last_updated || null,
+            zip: s.zip || ""
+        }));
+
+        // IMPORTANT: Ensure your applyClientSideMapFilters function 
+        // does not hide stations just because lat/lon is null!
+        if (typeof applyClientSideMapFilters === "function") {
+            applyClientSideMapFilters();
+        }
+        window.map?.invalidateSize();
+
+    } catch (error) {
+        console.error("🔴 Sync failed:", error);
+        window.isSearching = false;
+        searchBar?.classList.remove("loading");
+        updateStatusUI("Sync failed. Please try again.", { persistent: false });
+    }
+}
 
 /* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
