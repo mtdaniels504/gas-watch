@@ -4521,7 +4521,6 @@
 /* ==========================================================================
    STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
    ========================================================================== */
-
 /**
  * GLOBAL STATE MANAGEMENT
  * Prevents multiple intervals from overlapping
@@ -4604,11 +4603,14 @@ async function pollForCompletion(query) {
 async function getPricesNow(searchQuery, forceRefresh = false) {
     if (window.isSearching && !forceRefresh) return;
     
-    // Reset state before starting
+    // 1. Reset state before starting
     clearExistingPoll();
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
     searchBar?.classList.add("loading");
+
+    // Immediate feedback for the user
+    updateStatusUI("Searching database...", { persistent: true });
 
     try {
         clearMarkers();
@@ -4643,14 +4645,13 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         
         const responseData = await response.json();
 
-        // 1. Handle STALE (Requires Backend Ingestion)
+        // 2. Handle Logic States
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
                 onYes: () => getPricesNow(sanitizedQuery, true),
                 onNo: () => console.log("User kept current data")
             });
         } 
-        // 2. Handle INFO (Geocoding progress)
         else if (responseData.info) {
             updateStatusUI(responseData.info, { persistent: true });
             if (responseData.info.includes("Geocoding")) {
@@ -4660,6 +4661,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
 
         // 3. Render Stations
         const stations = responseData.stations || [];
+        const isGeocoding = responseData.info?.includes("Geocoding");
+        
         window.globalRawStations = stations.map(s => ({
             lat: s.lat ? parseFloat(s.lat) : null,
             lon: s.lon ? parseFloat(s.lon) : null,
@@ -4671,7 +4674,13 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             zip: s.zip || ""
         }));
 
-        if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
+        // PRO MOVE: Defensive check to prevent empty map warnings during geocoding
+        if (stations.length > 0) {
+            if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
+        } else if (!isGeocoding) {
+            updateStatusUI("No stations found for this area.", { persistent: false });
+        }
+        
         window.map?.invalidateSize();
 
     } catch (error) {
