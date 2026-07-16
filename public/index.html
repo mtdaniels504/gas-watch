@@ -4523,7 +4523,6 @@
    ========================================================================== */
 /**
  * GLOBAL STATE MANAGEMENT
- * Prevents multiple intervals from overlapping
  */
 window.activePollInterval = null;
 
@@ -4535,7 +4534,7 @@ function clearExistingPoll() {
 }
 
 /**
- * Unified Status UI: Displays centered, non-disruptive notifications
+ * Unified Status UI
  */
 function updateStatusUI(message, options = {}) {
     const existing = document.getElementById('status-container');
@@ -4578,10 +4577,18 @@ function updateStatusUI(message, options = {}) {
     document.body.appendChild(container);
 }
 
+/**
+ * Poller with 10s safety buffer to prevent premature firing
+ */
 async function pollForCompletion(query) {
     clearExistingPoll();
+    const startTime = Date.now();
+    
     window.activePollInterval = setInterval(async () => {
         try {
+            // Buffer: Don't check progress for the first 10 seconds
+            if (Date.now() - startTime < 10000) return;
+
             const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
             const { hasNulls } = await res.json();
             
@@ -4589,14 +4596,7 @@ async function pollForCompletion(query) {
                 clearExistingPoll();
                 updateStatusUI("Geocoding complete! New prices now available.", {
                     isMapRefresh: true,
-                    onYes: () => {
-                        // CRITICAL: Clean up UI explicitly before calling
-                        const container = document.getElementById('status-container');
-                        if (container) container.remove();
-                        
-                        // Use forceRefresh: true to bypass any "isSearching" locks
-                        getPricesNow(query, true); 
-                    },
+                    onYes: () => getPricesNow(query, true),
                     onNo: () => console.log("User dismissed final refresh")
                 });
             }
@@ -4607,33 +4607,20 @@ async function pollForCompletion(query) {
     }, 5000);
 }
 
+/**
+ * Optimized fetch with atomic state management
+ */
 async function getPricesNow(searchQuery, forceRefresh = false) {
     if (window.isSearching && !forceRefresh) return;
     
-    // 1. Reset state before starting
-    clearExistingPoll();
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
     searchBar?.classList.add("loading");
-
-    // Immediate feedback for the user
     updateStatusUI("Searching database...", { persistent: true });
 
     try {
-        clearMarkers();
-        window.globalRawStations = [];
-        if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
-
         const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
                                (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
-
-        // Geocoding Helper
-        const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
-        const cachedCoords = localStorage.getItem(cacheKey);
-        if (cachedCoords) {
-            const { lat, lon } = JSON.parse(cachedCoords);
-            window.map?.flyTo([lat, lon], 12);
-        }
 
         let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
             ? "http://localhost:3000/api/gas-prices" : "/api/gas-prices";
@@ -4641,35 +4628,34 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         const response = await fetch(BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                search: sanitizedQuery, 
-                fuelGradeSelection: window.activeFuelType || "regular",
-                forceRefresh: forceRefresh 
-            })
+            body: JSON.stringify({ search: sanitizedQuery, fuelGradeSelection: window.activeFuelType || "regular", forceRefresh })
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const responseData = await response.json();
 
-        // 2. Handle Logic States
+        // 1. Handle STALE state
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
                 onYes: () => getPricesNow(sanitizedQuery, true),
                 onNo: () => console.log("User kept current data")
             });
-        } 
-        else if (responseData.info) {
-            updateStatusUI(responseData.info, { persistent: true });
-            if (responseData.info.includes("Geocoding")) {
-                pollForCompletion(sanitizedQuery);
-            }
+            return; // Stop here if stale
         }
 
-        // 3. Render Stations
+        // 2. Clear UI ONLY after successful fetch
+        clearMarkers();
+        window.globalRawStations = [];
+        if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
+
+        // 3. Handle GEOCODING / NEW DATA
+        if (responseData.info?.includes("Geocoding")) {
+            pollForCompletion(sanitizedQuery);
+        }
+
+        // 4. Render Data
         const stations = responseData.stations || [];
-        const isGeocoding = responseData.info?.includes("Geocoding");
-        
         window.globalRawStations = stations.map(s => ({
             lat: s.lat ? parseFloat(s.lat) : null,
             lon: s.lon ? parseFloat(s.lon) : null,
@@ -4677,24 +4663,19 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             address: s.address || "Unknown Address",
             price: parseFloat(s.price) || 0,
             displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
-            postedTime: s.last_updated || null,
-            zip: s.zip || ""
+            postedTime: s.last_updated || null
         }));
 
-        // PRO MOVE: Defensive check to prevent empty map warnings during geocoding
         if (stations.length > 0) {
             if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
-        } else if (!isGeocoding) {
-            updateStatusUI("No stations found for this area.", { persistent: false });
+        } else {
+            updateStatusUI("No stations found.", { persistent: false });
         }
         
-        window.map?.invalidateSize();
-
     } catch (error) {
         console.error("🔴 Sync failed:", error);
         updateStatusUI("Sync failed. Please try again.", { persistent: false });
     } finally {
-        // ALWAYS reset state
         window.isSearching = false;
         searchBar?.classList.remove("loading");
     }
