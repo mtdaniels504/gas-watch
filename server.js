@@ -13,38 +13,36 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/gas-prices', async (req, res) => {
     try {
         const { search, forceRefresh } = req.body;
-        console.log(`📥 [LOG] Request received: search="${search}", forceRefresh=${forceRefresh}`);
+        const cleanSearch = search?.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
+        
+        if (!cleanSearch) return res.status(400).json({ error: "Missing search" });
 
-        if (!search) return res.status(400).json({ error: "Missing search" });
+        const status = await smartIngestion(cleanSearch);
 
-        const cleanSearch = search.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
-
-        // 1. PERFORM THE STATUS CHECK
-        const status = await smartIngestion(cleanSearch); 
-        console.log(`🔍 [LOG] Data status for "${cleanSearch}": ${status}`);
-
-        // 2. CASE: MISSING - Auto-scrape and inform frontend
+        // 1. CASE: MISSING DATA
         if (status === 'MISSING') {
-            console.log(`📡 [LOG] Data missing. Auto-triggering scrape...`);
-            await runIngestion(cleanSearch);
+            const result = await runIngestion(cleanSearch);
             
-            const { data } = await supabase.from('gas_stations').select('*')
-                .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
-                .order('price', { ascending: true });
-                
+            if (result.status === 'EMPTY') {
+                // This message DOES NOT contain "Geocoding", so polling will NOT trigger
+                return res.json({ 
+                    status: "OK", 
+                    info: "No Stations Were Found for the Searched Location, Please Review the Search Query or Add a Gas Station for Review" 
+                });
+            }
+            
+            // This message contains "Geocoding", so polling WILL trigger
             return res.json({ 
                 status: "OK", 
-                info: "No local data found. Fetching new prices now...", 
-                stations: data || [] 
+                info: "Gas Prices Successfully Updated, Geocoding New Locations...", 
+                stations: result.stations 
             });
         }
 
-        // 3. CASE: STALE - Prompt the user
+        // 2. CASE: STALE DATA
         if (status === 'STALE' && !forceRefresh) {
-            console.log(`⏳ [LOG] Data stale. Prompting user.`);
             const { data } = await supabase.from('gas_stations').select('*')
-                .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
-                .order('price', { ascending: true });
+                .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
                 
             return res.json({ 
                 status: "STALE", 
@@ -53,28 +51,48 @@ app.post('/api/gas-prices', async (req, res) => {
             });
         }
 
-        // 4. CASE: FRESH / FORCED REFRESH
+        // 3. CASE: REFRESH TRIGGERED (From STALE-Yes or Forced)
         if (forceRefresh) {
-            console.log(`⏳ [LOG] User forced refresh. Running ingestion...`);
-            await runIngestion(cleanSearch);
+            const result = await runIngestion(cleanSearch);
+            return res.json({ 
+                status: "OK", 
+                info: "Gas Prices Successfully Updated, Geocoding New Locations...", 
+                stations: result.stations 
+            });
         }
 
-        const { data, error } = await supabase.from('gas_stations').select('*')
-            .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`)
-            .order('price', { ascending: true });
+        // 4. CASE: FRESH DATA
+        const { data } = await supabase.from('gas_stations').select('*')
+            .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
+
+        res.json({ status: "OK", stations: data });
+
+    } catch (err) {
+        console.error("🚨 Backend Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add this to server.js
+app.get('/api/check-progress', async (req, res) => {
+    try {
+        const { query } = req.query;
+        if (!query) return res.status(400).json({ error: "Query required" });
+
+        // Check if any station matching the query still has NULL lat or lon
+        const { count, error } = await supabase
+            .from('gas_stations')
+            .select('*', { count: 'exact', head: true })
+            .or(`city.ilike.%${query}%,address.ilike.%${query}%`)
+            .or('lat.is.null,lon.is.null');
 
         if (error) throw error;
 
-        console.log(`✅ [LOG] Returning ${data.length} records.`);
-        res.json({ 
-            status: "OK", 
-            info: forceRefresh ? "Prices updated successfully." : null,
-            stations: data 
-        });
-
+        // hasNulls is true if count > 0, meaning geocoding is still in progress
+        res.json({ hasNulls: count > 0 });
     } catch (err) {
-        console.error("🚨 [LOG] Backend Final Catch Block:", err);
-        res.status(500).json({ error: err.message });
+        console.error("🚨 Progress Check Error:", err);
+        res.status(500).json({ error: "Failed to check progress" });
     }
 });
 
