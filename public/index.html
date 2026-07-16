@@ -4589,7 +4589,19 @@ async function pollForCompletion(query) {
                 clearExistingPoll();
                 updateStatusUI("Geocoding complete! New prices now available.", {
                     isMapRefresh: true,
-                    onYes: () => getPricesNow(query, false),
+                    // Inside pollForCompletion
+                    onYes: () => {
+                        // 1. Force removal of ALL UI elements to avoid DOM conflicts
+                        const container = document.getElementById('status-container');
+                        if (container) container.remove();
+                        
+                        // 2. Explicitly stop the spinner before starting the final refresh
+                        const searchBar = document.getElementById("searchBar");
+                        searchBar?.classList.remove("loading");
+                        
+                        // 3. Trigger final fetch
+                        getPricesNow(query, true); 
+                    },
                     onNo: () => console.log("User dismissed final refresh")
                 });
             }
