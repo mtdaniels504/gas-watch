@@ -81,7 +81,7 @@ app.get('/api/check-progress', async (req, res) => {
             .from('gas_stations')
             .select('*', { count: 'exact', head: true })
             .or(`city.ilike.%${query}%,address.ilike.%${query}%`)
-            .or('lat.is.null,lon.is.null');
+            .or('lat.is.null,lon.is.null,lat.eq.\'\',lon.eq.\'\'');
 
         if (error) throw error;
 
