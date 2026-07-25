@@ -4240,6 +4240,15 @@
             return;
         }
 
+        sessionStorage.removeItem('gasWatch_sessAddress');
+        sessionStorage.removeItem('gasWatch_sessCity');
+        sessionStorage.removeItem('gasWatch_sessState');
+        sessionStorage.removeItem('gasWatch_sessZip');
+        sessionStorage.removeItem('gasWatch_sessStoreName');
+        sessionStorage.removeItem('gasWatch_sessRadius');
+        sessionStorage.removeItem('gasWatch_sessFuel');
+        sessionStorage.removeItem('gasWatch_sessMaxPrice');
+
         // 2. Hydrate State BEFORE initializing components
         hydrateRuntimeState();
 
@@ -4467,6 +4476,7 @@
                 const quickSliderVal = document.getElementById("distanceRange")?.value || "10";
                 const quickPriceVal = document.getElementById("filterMaxPrice")?.value.trim() || "";
 
+                // 1. Always save to session storage for the current active run
                 sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
                 sessionStorage.setItem('gasWatch_sessCity', rawCity);
                 sessionStorage.setItem('gasWatch_sessState', rawState);
@@ -4476,14 +4486,23 @@
                 sessionStorage.setItem('gasWatch_sessFuel', window.activeFuelType);
                 sessionStorage.setItem('gasWatch_sessMaxPrice', quickPriceVal);
 
+                let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : rawCity);
+
+                // 2. If the user checked "Set as default preference", update preferences -> sets localStorage
                 if (document.getElementById('saveFiltersAsPrefs')?.checked) {
                     localStorage.setItem(PREF_KEYS.radius, quickSliderVal);
                     localStorage.setItem(PREF_KEYS.fuel, window.activeFuelType);
                     localStorage.setItem(PREF_KEYS.maxPrice, quickPriceVal);
+
+                    // If they entered a location filter, make that the new Home Base preference too
+                    if (composedLocation) {
+                        localStorage.setItem(PREF_KEYS.homeBase, composedLocation);
+                        window.activeHomeBaseLocation = composedLocation;
+                    }
+
                     mirrorStateToUIForms();
                 }
 
-                let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : "");
                 if (!composedLocation) {
                     composedLocation = document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY;
                 }
@@ -4494,7 +4513,7 @@
                 if (displayPanel) displayPanel.style.display = "none";
             });
         }
-
+        
         document.getElementById("clearFiltersBtn")?.addEventListener("click", function(e) {
             e.preventDefault();
             sessionStorage.clear();
