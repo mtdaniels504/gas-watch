@@ -4535,6 +4535,15 @@ function clearExistingPoll() {
 }
 
 /**
+ * Defensive check to safely filter out stations with missing coordinates
+ */
+function getValidStations() {
+    return (window.globalRawStations || []).filter(s => 
+        s.lat !== null && s.lon !== null && !isNaN(s.lat) && !isNaN(s.lon)
+    );
+}
+
+/**
  * Unified Status UI: Displays centered, non-disruptive notifications
  */
 function updateStatusUI(message, options = {}) {
@@ -4588,12 +4597,10 @@ async function pollForCompletion(query) {
     
     window.activePollInterval = setInterval(async () => {
         try {
-
             console.log('trying...');
 
             // 2. Buffer: Do not check until at least 8-10 seconds have passed
             if (Date.now() - startTime < 10000) return;
-
             
             console.log('fetching...');
 
@@ -4601,7 +4608,6 @@ async function pollForCompletion(query) {
             if (!res.ok) throw new Error("Server error");
             
             const { hasNulls } = await res.json();
-
             
             console.log('waiting...');
             
@@ -4614,7 +4620,7 @@ async function pollForCompletion(query) {
                         if (container) container.remove();
                         const searchBar = document.getElementById("searchBar");
                         searchBar?.classList.remove("loading");
-                        getPricesNow(query, true); 
+                        getPricesNow(query); 
                     },
                     onNo: () => console.log("User dismissed final refresh")
                 });
@@ -4628,8 +4634,8 @@ async function pollForCompletion(query) {
     }, 5000);
 }
 
-async function getPricesNow(searchQuery, forceRefresh = false) {
-    if (window.isSearching && !forceRefresh) return;
+async function getPricesNow(searchQuery) {
+    if (window.isSearching) return;
     
     // 1. Reset state before starting
     clearExistingPoll();
@@ -4641,7 +4647,7 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
     updateStatusUI("Searching database...", { persistent: true });
 
     try {
-        clearMarkers();
+        if (typeof clearMarkers === "function") clearMarkers();
         window.globalRawStations = [];
         if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
@@ -4665,7 +4671,6 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             body: JSON.stringify({ 
                 search: sanitizedQuery, 
                 fuelGradeSelection: window.activeFuelType || "regular",
-                forceRefresh: forceRefresh 
             })
         });
 
@@ -4676,7 +4681,7 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         // 2. Handle Logic States
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
-                onYes: () => getPricesNow(sanitizedQuery, true),
+                onYes: () => getPricesNow(sanitizedQuery),
                 onNo: () => console.log("User kept current data")
             });
         } 
@@ -4692,8 +4697,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         const isGeocoding = responseData.info?.includes("Geocoding");
         
         window.globalRawStations = stations.map(s => ({
-            lat: s.lat ? parseFloat(s.lat) : null,
-            lon: s.lon ? parseFloat(s.lon) : null,
+            lat: (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null,
+            lon: (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null,
             name: s.name || "Gas Station",
             address: s.address || "Unknown Address",
             price: parseFloat(s.price) || 0,
@@ -4703,7 +4708,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         }));
 
         // PRO MOVE: Defensive check to prevent empty map warnings during geocoding
-        if (stations.length > 0) {
+        const validStations = getValidStations();
+        if (validStations.length > 0) {
             if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
         } else if (!isGeocoding) {
             updateStatusUI("No stations found for this area.", { persistent: false });
