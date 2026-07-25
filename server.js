@@ -80,7 +80,8 @@ app.get('/api/check-progress', async (req, res) => {
         const { count, error } = await supabase
             .from('gas_stations')
             .select('*', { count: 'exact', head: true })
-            .is('lat', null)
+            .or(`city.ilike.%${query}%,address.ilike.%${query}%`)
+            .or('lat.is.null,lon.is.null');
 
         if (error) throw error;
 
