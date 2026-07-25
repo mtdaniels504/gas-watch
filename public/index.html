@@ -4546,19 +4546,23 @@ function updateStatusUI(message, options = {}) {
 
     container.style.cssText = `
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-        z-index: 9999; background: #ffffff; padding: 12px 24px; border-radius: 50px; 
+        z-index: 9999; background: #ffffff; padding: 12px 24px; border-radius: 10px; 
         box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #eee; 
         display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 300px;
         justify-content: center;
     `;
 
-    const msgEl = document.createElement('p');
-    msgEl.style.cssText = "margin:0; font-size:14px; color:#333; text-align:center;";
-    msgEl.innerText = message;
-    container.appendChild(msgEl);
+    const loadmsg = document.createElement('p');
+    loadmsg.style.cssText = "margin:0; font-size:14px; color:#333; text-align:center;";
+    loadmsg.innerText = message;
+    container.appendChild(loadmsg);
 
     if (options.onYes) {
-        const btnStyle = "border:none; background:#007bff; color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:600;";
+        const btnStyle = `
+            border:none; background:#007bff; color:white; 
+            padding:6px 14px; border-radius:10px; cursor:pointer; font-size:12px; 
+            font-weight:600; height: 15px;
+        `;
         
         const btnYes = document.createElement('button');
         btnYes.innerText = options.isMapRefresh ? "Update Map" : "Refresh Prices";
@@ -4584,13 +4588,22 @@ async function pollForCompletion(query) {
     
     window.activePollInterval = setInterval(async () => {
         try {
+
+            console.log('trying...');
+
             // 2. Buffer: Do not check until at least 8-10 seconds have passed
             if (Date.now() - startTime < 10000) return;
+
+            
+            console.log('fetching...');
 
             const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
             if (!res.ok) throw new Error("Server error");
             
             const { hasNulls } = await res.json();
+
+            
+            console.log('waiting...');
             
             if (!hasNulls) {
                 clearExistingPoll();
@@ -4606,10 +4619,13 @@ async function pollForCompletion(query) {
                     onNo: () => console.log("User dismissed final refresh")
                 });
             }
+
+            console.log('Clear!');
+
         } catch (err) {
             console.warn("Polling attempt failed, retrying in 5s...", err.message);
         }
-    }, 1000);
+    }, 5000);
 }
 
 async function getPricesNow(searchQuery, forceRefresh = false) {
