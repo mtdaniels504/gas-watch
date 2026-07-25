@@ -6,7 +6,7 @@
         <meta name="description" content="Find the cheapest gas prices in your area instantly. Search by city, zip code, or address on our interactive live fuel map to save money on gas today.">
 
 
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -4264,17 +4264,34 @@
         window.map.whenReady(() => {
             console.log("📍 Map engine ready. Initializing data fetch...");
             
-            // Critical: Force size recalculation immediately upon readiness
             window.map.invalidateSize();
             
-            // Logic check: Validate existence of Home Base location before triggering API
-            if (hasSavedHome && window.activeHomeBaseLocation && window.activeHomeBaseLocation.trim() !== "") {
-                console.log("🚀 Fetching data for saved home:", window.activeHomeBaseLocation);
+            // --- HOME BASE ABSOLUTE PRECEDENCE LOGIC ---
+            const savedHome = localStorage.getItem(PREF_KEYS.homeBase);
+
+            if (savedHome && savedHome.trim() !== "") {
+                console.log("🚀 Home Base takes precedence:", savedHome);
+                window.activeHomeBaseLocation = savedHome.trim();
+                
+                // Clear any lingering search session conflicts so home wins
+                sessionStorage.removeItem('gasWatch_sessAddress');
+                sessionStorage.removeItem('gasWatch_sessCity');
+                
                 getPricesNow(window.activeHomeBaseLocation);
             } else {
-                console.log("📍 No home set. Using fallback:", FALLBACK_CITY);
-                dropDenverWelcomeMarker();
-                getPricesNow(FALLBACK_CITY);
+                // Check secondary filter/session states only if Home Base doesn't exist
+                const sessionAddress = sessionStorage.getItem('gasWatch_sessAddress');
+                const sessionCity = sessionStorage.getItem('gasWatch_sessCity');
+                const composedSessionLoc = sessionCity || sessionAddress;
+
+                if (composedSessionLoc) {
+                    console.log("📍 Using session filter location:", composedSessionLoc);
+                    getPricesNow(composedSessionLoc);
+                } else {
+                    console.log("📍 No home or session set. Using fallback:", FALLBACK_CITY);
+                    dropDenverWelcomeMarker();
+                    getPricesNow(FALLBACK_CITY);
+                }
             }
         });
     });
