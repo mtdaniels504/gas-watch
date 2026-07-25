@@ -4637,7 +4637,7 @@ async function pollForCompletion(query) {
                         if (container) container.remove();
                         const searchBar = document.getElementById("searchBar");
                         searchBar?.classList.remove("loading");
-                        getPricesNow(query, false); 
+                        getPricesNow(query, true); 
                     },
                     onNo: () => console.log("User dismissed final refresh")
                 });
