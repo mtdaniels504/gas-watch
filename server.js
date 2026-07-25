@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/gas-prices', async (req, res) => {
     try {
-        const { search, forceRefresh } = req.body;
+        const { search } = req.body;
         const cleanSearch = search?.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
         
         if (!cleanSearch) return res.status(400).json({ error: "Missing search" });
@@ -20,7 +20,7 @@ app.post('/api/gas-prices', async (req, res) => {
         const status = await smartIngestion(cleanSearch);
 
         // 1. MISSING: Run ingestion and return immediately
-        if (status === 'MISSING' || forceRefresh) {
+        if (status === 'MISSING') {
             const result = await runIngestion(cleanSearch);
             if (result.status === 'EMPTY') {
                 return res.json({ 
@@ -36,7 +36,7 @@ app.post('/api/gas-prices', async (req, res) => {
         }
 
         // 2. STALE: Inform the user
-        if (status === 'STALE' && !forceRefresh) {
+        if (status === 'STALE') {
             const { data } = await supabase.from('gas_stations')
                 .select('*')
                 .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
