@@ -4637,7 +4637,7 @@ async function pollForCompletion(query) {
                         if (container) container.remove();
                         const searchBar = document.getElementById("searchBar");
                         searchBar?.classList.remove("loading");
-                        getPricesNow(query); 
+                        getPricesNow(query, false); 
                     },
                     onNo: () => console.log("User dismissed final refresh")
                 });
@@ -4651,8 +4651,8 @@ async function pollForCompletion(query) {
     }, 5000);
 }
 
-async function getPricesNow(searchQuery) {
-    if (window.isSearching) return;
+async function getPricesNow(searchQuery, forceRefresh = false) {
+    if (window.isSearching && !forceRefresh) return;
     
     // 1. Reset state before starting
     clearExistingPoll();
@@ -4688,6 +4688,7 @@ async function getPricesNow(searchQuery) {
             body: JSON.stringify({ 
                 search: sanitizedQuery, 
                 fuelGradeSelection: window.activeFuelType || "regular",
+                forceRefresh: forceRefresh 
             })
         });
 
@@ -4698,7 +4699,7 @@ async function getPricesNow(searchQuery) {
         // 2. Handle Logic States
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
-                onYes: () => getPricesNow(sanitizedQuery),
+                onYes: () => getPricesNow(sanitizedQuery, true),
                 onNo: () => console.log("User kept current data")
             });
         } 
@@ -4743,7 +4744,6 @@ async function getPricesNow(searchQuery) {
         searchBar?.classList.remove("loading");
     }
 }
-
 /* ==========================================================================
         STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
         ========================================================================== */
