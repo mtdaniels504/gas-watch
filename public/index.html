@@ -3070,8 +3070,18 @@
                         <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
                     </div>
                 </form>
-                <div class="filterForm" id="sortList" style="display: none;">
-
+                <div class="filterForm" id="sortList">
+                    <div class="filterRow" style="display: flex; flex-direction: column; gap: 12px; padding: 15px;">
+                        <label class="lesserP" style="font-weight: 600;">Sort Stations By:</label>
+                        <select id="sortPreferenceSelect" class="form-control" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="price">Sort by: Lowest Price</option>
+                            <option value="distance">Sort by: Closest Distance</option>
+                        </select>
+                    </div>
+                    <!-- Add this where your sidebar container is located in your HTML -->
+                    <div id="sidebarStationList" class="sidebar-station-container">
+                        <div style="text-align: center; color: #94a3b8; padding: 20px; font-size: 13px;">No stations to display</div>
+                    </div>
                 </div>
             </div>
 
@@ -4544,6 +4554,11 @@ function mirrorStateToUIForms() {
         else distanceLabel.textContent = window.activeRadiusMiles;
     }
 
+    // Dropdown sync (if applicable)
+    const sortSelect = document.getElementById('sortPreferenceSelect');
+    if (sortSelect) sortSelect.value = window.activeSortPreference;
+
+
     syncVal('filterAddress', sessionStorage.getItem('gasWatch_sessAddress'));
     syncVal('filterCity', sessionStorage.getItem('gasWatch_sessCity'));
     syncVal('filterState', sessionStorage.getItem('gasWatch_sessState'));
@@ -4703,6 +4718,13 @@ function setupInteractiveComponentsListeners() {
     document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
         localStorage.setItem(PREF_KEYS.contrast, this.value);
         applyMarkerContrast(this.value, true);
+    });
+
+    // Or if using the dropdown version:
+    document.getElementById('sortPreferenceSelect')?.addEventListener('change', function() {
+        window.activeSortPreference = this.value;
+        localStorage.setItem(PREF_KEYS.sort, this.value);
+        applyClientSideMapFilters();
     });
 
     const filterForm = document.querySelector(".filterForm");
@@ -4991,12 +5013,16 @@ async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
    STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
    ========================================================================== */
 
+/* ==========================================================================
+   DIRECT SIDEBAR POPULATOR (Drop this right into your script)
+   ========================================================================== */
 function rebuildSidebarStationList(stations) {
     const container = document.getElementById("sidebarStationList");
     const badge = document.getElementById("stationCountBadge");
     if (!container) return;
 
     container.innerHTML = "";
+    
     if (!stations || stations.length === 0) {
         if (badge) badge.innerText = "0 found";
         container.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px; font-size: 13px;">No stations to display</div>`;
@@ -5032,6 +5058,7 @@ function rebuildSidebarStationList(stations) {
             </div>
         `;
 
+        // Strictly flies to location without hijacking or altering your custom marker popups
         card.addEventListener('click', () => {
             if (station.lat && station.lon && window.map) {
                 window.map.flyTo([station.lat, station.lon], 15);
