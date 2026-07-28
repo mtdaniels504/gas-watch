@@ -1479,14 +1479,17 @@
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
 }
 
-.station-card-footer {
+.station-card-body { 
     background: linear-gradient(178deg, #fff 0%, #eceef2 100%);
+}
+
+.station-card-footer {
+    background: transparent;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: clamp(0.425rem, 0.25rem + 0.55dvw, 0.52rem);
-    color: #666;
-    border-top: 1px solid #e5e6e7;
+    border-top: 1px solid #eceef2;
     padding-top: 4px;
 }
 
@@ -5076,10 +5079,12 @@ function rebuildSidebarStationList(stations) {
                 <h4 class="station-name">${station.name}</h4>
                 <div class="station-price-badge">${station.displayPrice}</div>
             </div>
-            <p class="station-address">${station.address}</p>
-            <div class="station-card-footer">
-                <span>🕒 Updated ${displayTime}</span>
-                <span style="font-weight: 600; color: #0f172a;">${distanceText}</span>
+            <div class="station-card-body">
+                <p class="station-address">${station.address}</p>
+                <div class="station-card-footer">
+                    <span>🕒 Updated ${displayTime}</span>
+                    <span style="font-weight: 600; color: #0f172a;">${distanceText}</span>
+                </div>
             </div>
         `;
 
