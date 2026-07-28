@@ -1380,94 +1380,116 @@
             }
 
 
-            .sidebar-list-container {
+/* ==========================================================================
+   COMPACT MOBILE SIDEBAR STATION LIST STYLES (MATCHING DESIGN SYSTEM)
+   ========================================================================== */
+
+.sidebar-list-container {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 12px;
-    background: #f8fafc;
-    font-family: 'Poppins', sans-serif;
+    padding: 6px 8px;
+    background: #fff;
+    font-family: 'Satoshi', sans-serif;
 }
 
 .sidebar-list-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #eceef2;
 }
 
 .sidebar-list-header h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1e293b;
+    font-weight: 625;
+    font-size: clamp(0.7rem, 0.375rem + 1.06dvw, .9rem);
+    color: #0060b5;
     margin: 0;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-list-header span, 
+#stationCountBadge {
+    font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.55rem);
+    color: #666;
+    font-weight: 600;
 }
 
 .station-scroll-area {
     overflow-y: auto;
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 160px);
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding-right: 4px;
+    gap: 6px;
+    padding-right: 2px;
 }
 
 .station-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px;
+    background: linear-gradient(178deg, #fff 0%, #eceef2 100%);
+    border: 1px solid #e5e6e7;
+    border-radius: 4px;
+    padding: 6px 8px;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
 }
 
 .station-card:hover {
-    border-color: #10b981;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.1);
+    background: #fff;
+    border-color: #0060b5;
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
 }
 
 .station-card-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 6px;
+    align-items: center;
+    margin-bottom: 3px;
 }
 
 .station-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
+    font-weight: 625;
+    font-size: clamp(0.6rem, 0.35rem + 0.9dvw, 0.8rem);
+    color: #121418;
     margin: 0;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .station-price-badge {
-    background: #10b981;
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 13px;
-    padding: 3px 8px;
-    border-radius: 6px;
+    background: linear-gradient(178deg, #2274c7 0%, #075baf 100%);
+    color: #fff;
+    font-weight: 600;
+    font-size: clamp(0.5rem, 0.3rem + 0.65dvw, 0.7rem);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #0060b5;
     white-space: nowrap;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
 }
 
 .station-address {
-    font-size: 12px;
-    color: #64748b;
-    margin: 0 0 8px 0;
+    font-size: clamp(0.45rem, 0.28em + 0.61dvw, 0.58rem);
+    color: #666;
+    margin: 0 0 4px 0;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
 }
 
 .station-card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 11px;
-    color: #94a3b8;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 6px;
+    font-size: clamp(0.425rem, 0.25rem + 0.55dvw, 0.52rem);
+    color: #666;
+    border-top: 1px solid #e5e6e7;
+    padding-top: 4px;
+}
+
+.station-card-footer span:last-child {
+    font-weight: 600;
+    color: #0060b5;
 }
 
             /*displayReport*/
