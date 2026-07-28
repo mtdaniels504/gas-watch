@@ -2072,17 +2072,17 @@
     border: none !important;
 }
 
-   .gas-price-marker {
-    background: #10b981 !important; /* Fresh, modern emerald green accent color */
+.gas-price-marker {
+    background: #10b981 !important;
     color: #ffffff !important;
     border: 2px solid #ffffff !important;
-    border-radius: 8px !important; /* Clean tracking pill shape layout */
+    border-radius: 8px !important;
     font-family: 'Poppins', sans-serif !important;
     font-weight: 700 !important;
-    font-size: 13px !important;
+    font-size: var(--gas-marker-font-size, 12.5px) !important; /* Default starting size */
     text-align: center !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important; /* Balanced colored drop shadow */
-    padding: 4px 8px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    padding: var(--gas-marker-padding, 3px 6px) !important; /* Default padding */
     white-space: nowrap;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
@@ -2094,12 +2094,11 @@
     transform: translate(-50%, -50%);
 }
 
-/* Hover state enhancement: Price tags swell slightly when mouse glides over them */
 .gas-price-marker:hover {
-    background: #059669 !important; /* Slightly deeper emerald green on focus */
-    transform: translate(-50%, -50%) scale(1.1) !important; /* Micro-scaling physical feedback */
+    background: #059669 !important;
+    transform: translate(-50%, -50%) scale(1.1) !important;
     box-shadow: 0 6px 16px rgba(5, 150, 105, 0.45) !important;
-    z-index: 800 !important; /* Forces hovered price straight to top visible depth layer */
+    z-index: 800 !important;
 }
 
 /* ==========================================================================
@@ -2829,7 +2828,8 @@
                                     <div class="subNavRow2" style="width: 100%;">
                                         <span class="lesserP subNavItem">Marker Bubble Size</span>
                                         <select class="lesserP" id="prefTextSize" class="subSmallSelect">
-                                            <option value="normal">Standard</option>
+                                            <option value="small">Small</option>
+                                            <option value="normal" selected>Standard</option>
                                             <option value="large">Large Text</option>
                                         </select>
                                     </div>
@@ -4933,11 +4933,26 @@ function switchMapTheme(themeName) {
 function renderStationMarker(station) {
     if (!window.map || !station) return;
 
+    // Read current scaling state live from the document root element
+    const currentFontSize = getComputedStyle(document.documentElement).getPropertyValue('--gas-marker-font-size').trim();
+    
+    // Scale container boundaries proportionally to fit small, normal, or large text gracefully
+    let iconWidth = 58;
+    let iconHeight = 28;
+    
+    if (currentFontSize.includes('15px')) {
+        iconWidth = 72; // Large state
+        iconHeight = 36;
+    } else if (currentFontSize.includes('11px')) {
+        iconWidth = 50; // Small state
+        iconHeight = 24;
+    }
+
     const priceIcon = L.divIcon({
         className: 'gas-price-marker', 
         html: `<div class="marker-pin-bubble">${station.displayPrice}</div>`,    
-        iconSize: [60, 30],        
-        iconAnchor: [30, 15]       
+        iconSize: [iconWidth, iconHeight],        
+        iconAnchor: [iconWidth / 2, iconHeight / 2]       
     });
 
     let displayTime = "Updated recently";
@@ -4988,12 +5003,17 @@ function dropDenverWelcomeMarker() {
 
 function applyTextScaling(scale, triggerRefresh = true) {
     if (scale === 'large') {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
-        document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
+        document.documentElement.style.setProperty('--gas-marker-font-size', '15px');
+        document.documentElement.style.setProperty('--gas-marker-padding', '5px 9px');
+    } else if (scale === 'small') {
+        document.documentElement.style.setProperty('--gas-marker-font-size', '11px');
+        document.documentElement.style.setProperty('--gas-marker-padding', '2px 5px');
     } else {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
-        document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
+        // Standard (Medium) starting point
+        document.documentElement.style.setProperty('--gas-marker-font-size', '12.5px');
+        document.documentElement.style.setProperty('--gas-marker-padding', '3px 6px');
     }
+    
     if (triggerRefresh) applyClientSideMapFilters();
 }
 
