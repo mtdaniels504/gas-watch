@@ -138,15 +138,30 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
 async function smartIngestion(searchQuery, queryType, components) {
     let dbQuery = supabase.from('gas_stations').select('last_updated');
 
-    const city = components?.city?.toLowerCase();
-    const zip = components?.zip;
+    const city = components?.city?.toLowerCase() || '';
+    const state = components?.state?.toLowerCase() || '';
+    const zip = components?.zip || '';
+    const storeOrAddress = components?.storeOrAddress?.toLowerCase() || '';
 
-    if (queryType === 'zip' && zip) {
-        dbQuery = dbQuery.eq('zip', zip);
-    } else if (city) {
-        dbQuery = dbQuery.ilike('city', `%${city}%`);
-    } else {
-        dbQuery = dbQuery.or(`city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`);
+    // Handle database filtering explicitly based on frontend queryType
+    switch (queryType) {
+        case 'city_state':
+            dbQuery = dbQuery.ilike('city', `%${city}%`).ilike('address', `%${state}%`);
+            break;
+        case 'city':
+            dbQuery = dbQuery.ilike('city', `%${city}%`);
+            break;
+        case 'zip':
+            dbQuery = dbQuery.eq('zip', zip);
+            break;
+        case 'state':
+            dbQuery = dbQuery.ilike('address', `%${state}%`);
+            break;
+        case 'text_fallback':
+        default:
+            const fallback = storeOrAddress || city || zip || searchQuery;
+            dbQuery = dbQuery.or(`city.ilike.%${fallback}%,address.ilike.%${fallback}%,name.ilike.%${fallback}%`);
+            break;
     }
 
     const { data, error } = await dbQuery
