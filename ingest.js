@@ -1,188 +1,88 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
-const { runFullSweep } = require('./geocode-sweeper.js');
 const Geocodio = require('geocodio-library-node');
-const { spawn } = require('child_process');
 
+// 1. INITIALIZATION
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const geocoder = new Geocodio(process.env.GEOCODIO_API_KEY);
 
+const BATCH_SIZE = 100;
+const DELAY_MS = 2000;
 
-// TIERED CITY CONFIGURATION
-const CITIES = [
-    // HIGH PRIORITY: 10 Largest (Update every 48h - 10 stations each)
-    { name: 'New York, NY', tier: 'high' },
-    { name: 'Los Angeles, CA', tier: 'high' },
-    { name: 'Chicago, IL', tier: 'high' },
-    { name: 'Houston, TX', tier: 'high' },
-    { name: 'Denver, CO', tier: 'high' },
-    { name: 'Phoenix, AZ', tier: 'high' },
-    { name: 'Philadelphia, PA', tier: 'high' },
-    { name: 'San Diego, CA', tier: 'high' },
-    { name: 'Dallas, TX', tier: 'high' },
-    { name: 'San Jose, CA', tier: 'high' },
+async function runFullSweep(maxBatches = 50) {
+    console.log("🚀 Starting Optimized Geocoding Drain...");
+    let totalProcessed = 0;
 
-    // MEDIUM PRIORITY: Next 20 Largest (Update every 7 days - 20 stations each)
-    { name: 'Austin, TX', tier: 'medium' },
-    { name: 'San Antonio, TX', tier: 'medium' },
-    { name: 'Jacksonville, FL', tier: 'medium' },
-    { name: 'Fort Worth, TX', tier: 'medium' },
-    { name: 'Columbus, OH', tier: 'medium' },
-    { name: 'Indianapolis, IN', tier: 'medium' },
-    { name: 'Charlotte, NC', tier: 'medium' },
-    { name: 'San Francisco, CA', tier: 'medium' },
-    { name: 'Seattle, WA', tier: 'medium' },
-    { name: 'Oklahoma City, OK', tier: 'medium' },
-    { name: 'Nashville, TN', tier: 'medium' },
-    { name: 'El Paso, TX', tier: 'medium' },
-    { name: 'Washington, DC', tier: 'medium' },
-    { name: 'Las Vegas, NV', tier: 'medium' },
-    { name: 'Boston, MA', tier: 'medium' },
-    { name: 'Portland, OR', tier: 'medium' },
-    { name: 'Louisville, KY', tier: 'medium' },
-    { name: 'Detroit, MI', tier: 'medium' },
-    { name: 'Baltimore, MD', tier: 'medium' },
-    { name: 'Miami, FL', tier: 'medium' }
-];
+    for (let i = 0; i < maxBatches; i++) {
+        // 2. FETCH PENDING
+        const { data: pending, error: fetchError } = await supabase
+            .from('gas_stations')
+            .select('external_id, address')
+            .is('lat', null)
+            .eq('geocoding_failed', false)
+            .limit(BATCH_SIZE);
 
-
-/**
- * Triggers the remote Render Cron Job via Render's API (Fire-and-Forget)
- */
-async function triggerRemoteGeocode() {
-    console.log("🚀 Requesting remote Geocoding trigger from Render...");
-    
-    // Make sure the URL ends with /runs
-    const url = `https://api.render.com/v1/cron-jobs/${process.env.RENDER_CRON_JOB_ID}/runs`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${process.env.RENDER_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Render API failed: ${response.status} - ${errorText}`);
+        if (fetchError) {
+            console.error("❌ DB Fetch Error:", fetchError.message);
+            break;
         }
 
-        console.log("✅ Remote Render Cron Job triggered successfully.");
-    } catch (err) {
-        console.error("❌ Failed to trigger remote Render Cron:", err.message);
-    }
-}
-
-async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20) {
-    console.log(`📡 Fetching data for ${searchQuery}...`);
-    
-    // NOTE: Signal to server that fetch has begun
-    // We handle this via the object returned below
-    
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
-
-    try {
-        const response = await fetch(`https://api.apify.com/v2/actors/johnvc~fuelprices/run-sync-get-dataset-items?token=${process.env.APIFY_TOKEN}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ search: searchQuery, sort: sortStrategy, limit: limit }),
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeout);
-        if (!response.ok) throw new Error(`Apify returned ${response.status}`);
-
-        const rawApifyItems = await response.json();
-        
-        // CASE: MISSING / NO RESULTS
-        if (!Array.isArray(rawApifyItems) || rawApifyItems.length === 0) {
-            return { 
-                status: 'EMPTY', 
-                uiSignal: 'NO_STATIONS_FOUND' 
-            };
+        if (!pending || pending.length === 0) {
+            console.log("✨ All stations geocoded. Cleanup complete.");
+            break;
         }
 
-        // --- LOOKUP & PROCESS ---
-        const externalIds = rawApifyItems.map(s => String(s.id));
-        const { data: existingData } = await supabase
-            .from('gas_stations')
-            .select('external_id, lat, lon')
-            .in('external_id', externalIds);
+        console.log(`🌍 Batch ${i + 1}: Geocoding ${pending.length} stations...`);
 
-        const coordMap = new Map(existingData?.map(item => [item.external_id, { lat: item.lat, lon: item.lon }]) || []);
+        // 3. GEOCODE BATCH
+        const batchRequest = {};
+        pending.forEach(item => batchRequest[item.external_id] = item.address);
 
-        const processedData = rawApifyItems.map(s => {
-            const id = String(s.id);
-            const existing = coordMap.get(id);
-            const rawPrice = s.price_cash ?? s.price_credit ?? null;
-            const fullAddress = `${s.address_line1 || ''}, ${s.address_locality || 'unknown'}, ${s.address_region || ''} ${s.address_postalCode || ''}`.replace(/^, |, $/g, '');
+        try {
+            const response = await geocoder.geocode(batchRequest);
+            console.log("DEBUG: Geocodio responded. Result keys:", Object.keys(response.results));
+            
+            const updates = Object.keys(response.results).map(id => {
+                const res = response.results[id];
+                const location = res.response.results[0]?.location;
+                return {
+                    external_id: id,
+                    lat: location?.lat || null,
+                    lon: location?.lng || null,
+                    geocoding_failed: !location
+                };
+            });
 
-            return {
-                external_id: id,
-                name: s.name || "Unknown Station",
-                address: fullAddress,
-                city: (s.address_locality || 'unknown').toLowerCase(),
-                zip: s.address_postalCode || '',
-                price: rawPrice ? parseFloat(rawPrice) : null,
-                last_updated: new Date().toISOString(),
-                lat: existing?.lat || null,
-                lon: existing?.lon || null,
-                geocoding_failed: false
-            };
+            // 4. UPSERT UPDATES
+            const { error: upsertError } = await supabase
+                .from('gas_stations')
+                .upsert(updates, { onConflict: 'external_id' });
+
+            if (upsertError) throw upsertError;
+
+            totalProcessed += updates.length;
+            console.log(`✅ Success. Total processed in this session: ${totalProcessed}`);
+
+            // 5. THROTTLE
+            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        } catch (err) {
+            console.error("❌ API/Upsert Error:", err.message);
+            break; 
+        }
+    }
+    console.log(`🏁 Session Finished. Total records updated: ${totalProcessed}`);
+}
+
+if (require.main === module) {
+    runFullSweep()
+        .then(() => {
+            console.log("✅ Script execution successful.");
+            process.exit(0);
+        })
+        .catch(err => {
+            console.error("❌ Fatal Error in Cron Job:", err);
+            process.exit(1);
         });
-
-        // --- UPSERT ---
-        const { data: savedData, error: upsertError } = await supabase
-            .from('gas_stations')
-            .upsert(processedData, { onConflict: 'external_id' })
-            .select();
-
-        if (upsertError) throw upsertError;
-
-        // --- TRIGGER GEOCODING ---
-        triggerRemoteGeocode();
-
-        // CASE: SUCCESS
-        return { 
-            status: 'SUCCESS', 
-            uiSignal: 'GEOCODING_STARTED', 
-            stations: savedData 
-        };
-        
-    } catch (err) {
-        clearTimeout(timeout);
-        console.error(`❌ Ingestion failed for ${searchQuery}:`, err.message);
-        return { status: 'ERROR', message: err.message };
-    }
 }
 
-async function smartIngestion(searchQuery) {
-    const { data, error } = await supabase
-        .from('gas_stations')
-        .select('last_updated')
-        .or(`city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
-        .order('last_updated', { ascending: false })
-        .limit(1);
-
-    if (error || !data || data.length === 0) return 'MISSING';
-   
-    const lastUpdate = new Date(data[0].last_updated);
-    const twoDaysAgo = new Date(Date.now() - (48 * 60 * 60 * 1000));
-   
-    return lastUpdate < twoDaysAgo ? 'STALE' : 'FRESH';
-}
-
-async function runAllCities(tierFilter, sortStrategy) {
-    const citiesToProcess = CITIES.filter(c => c.tier === tierFilter);
-    const stationLimit = (tierFilter === 'high') ? 10 : 20;
-   
-    for (const cityObj of citiesToProcess) {
-        await runIngestion(cityObj.name, sortStrategy, stationLimit);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-}
-
-module.exports = { runIngestion, smartIngestion, runAllCities };
+module.exports = { runFullSweep };
