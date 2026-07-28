@@ -17,22 +17,51 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+/**
+ * Helper to build precise Supabase queries based on structured components & queryType
+ */
+function applyLocationFilter(queryBuilder, queryType, components) {
+  const city = components?.city?.toLowerCase() || '';
+  const state = components?.state?.toLowerCase() || '';
+  const zip = components?.zip || '';
+  const storeOrAddress = components?.storeOrAddress?.toLowerCase() || '';
+
+  switch (queryType) {
+    case 'city_state':
+      return queryBuilder.ilike('city', `%${city}%`); // Can combine with state if stored in db
+    case 'city':
+      return queryBuilder.ilike('city', `%${city}%`);
+    case 'zip':
+      return queryBuilder.eq('zip', zip);
+    case 'state':
+      return queryBuilder.ilike('address', `%${state}%`);
+    case 'text_fallback':
+    default:
+      const fallback = storeOrAddress || city || zip;
+      return queryBuilder.or(`city.ilike.%${fallback}%,address.ilike.%${fallback}%,name.ilike.%${fallback}%`);
+  }
+}
+
 // --- ROUTES ---
 
 app.post('/api/gas-prices', async (req, res) => {
   try {
-    const { search, forceRefresh } = req.body;
-    const cleanSearch = search?.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
-
-    if (!cleanSearch) {
-      return res.status(400).json({ error: 'Missing search' });
+    const { search, queryType, components, forceRefresh } = req.body;
+    
+    if (!search) {
+      return res.status(400).json({ error: 'Missing search query' });
     }
 
-    const status = await smartIngestion(cleanSearch);
+    // Determine the ideal target string for Apify/Ingestion lookup
+    const ingestionTarget = (components?.city && components?.state) 
+      ? `${components.city}, ${components.state}` 
+      : search;
+
+    const status = await smartIngestion(ingestionTarget, queryType, components);
 
     // 1. MISSING: Run ingestion and return immediately
     if (status === 'MISSING' || forceRefresh) {
-      const result = await runIngestion(cleanSearch);
+      const result = await runIngestion(ingestionTarget);
       
       if (result.status === 'EMPTY') {
         return res.json({
@@ -50,32 +79,28 @@ app.post('/api/gas-prices', async (req, res) => {
 
     // 2. STALE: Inform the user
     if (status === 'STALE' && !forceRefresh) {
-      const { data } = await supabase
-        .from('gas_stations')
-        .select('*')
-        .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
+      let query = supabase.from('gas_stations').select('*');
+      query = applyLocationFilter(query, queryType, components);
+      const { data } = await query;
 
-      // Only return the prompt if NOT forced
       return res.json({
         status: 'STALE',
         message: 'Prices are over 48h old. Would you like to fetch new prices from the network?',
-        stations: data,
+        stations: data || [],
       });
     }
 
     // 3. FRESH: Fetch and include all, even if some are still geocoding
-    const { data } = await supabase
-      .from('gas_stations')
-      .select('*')
-      .or(`city.ilike.%${cleanSearch}%,address.ilike.%${cleanSearch}%`);
+    let query = supabase.from('gas_stations').select('*');
+    query = applyLocationFilter(query, queryType, components);
+    const { data } = await query;
 
-    // Check if we need to show the polling UI even for 'FRESH'
-    const hasNulls = data.some((s) => s.lat === null || s.lon === null);
+    const stationList = data || [];
+    const hasNulls = stationList.some((s) => s.lat === null || s.lon === null);
 
     return res.json({
       status: 'OK',
-      stations: data,
-      // If they are fresh but still have nulls, trigger the poller
+      stations: stationList,
       info: hasNulls ? 'Geocoding New Locations...' : null,
     });
 
@@ -85,7 +110,6 @@ app.post('/api/gas-prices', async (req, res) => {
   }
 });
 
-// Add this to server.js
 app.get('/api/check-progress', async (req, res) => {
   try {
     const { query } = req.query;
@@ -103,7 +127,6 @@ app.get('/api/check-progress', async (req, res) => {
 
     if (error) throw error;
 
-    // hasNulls is true if count > 0, meaning geocoding is still in progress
     return res.json({ hasNulls: count > 0 });
 
   } catch (err) {
