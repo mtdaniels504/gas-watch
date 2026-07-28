@@ -4936,16 +4936,16 @@ function renderStationMarker(station) {
     // Read current scaling state live from the document root element
     const currentFontSize = getComputedStyle(document.documentElement).getPropertyValue('--gas-marker-font-size').trim();
     
-    // Scale container boundaries proportionally to fit small, normal, or large text gracefully
-    let iconWidth = 58;
-    let iconHeight = 28;
+    // Scale container boundaries proportionally based on the 3 tiers
+    let iconWidth = 52;
+    let iconHeight = 24;
     
     if (currentFontSize.includes('15px')) {
-        iconWidth = 72; // Large state
+        iconWidth = 76; // Large state (prominent & bold)
         iconHeight = 36;
-    } else if (currentFontSize.includes('11px')) {
-        iconWidth = 50; // Small state
-        iconHeight = 24;
+    } else if (currentFontSize.includes('9.5px')) {
+        iconWidth = 44; // Small state (compact)
+        iconHeight = 20;
     }
 
     const priceIcon = L.divIcon({
@@ -5006,11 +5006,11 @@ function applyTextScaling(scale, triggerRefresh = true) {
         document.documentElement.style.setProperty('--gas-marker-font-size', '15px');
         document.documentElement.style.setProperty('--gas-marker-padding', '5px 9px');
     } else if (scale === 'small') {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '11px');
-        document.documentElement.style.setProperty('--gas-marker-padding', '2px 5px');
+        document.documentElement.style.setProperty('--gas-marker-font-size', '9.5px');
+        document.documentElement.style.setProperty('--gas-marker-padding', '2px 4px');
     } else {
-        // Standard (Medium) starting point
-        document.documentElement.style.setProperty('--gas-marker-font-size', '12.5px');
+        // Standard starting point (11px)
+        document.documentElement.style.setProperty('--gas-marker-font-size', '11px');
         document.documentElement.style.setProperty('--gas-marker-padding', '3px 6px');
     }
     
