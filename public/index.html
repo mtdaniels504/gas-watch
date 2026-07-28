@@ -1280,6 +1280,13 @@
                 right: 0;
             }
 
+            .filterDisplayHeader {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+
             .filterForm {
                 flex-grow: 1;
                 width: 100%;
@@ -3879,7 +3886,7 @@
                 navTab.addEventListener('click', () => {
                     //Display Target Body and Add Actives
                     targetClass.forEach(t => t.style.display = 'none');
-                    target.style.display = 'flex';
+                    target.style.display = 'block';
                 });
             });
 
