@@ -1372,6 +1372,97 @@
                 margin-left: 2px;
             }
 
+
+            .sidebar-list-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    background: #f8fafc;
+    font-family: 'Poppins', sans-serif;
+}
+
+.sidebar-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-list-header h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.station-scroll-area {
+    overflow-y: auto;
+    max-height: calc(100vh - 220px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+}
+
+.station-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.station-card:hover {
+    border-color: #10b981;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.1);
+}
+
+.station-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.station-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.station-price-badge {
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.station-address {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 8px 0;
+}
+
+.station-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #94a3b8;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 6px;
+}
+
             /*displayReport*/
 
             .displayReports {
@@ -2882,7 +2973,17 @@
                 REFINED FILTER DISPLAY SIDE PANEL
                 ========================================================================== -->
             <div class="filterDisplay" id="filterDisplay" style="display: none;">
-                <form class="filterForm">
+                <div class="filterDisplayHeader">
+                    <button class="fullSmallButton lesserP navTab2" id="filterButton-filter"
+                        data-section="filterDisplay" data-target="filterForm"
+                        data-targetClass=".filterForm"
+                    >Filter</button>
+                    <button class="fullSmallButton lesserP navTab2" id="filterButton-sort"
+                        data-section="filterDisplay" data-target="sortList"
+                        data-targetClass=".filterForm"
+                    >Sort List</button>
+                </div>
+                <form class="filterForm" id="filterForm">
                     
                     <!-- Geographic Group 1: Absolute Street/Point Target -->
                     <div class="filterRow">
@@ -2962,7 +3063,7 @@
                         <button type="submit" class="fullButton applyFiltersButton" style="flex: 2; margin: 0; min-height: calc(17px + 0.35vw); max-height: 20px; height: auto;">Apply Filters</button>
                     </div>
                 </form>
-                <div class="filter-adBox" style="display: none;">
+                <div class="filterForm" id="sortList" style="display: none;">
 
                 </div>
             </div>
@@ -3761,6 +3862,24 @@
                         document.querySelector('.fa-grip-horizontal').style.cursor = 'grab';      
                         toggle.style.cursor = 'grab';                  
                     };
+                });
+            });
+
+            
+            // NavTabs2
+
+            const navTabs2 = document.querySelectorAll(`.navTab2`);
+
+            navTabs2.forEach(navTab => {
+                //Nav Tab Dataset
+                const section = document.getElementById(navTab.getAttribute('data-section'));
+                const targetClass = section.querySelectorAll(navTab.getAttribute('data-targetClass'));
+                const target = document.getElementById(navTab.getAttribute('data-target'));
+
+                navTab.addEventListener('click', () => {
+                    //Display Target Body and Add Actives
+                    targetClass.forEach(t => t.style.display = 'none');
+                    target.style.display = 'flex';
                 });
             });
 
@@ -4660,6 +4779,19 @@ function clearExistingPoll() {
     }
 }
 
+// Helper to calculate distance between two coordinates in miles
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 3958.8; // Radius of earth in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
 function getValidStations() {
     return (window.globalRawStations || []).filter(s => 
         s.lat !== null && s.lon !== null && !isNaN(s.lat) && !isNaN(s.lon)
@@ -4758,7 +4890,7 @@ async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
         if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
         const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                                   (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
+                                 (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
 
         // --- DEBUG LOG ---
         console.log("📤 Sending Gas Price Request to Backend:", sanitizedQuery);
@@ -4779,8 +4911,8 @@ async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 search: sanitizedQuery, 
-                queryType: meta.queryType || "general", // Maps safely to the passed meta object
-                components: meta.components || {},      // Maps safely to the passed components
+                queryType: meta.queryType || "general", 
+                components: meta.components || {},      
                 fuelGradeSelection: window.activeFuelType || "regular",
                 forceRefresh: forceRefresh 
             })
@@ -4792,7 +4924,7 @@ async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
 
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
-                onYes: () => getPricesNow(sanitizedQuery, true, meta), // Preserve meta on refresh
+                onYes: () => getPricesNow(sanitizedQuery, true, meta), 
                 onNo: () => console.log("User kept current data")
             });
         } else if (responseData.info) {
@@ -4805,16 +4937,25 @@ async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
         const stations = responseData.stations || [];
         const isGeocoding = responseData.info?.includes("Geocoding");
         
-        window.globalRawStations = stations.map(s => ({
-            lat: (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null,
-            lon: (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null,
-            name: s.name || "Gas Station",
-            address: s.address || "Unknown Address",
-            price: parseFloat(s.price) || 0,
-            displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
-            postedTime: s.last_updated || null,
-            zip: s.zip || ""
-        }));
+        const mapCenter = window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON };
+
+        window.globalRawStations = stations.map(s => {
+            const lat = (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null;
+            const lon = (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null;
+            const dist = calculateDistance(mapCenter.lat, mapCenter.lng, lat, lon);
+
+            return {
+                lat: lat,
+                lon: lon,
+                name: s.name || "Gas Station",
+                address: s.address || "Unknown Address",
+                price: parseFloat(s.price) || 0,
+                displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
+                postedTime: s.last_updated || null,
+                zip: s.zip || "",
+                distance: dist !== null ? dist : 9999
+            };
+        });
 
         const validStations = getValidStations();
         if (validStations.length > 0) {
@@ -4838,6 +4979,58 @@ async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
 /* ==========================================================================
    STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
    ========================================================================== */
+
+function rebuildSidebarStationList(stations) {
+    const container = document.getElementById("sidebarStationList");
+    const badge = document.getElementById("stationCountBadge");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!stations || stations.length === 0) {
+        if (badge) badge.innerText = "0 found";
+        container.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px; font-size: 13px;">No stations to display</div>`;
+        return;
+    }
+
+    if (badge) badge.innerText = `${stations.length} found`;
+
+    stations.forEach(station => {
+        let displayTime = "Recently";
+        if (station.postedTime) {
+            try {
+                displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric'
+                });
+            } catch(e) { displayTime = "Recently"; }
+        }
+
+        const distanceText = station.distance !== undefined && station.distance !== 9999 
+            ? `${station.distance.toFixed(1)} mi away` : '';
+        
+        const card = document.createElement('div');
+        card.className = 'station-card';
+        card.innerHTML = `
+            <div class="station-card-top">
+                <h4 class="station-name">${station.name}</h4>
+                <div class="station-price-badge">${station.displayPrice}</div>
+            </div>
+            <p class="station-address">${station.address}</p>
+            <div class="station-card-footer">
+                <span>🕒 Updated ${displayTime}</span>
+                <span style="font-weight: 600; color: #0f172a;">${distanceText}</span>
+            </div>
+        `;
+
+        card.addEventListener('click', () => {
+            if (station.lat && station.lon && window.map) {
+                window.map.flyTo([station.lat, station.lon], 15);
+            }
+        });
+
+        container.appendChild(card);
+    });
+}
+
 function applyClientSideMapFilters() {
     if (!window.map) return;
 
@@ -4859,9 +5052,13 @@ function applyClientSideMapFilters() {
             return true;
         })
         .sort((a, b) => {
-            return window.activeSortPreference === 'price' 
-                ? (a.price - b.price) 
-                : (a.distance - b.distance);
+            if (window.activeSortPreference === 'distance') {
+                return (a.distance || 9999) - (b.distance || 9999);
+            } else {
+                const priceA = a.price > 0 ? a.price : 9999;
+                const priceB = b.price > 0 ? b.price : 9999;
+                return priceA - priceB;
+            }
         });
 
     clearMarkers();
@@ -4877,7 +5074,7 @@ function applyClientSideMapFilters() {
     }
 }
       
-  
+ 
 /* ==========================================================================
    STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
    ========================================================================== */
