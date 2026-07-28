@@ -4166,401 +4166,491 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
 <script>
-    /* ==========================================================================
-        STAGE 1: GLOBAL APP STATE & DICTIONARY MATRIX CONTAINERS
-        ========================================================================== */
-    window.map = window.map || null;
-    window.currentTileLayer = window.currentTileLayer || null;
-    window.isSearching = false;
-    window.markers = [];
-    window.globalRawStations = [];
+/* ==========================================================================
+   STAGE 1: GLOBAL APP STATE & DICTIONARY MATRIX CONTAINERS
+   ========================================================================== */
+window.map = window.map || null;
+window.currentTileLayer = window.currentTileLayer || null;
+window.isSearching = false;
+window.markers = [];
+window.globalRawStations = [];
 
-    // Unified Global Runtime Application Sync States
-    window.activeRadiusMiles = 10; 
-    window.maxPriceAllowed = null;
-    window.activeFuelType = 'regular';
-    window.activeHomeBaseLocation = "";
-    window.activeSortPreference = 'price';
+// Unified Global Runtime Application Sync States
+window.activeRadiusMiles = 10; 
+window.maxPriceAllowed = null;
+window.activeFuelType = 'regular';
+window.activeHomeBaseLocation = "";
+window.activeSortPreference = 'price';
 
-    // Baseline Storage Reference Profile Keys
-    const PREF_KEYS = {
-        homeBase: 'gasWatch_prefHomeBase',
-        fuel: 'gasWatch_prefFuel',
-        radius: 'gasWatch_prefRadius',
-        maxPrice: 'gasWatch_prefMaxPrice',
-        sort: 'gasWatch_prefSort',
-        skin: 'gasWatch_mapTheme', 
-        text: 'gasWatch_prefText',
-        contrast: 'gasWatch_prefMarkerContrast'
+// Baseline Storage Reference Profile Keys
+const PREF_KEYS = {
+    homeBase: 'gasWatch_prefHomeBase',
+    fuel: 'gasWatch_prefFuel',
+    radius: 'gasWatch_prefRadius',
+    maxPrice: 'gasWatch_prefMaxPrice',
+    sort: 'gasWatch_prefSort',
+    skin: 'gasWatch_mapTheme', 
+    text: 'gasWatch_prefText',
+    contrast: 'gasWatch_prefMarkerContrast'
+};
+
+// --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
+const MAP_THEME_TILES = {
+    google: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
+    matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
+    navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
+};
+
+const MAP_THEME_ATTRIBUTIONS = {
+    google: '© OpenStreetMap contributors',
+    iphone: '© OpenStreetMap contributors, © CARTO',
+    midnight: '© OpenStreetMap contributors, © JawgMaps',
+    matrix: '© OpenStreetMap contributors, © JawgMaps',
+    navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
+};
+
+// Baseline Fallback Coordinates (Denver, CO)
+const FALLBACK_LAT = 39.73921;
+const FALLBACK_LON = -104.9903;
+const FALLBACK_CITY = "Denver";
+
+// Master list of states & abbreviations for validation (all lowercase)
+const VALID_STATES_SET = new Set([
+    "al","ak","az","ar","ca","co","ct","de","fl","ga","hi","id","il","in","ia","ks","ky","la","me","md","ma","mi","mn","ms","mo","mt","ne","nv","nh","nj","nm","ny","nc","nd","oh","ok","or","pa","ri","sc","sd","tn","tx","ut","vt","va","wa","wv","wi","wy",
+    "alabama","alaska","arizona","arkansas","california","colorado","connecticut","delaware","florida","georgia","hawaii","idaho","illinois","indiana","iowa","kansas","kentucky","louisiana","maine","maryland","massachusetts","michigan","minnesota","mississippi","missouri","montana","nebraska","nevada","new hampshire","new jersey","new mexico","new york","north carolina","north dakota","ohio","oklahoma","oregon","pennsylvania","rhode island","south carolina","south dakota","tennessee","texas","utah","vermont","virginia","washington","west virginia","wisconsin","wyoming"
+]);
+
+/* --- PERFORMANCE UTILITY: High Efficiency Input Debouncer --- */
+function debounce(func, delay = 200) {
+    let timeoutId;
+    return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
     };
+}
+const debouncedClientFilter = debounce(() => applyClientSideMapFilters(), 200);
 
-    // --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
-    const MAP_THEME_TILES = {
-        google: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', // Swapped out broken fallback for a valid, stable tile routing block
-        iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
-        matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
-        navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
-    };
 
-    const MAP_THEME_ATTRIBUTIONS = {
-        google: '© OpenStreetMap contributors',
-        iphone: '© OpenStreetMap contributors, © CARTO',
-        midnight: '© OpenStreetMap contributors, © JawgMaps',
-        matrix: '© OpenStreetMap contributors, © JawgMaps',
-        navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
-    };
+/* ==========================================================================
+   SHARED CORE ENGINE: UNIFORM LOCATION PARSING & NORMALIZATION
+   ========================================================================== */
+function cleanUpString(str) {
+    if (!str) return "";
+    return str.replace(/^[^a-zA-Z0-9!^\*\+]+|[^a-zA-Z0-9!^\*\+]+$/g, "").trim();
+}
 
-    // Baseline Fallback Coordinates (Denver, CO)
-    const FALLBACK_LAT = 39.73921;
-    const FALLBACK_LON = -104.9903;
-    const FALLBACK_CITY = "Denver";
+function isValidCityInSystem(cityName) {
+    if (!cityName || cityName.length < 2) return false;
+    return true; // Hook into database validation check here if available
+}
 
-    /* --- PERFORMANCE UTILITY: High Efficiency Input Debouncer --- */
-    function debounce(func, delay = 200) {
-        let timeoutId;
-        return function(...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, args), delay);
-        };
+function parseLocationQuery(rawInput) {
+    if (!rawInput) return { storeOrAddress: null, city: null, state: null, zip: null, rawQuery: "" };
+
+    let workString = cleanUpString(rawInput);
+    let searchZip = null;
+    let searchState = null;
+    let searchCity = null;
+
+    // 1. Zip Code Check (5-digit or 5+4 at tail end)
+    const zipRegex = /\b\d{5}(-\d{4})?$/;
+    const zipMatch = workString.match(zipRegex);
+    if (zipMatch) {
+        searchZip = zipMatch[0];
+        workString = workString.replace(zipRegex, "").trim();
     }
-    const debouncedClientFilter = debounce(() => applyClientSideMapFilters(), 200);
 
+    workString = cleanUpString(workString);
 
-    /* ==========================================================================
-       STAGE 2: MASTER ORCHESTRATION ENGINE (DOM LIFECYCLE)
-       ========================================================================== */
-    document.addEventListener("DOMContentLoaded", function() {
-        console.log("⚙️ Orchestration Engine: Initializing...");
-
-        // 1. Ensure the map container actually exists before proceeding
-        const mapContainer = document.getElementById('map');
-        if (!mapContainer) {
-            console.error("❌ Fatal Error: #map container not found in DOM.");
-            return;
+    // 2. State Validation Check (Last 1 or 2 words)
+    let words = workString.split(/\s+/);
+    if (words.length > 0) {
+        let lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z]/g, "");
+        let lastTwoWords = words.length > 1 ? `${words[words.length - 2]} ${words[words.length - 1]}`.toLowerCase().replace(/[^a-z\s]/g, "") : "";
+        
+        if (VALID_STATES_SET.has(lastTwoWords)) {
+            searchState = lastTwoWords;
+            words.splice(words.length - 2, 2);
+            workString = words.join(" ");
+        } else if (VALID_STATES_SET.has(lastWord)) {
+            searchState = lastWord;
+            words.pop();
+            workString = words.join(" ");
         }
+    }
 
-        sessionStorage.removeItem('gasWatch_sessAddress');
-        sessionStorage.removeItem('gasWatch_sessCity');
-        sessionStorage.removeItem('gasWatch_sessState');
-        sessionStorage.removeItem('gasWatch_sessZip');
-        sessionStorage.removeItem('gasWatch_sessStoreName');
-        sessionStorage.removeItem('gasWatch_sessRadius');
-        sessionStorage.removeItem('gasWatch_sessFuel');
-        sessionStorage.removeItem('gasWatch_sessMaxPrice');
+    workString = cleanUpString(workString);
 
-        // 2. Hydrate State BEFORE initializing components
-        hydrateRuntimeState();
+    // 3. City & Comma Check
+    let candidateCityString = "";
+    const rightmostCommaIndex = workString.lastIndexOf(',');
 
-        const startLat = parseFloat(localStorage.getItem('gasWatch_prefLat')) || FALLBACK_LAT;
-        const startLon = parseFloat(localStorage.getItem('gasWatch_prefLon')) || FALLBACK_LON;
-        const hasSavedHome = !!localStorage.getItem(PREF_KEYS.homeBase);
+    if (rightmostCommaIndex !== -1) {
+        candidateCityString = cleanUpString(workString.substring(rightmostCommaIndex + 1));
+    } else {
+        candidateCityString = workString;
+    }
 
-        // 3. Initialize Map
-        window.map = L.map('map', {
-            zoomControl: true,
-            tap: false 
-        }).setView([startLat, startLon], 12);
+    if (isValidCityInSystem(candidateCityString)) {
+        searchCity = candidateCityString;
+        if (rightmostCommaIndex !== -1) {
+            workString = workString.substring(0, rightmostCommaIndex);
+        } else {
+            workString = ""; 
+        }
+    }
 
-        // 4. Setup Theme and UI Mirrors
-        const runtimeSkinToken = localStorage.getItem(PREF_KEYS.skin) || 'google';
-        switchMapTheme(runtimeSkinToken);
+    // 4. Residual text acts as Store Name or Street Address for frontend centering
+    let searchAddressOrStore = cleanUpString(workString);
 
-        mirrorStateToUIForms();
-        setupInteractiveComponentsListeners();
+    return {
+        storeOrAddress: searchAddressOrStore || null,
+        city: searchCity || null,
+        state: searchState || null,
+        zip: searchZip || null,
+        rawQuery: rawInput
+    };
+}
 
-        // 5. Data Fetching via Leaflet Life-cycle
-        window.map.whenReady(() => {
-            console.log("📍 Map engine ready. Initializing data fetch...");
-            
-            window.map.invalidateSize();
-            
-            // --- HOME BASE ABSOLUTE PRECEDENCE LOGIC ---
-            const savedHome = localStorage.getItem(PREF_KEYS.homeBase);
 
-            if (savedHome && savedHome.trim() !== "") {
-                console.log("🚀 Home Base takes precedence:", savedHome);
-                window.activeHomeBaseLocation = savedHome.trim();
-                
-                // Clear any lingering search session conflicts so home wins
-                sessionStorage.removeItem('gasWatch_sessAddress');
-                sessionStorage.removeItem('gasWatch_sessCity');
-                
-                getPricesNow(window.activeHomeBaseLocation);
-            } else {
-                // Check secondary filter/session states only if Home Base doesn't exist
-                const sessionAddress = sessionStorage.getItem('gasWatch_sessAddress');
-                const sessionCity = sessionStorage.getItem('gasWatch_sessCity');
-                const composedSessionLoc = sessionCity || sessionAddress;
+/* ==========================================================================
+   STAGE 2: MASTER ORCHESTRATION ENGINE (DOM LIFECYCLE)
+   ========================================================================== */
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("⚙️ Orchestration Engine: Initializing...");
 
-                if (composedSessionLoc) {
-                    console.log("📍 Using session filter location:", composedSessionLoc);
-                    getPricesNow(composedSessionLoc);
-                } else {
-                    console.log("📍 No home or session set. Using fallback:", FALLBACK_CITY);
-                    dropDenverWelcomeMarker();
-                    getPricesNow(FALLBACK_CITY);
-                }
-            }
-        });
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) {
+        console.error("❌ Fatal Error: #map container not found in DOM.");
+        return;
+    }
+
+    // Clear previous sessions
+    ['Address', 'City', 'State', 'Zip', 'StoreName', 'Radius', 'Fuel', 'MaxPrice'].forEach(k => {
+        sessionStorage.removeItem(`gasWatch_sess${k}`);
     });
 
+    hydrateRuntimeState();
 
-    /* ==========================================================================
-        STAGE 3: RUNTIME STATE STORAGE HYDRATION & MIRRORING
-        ========================================================================= */
-    function hydrateRuntimeState() {
-        const resolveState = (sessKey, localKey, defaultVal) => {
-            const sess = sessionStorage.getItem(sessKey);
-            if (sess !== null) return sess;
-            const local = localStorage.getItem(localKey);
-            return local !== null ? local : defaultVal;
-        };
+    const startLat = parseFloat(localStorage.getItem('gasWatch_prefLat')) || FALLBACK_LAT;
+    const startLon = parseFloat(localStorage.getItem('gasWatch_prefLon')) || FALLBACK_LON;
 
-        window.activeRadiusMiles = parseInt(resolveState('gasWatch_sessRadius', PREF_KEYS.radius, '10'), 10) || 10;
-        window.activeFuelType = resolveState('gasWatch_sessFuel', PREF_KEYS.fuel, 'regular');
-        window.activeSortPreference = localStorage.getItem(PREF_KEYS.sort) || 'price';
-        window.activeHomeBaseLocation = localStorage.getItem(PREF_KEYS.homeBase) || "";
+    window.map = L.map('map', { zoomControl: true, tap: false }).setView([startLat, startLon], 12);
 
-        const rawMaxPrice = resolveState('gasWatch_sessMaxPrice', PREF_KEYS.maxPrice, '');
-        window.maxPriceAllowed = rawMaxPrice !== '' ? parseFloat(rawMaxPrice) : null;
+    const runtimeSkinToken = localStorage.getItem(PREF_KEYS.skin) || 'google';
+    switchMapTheme(runtimeSkinToken);
 
-        const activeTextSize = localStorage.getItem(PREF_KEYS.text) || 'normal';
-        applyTextScaling(activeTextSize, false);
+    mirrorStateToUIForms();
+    setupInteractiveComponentsListeners();
 
-        const activeContrastMode = localStorage.getItem(PREF_KEYS.contrast) || 'normal';
-        applyMarkerContrast(activeContrastMode, false);
-    }
-
-    function mirrorStateToUIForms() {
-        const syncVal = (elementId, val) => {
-            const el = document.getElementById(elementId);
-            if (el) el.value = val || '';
-        };
-
-        syncVal('fuelType', window.activeFuelType);
-        syncVal('filterMaxPrice', window.maxPriceAllowed);
+    window.map.whenReady(() => {
+        console.log("📍 Map engine ready. Initializing data fetch...");
+        window.map.invalidateSize();
         
-        const distanceSlider = document.getElementById("distanceRange");
-        const distanceLabel = document.getElementById("distanceValue");
-        if (distanceSlider) distanceSlider.value = window.activeRadiusMiles;
-        if (distanceLabel) {
-            if (distanceLabel.tagName === "INPUT") distanceLabel.value = window.activeRadiusMiles;
-            else distanceLabel.textContent = window.activeRadiusMiles;
-        }
+        // --- HOME BASE / INITIAL LOAD PRECEDENCE ---
+        const savedHome = localStorage.getItem(PREF_KEYS.homeBase);
 
-        syncVal('filterAddress', sessionStorage.getItem('gasWatch_sessAddress'));
-        syncVal('filterCity', sessionStorage.getItem('gasWatch_sessCity'));
-        syncVal('filterState', sessionStorage.getItem('gasWatch_sessState'));
-        syncVal('filterZip', sessionStorage.getItem('gasWatch_sessZip'));
-        syncVal('filterStoreName', sessionStorage.getItem('gasWatch_sessStoreName'));
+        if (savedHome && savedHome.trim() !== "") {
+            console.log("🚀 Home Base takes precedence:", savedHome);
+            window.activeHomeBaseLocation = savedHome.trim();
+            searchLocation(null, window.activeHomeBaseLocation);
+        } else {
+            const sessionCity = sessionStorage.getItem('gasWatch_sessCity');
+            const sessionAddress = sessionStorage.getItem('gasWatch_sessAddress');
+            const composedSessionLoc = sessionCity || sessionAddress;
 
-        syncVal('prefHomeBase', window.activeHomeBaseLocation);
-        syncVal('prefDefaultFuel', window.activeFuelType);
-        syncVal('prefDefaultRadius', window.activeRadiusMiles);
-        syncVal('prefMaxPrice', window.maxPriceAllowed !== null ? window.maxPriceAllowed : '');
-        syncVal('prefDefaultSort', window.activeSortPreference);
-        syncVal('prefMapSkin', localStorage.getItem(PREF_KEYS.skin) || 'google');
-        syncVal('prefTextSize', localStorage.getItem(PREF_KEYS.text) || 'normal');
-        syncVal('prefMarkerContrast', localStorage.getItem(PREF_KEYS.contrast) || 'normal');
-    }
-
-
-    /* ==========================================================================
-        STAGE 4: CLIENT INTERACTIVE HANDLERS & EVENTS CONTROLLER
-        ========================================================================== */
-    function setupInteractiveComponentsListeners() {
-        const searchBar = document.getElementById("searchBar");
-        searchBar?.addEventListener("keydown", function(e) {
-            if (e.key === "Enter") { e.preventDefault(); searchLocation(); }
-        });
-        document.getElementById("extSearchIcon")?.addEventListener("click", function(e) {
-            e.preventDefault(); searchLocation();
-        });
-
-        document.getElementById("distanceRange")?.addEventListener("input", function() {
-            const distanceLabel = document.getElementById("distanceValue");
-            if (distanceLabel) {
-                if (distanceLabel.tagName === "INPUT") distanceLabel.value = this.value;
-                else distanceLabel.textContent = this.value;
+            if (composedSessionLoc) {
+                console.log("📍 Using session filter location:", composedSessionLoc);
+                searchLocation(null, composedSessionLoc);
+            } else {
+                console.log("📍 No home or session set. Using fallback:", FALLBACK_CITY);
+                dropDenverWelcomeMarker();
+                searchLocation(null, FALLBACK_CITY);
             }
-            window.activeRadiusMiles = parseInt(this.value, 10) || 10;
-            applyClientSideMapFilters();
-        });
-
-        document.getElementById("fuelType")?.addEventListener("change", function() {
-            window.activeFuelType = this.value;
-            triggerNetworkOrClientRefresh();
-        });
-
-        document.getElementById("filterMaxPrice")?.addEventListener("input", function() {
-            const parsedVal = this.value.trim();
-            window.maxPriceAllowed = parsedVal !== "" ? parseFloat(parsedVal) : null;
-            applyClientSideMapFilters();
-        });
-
-        ['filterAddress', 'filterCity', 'filterZip', 'filterStoreName'].forEach(fieldId => {
-            document.getElementById(fieldId)?.addEventListener("input", debouncedClientFilter);
-        });
-
-        document.getElementById('prefHomeBase')?.addEventListener('change', function() {
-            const freshHome = this.value.trim();
-            localStorage.setItem(PREF_KEYS.homeBase, freshHome);
-            window.activeHomeBaseLocation = freshHome;
-            if (freshHome) getPricesNow(freshHome);
-        });
-
-        document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
-            localStorage.setItem(PREF_KEYS.fuel, this.value);
-            window.activeFuelType = this.value;
-            const quickFuel = document.getElementById('fuelType');
-            if (quickFuel) quickFuel.value = this.value;
-            triggerNetworkOrClientRefresh();
-        });
-
-        document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
-            localStorage.setItem(PREF_KEYS.radius, this.value);
-            window.activeRadiusMiles = parseInt(this.value, 10) || 10;
-            
-            const quickSlider = document.getElementById('distanceRange');
-            const quickLabel = document.getElementById('distanceValue');
-            if (quickSlider) quickSlider.value = this.value;
-            if (quickLabel) {
-                if (quickLabel.tagName === "INPUT") quickLabel.value = this.value;
-                else quickLabel.textContent = this.value;
-            }
-            triggerNetworkOrClientRefresh();
-        });
-
-        document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
-            const freshMax = this.value.trim();
-            localStorage.setItem(PREF_KEYS.maxPrice, freshMax);
-            window.maxPriceAllowed = freshMax !== '' ? parseFloat(freshMax) : null;
-
-            const quickPrice = document.getElementById('filterMaxPrice');
-            if (quickPrice) quickPrice.value = freshMax;
-            applyClientSideMapFilters();
-        });
-
-        document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
-            localStorage.setItem(PREF_KEYS.sort, this.value);
-            window.activeSortPreference = this.value;
-            applyClientSideMapFilters();
-        });
-
-        document.getElementById('prefMapSkin')?.addEventListener('change', function() {
-            localStorage.setItem(PREF_KEYS.skin, this.value);
-            switchMapTheme(this.value);
-        });
-
-        document.getElementById('prefTextSize')?.addEventListener('change', function() {
-            localStorage.setItem(PREF_KEYS.text, this.value);
-            applyTextScaling(this.value, true);
-        });
-        
-        document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
-            localStorage.setItem(PREF_KEYS.contrast, this.value);
-            applyMarkerContrast(this.value, true);
-        });
-
-        const filterForm = document.querySelector(".filterForm");
-        if (filterForm) {
-            filterForm.addEventListener("submit", function(event) {
-                event.preventDefault();
-
-                const rawAddress = document.getElementById("filterAddress")?.value.trim() || "";
-                const rawCity = document.getElementById("filterCity")?.value.trim() || "";
-                const rawState = document.getElementById("filterState")?.value.trim() || "";
-                const rawZip = document.getElementById("filterZip")?.value.trim() || "";
-                const rawStore = document.getElementById("filterStoreName")?.value.trim() || "";
-                const quickSliderVal = document.getElementById("distanceRange")?.value || "10";
-                const quickPriceVal = document.getElementById("filterMaxPrice")?.value.trim() || "";
-
-                // 1. Always save to session storage for the current active run
-                sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
-                sessionStorage.setItem('gasWatch_sessCity', rawCity);
-                sessionStorage.setItem('gasWatch_sessState', rawState);
-                sessionStorage.setItem('gasWatch_sessZip', rawZip);
-                sessionStorage.setItem('gasWatch_sessStoreName', rawStore);
-                sessionStorage.setItem('gasWatch_sessRadius', quickSliderVal);
-                sessionStorage.setItem('gasWatch_sessFuel', window.activeFuelType);
-                sessionStorage.setItem('gasWatch_sessMaxPrice', quickPriceVal);
-
-                let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : rawCity);
-
-                // 2. If the user checked "Set as default preference", update preferences -> sets localStorage
-                if (document.getElementById('saveFiltersAsPrefs')?.checked) {
-                    localStorage.setItem(PREF_KEYS.radius, quickSliderVal);
-                    localStorage.setItem(PREF_KEYS.fuel, window.activeFuelType);
-                    localStorage.setItem(PREF_KEYS.maxPrice, quickPriceVal);
-
-                    // If they entered a location filter, make that the new Home Base preference too
-                    if (composedLocation) {
-                        localStorage.setItem(PREF_KEYS.homeBase, composedLocation);
-                        window.activeHomeBaseLocation = composedLocation;
-                    }
-
-                    mirrorStateToUIForms();
-                }
-
-                if (!composedLocation) {
-                    composedLocation = document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY;
-                }
-
-                getPricesNow(composedLocation);
-
-                const displayPanel = document.getElementById("filterDisplay");
-                if (displayPanel) displayPanel.style.display = "none";
-            });
         }
-        
-        document.getElementById("clearFiltersBtn")?.addEventListener("click", function(e) {
-            e.preventDefault();
-            sessionStorage.clear();
+    });
+});
 
-            window.activeRadiusMiles = parseInt(localStorage.getItem(PREF_KEYS.radius) || '10', 10) || 10;
-            window.activeFuelType = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
-            const rawLocalPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
-            window.maxPriceAllowed = rawLocalPrice !== '' ? parseFloat(rawLocalPrice) : null;
 
-            const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
-            if (saveCheckbox) saveCheckbox.checked = false;
+/* ==========================================================================
+   STAGE 3: RUNTIME STATE STORAGE HYDRATION & MIRRORING
+   ========================================================================== */
+function hydrateRuntimeState() {
+    const resolveState = (sessKey, localKey, defaultVal) => {
+        const sess = sessionStorage.getItem(sessKey);
+        if (sess !== null) return sess;
+        const local = localStorage.getItem(localKey);
+        return local !== null ? local : defaultVal;
+    };
 
-            mirrorStateToUIForms();
-            
-            const targetQuery = window.activeHomeBaseLocation || document.getElementById("searchBar")?.value.trim() || FALLBACK_CITY;
-            getPricesNow(targetQuery);
-        });
+    window.activeRadiusMiles = parseInt(resolveState('gasWatch_sessRadius', PREF_KEYS.radius, '10'), 10) || 10;
+    window.activeFuelType = resolveState('gasWatch_sessFuel', PREF_KEYS.fuel, 'regular');
+    window.activeSortPreference = localStorage.getItem(PREF_KEYS.sort) || 'price';
+    window.activeHomeBaseLocation = localStorage.getItem(PREF_KEYS.homeBase) || "";
+
+    const rawMaxPrice = resolveState('gasWatch_sessMaxPrice', PREF_KEYS.maxPrice, '');
+    window.maxPriceAllowed = rawMaxPrice !== '' ? parseFloat(rawMaxPrice) : null;
+
+    applyTextScaling(localStorage.getItem(PREF_KEYS.text) || 'normal', false);
+    applyMarkerContrast(localStorage.getItem(PREF_KEYS.contrast) || 'normal', false);
+}
+
+function mirrorStateToUIForms() {
+    const syncVal = (elementId, val) => {
+        const el = document.getElementById(elementId);
+        if (el) el.value = val || '';
+    };
+
+    syncVal('fuelType', window.activeFuelType);
+    syncVal('filterMaxPrice', window.maxPriceAllowed);
+    
+    const distanceSlider = document.getElementById("distanceRange");
+    const distanceLabel = document.getElementById("distanceValue");
+    if (distanceSlider) distanceSlider.value = window.activeRadiusMiles;
+    if (distanceLabel) {
+        if (distanceLabel.tagName === "INPUT") distanceLabel.value = window.activeRadiusMiles;
+        else distanceLabel.textContent = window.activeRadiusMiles;
     }
 
-    function searchLocation(customTargetId) {
-        if (window.isSearching) return;
-        
+    syncVal('filterAddress', sessionStorage.getItem('gasWatch_sessAddress'));
+    syncVal('filterCity', sessionStorage.getItem('gasWatch_sessCity'));
+    syncVal('filterState', sessionStorage.getItem('gasWatch_sessState'));
+    syncVal('filterZip', sessionStorage.getItem('gasWatch_sessZip'));
+    syncVal('filterStoreName', sessionStorage.getItem('gasWatch_sessStoreName'));
+
+    syncVal('prefHomeBase', window.activeHomeBaseLocation);
+    syncVal('prefDefaultFuel', window.activeFuelType);
+    syncVal('prefDefaultRadius', window.activeRadiusMiles);
+    syncVal('prefMaxPrice', window.maxPriceAllowed !== null ? window.maxPriceAllowed : '');
+    syncVal('prefDefaultSort', window.activeSortPreference);
+    syncVal('prefMapSkin', localStorage.getItem(PREF_KEYS.skin) || 'google');
+    syncVal('prefTextSize', localStorage.getItem(PREF_KEYS.text) || 'normal');
+    syncVal('prefMarkerContrast', localStorage.getItem(PREF_KEYS.contrast) || 'normal');
+}
+
+
+/* ==========================================================================
+   STAGE 4: CLIENT INTERACTIVE HANDLERS & UNIFIED SEARCH CONTROLLER
+   ========================================================================== */
+function searchLocation(customTargetId, overrideQuery) {
+    if (window.isSearching) return;
+    
+    let rawInput = "";
+    if (overrideQuery) {
+        rawInput = overrideQuery;
+    } else {
         const targetId = (typeof customTargetId === 'string') ? customTargetId : 'searchBar';
         const bar = document.getElementById(targetId);
-        const input = bar ? bar.value.trim() : "";
-        
-        if (!input) return;
-        bar.blur();
-        
-        window.activeHomeBaseLocation = input;
-        getPricesNow(input);
+        rawInput = bar ? bar.value.trim() : "";
+        if (bar) bar.blur();
+    }
+    
+    if (!rawInput) return;
+
+    // Run unified parser engine
+    const parsedLocation = parseLocationQuery(rawInput);
+    window.activeHomeBaseLocation = parsedLocation;
+
+    // Build backend priority query string
+    let priorityQuery = "";
+    let queryType = "general"; // Default type
+
+    if (parsedLocation.city && parsedLocation.state) {
+        priorityQuery = `${parsedLocation.city}, ${parsedLocation.state}`;
+        queryType = "city_state";
+    } else if (parsedLocation.city) {
+        priorityQuery = parsedLocation.city;
+        queryType = "city";
+    } else if (parsedLocation.zip) {
+        priorityQuery = parsedLocation.zip;
+        queryType = "zip";
+    } else if (parsedLocation.state) {
+        priorityQuery = parsedLocation.state;
+        queryType = "state";
+    } else {
+        priorityQuery = parsedLocation.storeOrAddress || rawInput;
+        queryType = "text_fallback";
     }
 
-    function triggerNetworkOrClientRefresh() {
-        const currentSearch = document.getElementById("searchBar")?.value.trim() || "";
-        const targetQuery = currentSearch || window.activeHomeBaseLocation || FALLBACK_CITY;
-        getPricesNow(targetQuery);
+    // Pass both the text query, the explicit type, and the parsed components
+    getPricesNow(priorityQuery, false, {
+        queryType: queryType,
+        components: parsedLocation
+    });
+}
+
+function setupInteractiveComponentsListeners() {
+    const searchBar = document.getElementById("searchBar");
+    searchBar?.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") { e.preventDefault(); searchLocation('searchBar'); }
+    });
+    document.getElementById("extSearchIcon")?.addEventListener("click", function(e) {
+        e.preventDefault(); searchLocation('searchBar');
+    });
+
+    document.getElementById("distanceRange")?.addEventListener("input", function() {
+        const distanceLabel = document.getElementById("distanceValue");
+        if (distanceLabel) {
+            if (distanceLabel.tagName === "INPUT") distanceLabel.value = this.value;
+            else distanceLabel.textContent = this.value;
+        }
+        window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+        applyClientSideMapFilters();
+    });
+
+    document.getElementById("fuelType")?.addEventListener("change", function() {
+        window.activeFuelType = this.value;
+        triggerNetworkOrClientRefresh();
+    });
+
+    document.getElementById("filterMaxPrice")?.addEventListener("input", function() {
+        const parsedVal = this.value.trim();
+        window.maxPriceAllowed = parsedVal !== "" ? parseFloat(parsedVal) : null;
+        applyClientSideMapFilters();
+    });
+
+    ['filterAddress', 'filterCity', 'filterZip', 'filterStoreName'].forEach(fieldId => {
+        document.getElementById(fieldId)?.addEventListener("input", debouncedClientFilter);
+    });
+
+    document.getElementById('prefHomeBase')?.addEventListener('change', function() {
+        const freshHome = this.value.trim();
+        localStorage.setItem(PREF_KEYS.homeBase, freshHome);
+        window.activeHomeBaseLocation = freshHome;
+        if (freshHome) searchLocation(null, freshHome);
+    });
+
+    document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.fuel, this.value);
+        window.activeFuelType = this.value;
+        const quickFuel = document.getElementById('fuelType');
+        if (quickFuel) quickFuel.value = this.value;
+        triggerNetworkOrClientRefresh();
+    });
+
+    document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.radius, this.value);
+        window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+        
+        const quickSlider = document.getElementById('distanceRange');
+        const quickLabel = document.getElementById('distanceValue');
+        if (quickSlider) quickSlider.value = this.value;
+        if (quickLabel) {
+            if (quickLabel.tagName === "INPUT") quickLabel.value = this.value;
+            else quickLabel.textContent = this.value;
+        }
+        triggerNetworkOrClientRefresh();
+    });
+
+    document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
+        const freshMax = this.value.trim();
+        localStorage.setItem(PREF_KEYS.maxPrice, freshMax);
+        window.maxPriceAllowed = freshMax !== '' ? parseFloat(freshMax) : null;
+
+        const quickPrice = document.getElementById('filterMaxPrice');
+        if (quickPrice) quickPrice.value = freshMax;
+        applyClientSideMapFilters();
+    });
+
+    document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.sort, this.value);
+        window.activeSortPreference = this.value;
+        applyClientSideMapFilters();
+    });
+
+    document.getElementById('prefMapSkin')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.skin, this.value);
+        switchMapTheme(this.value);
+    });
+
+    document.getElementById('prefTextSize')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.text, this.value);
+        applyTextScaling(this.value, true);
+    });
+    
+    document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
+        localStorage.setItem(PREF_KEYS.contrast, this.value);
+        applyMarkerContrast(this.value, true);
+    });
+
+    const filterForm = document.querySelector(".filterForm");
+    if (filterForm) {
+        filterForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const rawAddress = document.getElementById("filterAddress")?.value.trim() || "";
+            const rawCity = document.getElementById("filterCity")?.value.trim() || "";
+            const rawState = document.getElementById("filterState")?.value.trim() || "";
+            const rawZip = document.getElementById("filterZip")?.value.trim() || "";
+            const rawStore = document.getElementById("filterStoreName")?.value.trim() || "";
+            const quickSliderVal = document.getElementById("distanceRange")?.value || "10";
+            const quickPriceVal = document.getElementById("filterMaxPrice")?.value.trim() || "";
+
+            sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
+            sessionStorage.setItem('gasWatch_sessCity', rawCity);
+            sessionStorage.setItem('gasWatch_sessState', rawState);
+            sessionStorage.setItem('gasWatch_sessZip', rawZip);
+            sessionStorage.setItem('gasWatch_sessStoreName', rawStore);
+            sessionStorage.setItem('gasWatch_sessRadius', quickSliderVal);
+            sessionStorage.setItem('gasWatch_sessFuel', window.activeFuelType);
+            sessionStorage.setItem('gasWatch_sessMaxPrice', quickPriceVal);
+
+            let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : rawCity);
+
+            if (document.getElementById('saveFiltersAsPrefs')?.checked) {
+                localStorage.setItem(PREF_KEYS.radius, quickSliderVal);
+                localStorage.setItem(PREF_KEYS.fuel, window.activeFuelType);
+                localStorage.setItem(PREF_KEYS.maxPrice, quickPriceVal);
+
+                if (composedLocation) {
+                    localStorage.setItem(PREF_KEYS.homeBase, composedLocation);
+                    window.activeHomeBaseLocation = composedLocation;
+                }
+                mirrorStateToUIForms();
+            }
+
+            if (!composedLocation) {
+                composedLocation = document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY;
+            }
+
+            searchLocation(null, composedLocation);
+
+            const displayPanel = document.getElementById("filterDisplay");
+            if (displayPanel) displayPanel.style.display = "none";
+        });
     }
+    
+    document.getElementById("clearFiltersBtn")?.addEventListener("click", function(e) {
+        e.preventDefault();
+        sessionStorage.clear();
+
+        window.activeRadiusMiles = parseInt(localStorage.getItem(PREF_KEYS.radius) || '10', 10) || 10;
+        window.activeFuelType = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
+        const rawLocalPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
+        window.maxPriceAllowed = rawLocalPrice !== '' ? parseFloat(rawLocalPrice) : null;
+
+        const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
+        if (saveCheckbox) saveCheckbox.checked = false;
+
+        mirrorStateToUIForms();
+        
+        const targetQuery = window.activeHomeBaseLocation || document.getElementById("searchBar")?.value.trim() || FALLBACK_CITY;
+        searchLocation(null, targetQuery);
+    });
+}
+
+function triggerNetworkOrClientRefresh() {
+    const currentSearch = document.getElementById("searchBar")?.value.trim() || "";
+    const targetQuery = currentSearch || window.activeHomeBaseLocation || FALLBACK_CITY;
+    searchLocation(null, targetQuery);
+}
 
 
 /* ==========================================================================
    STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
    ========================================================================== */
-/**
- * GLOBAL STATE MANAGEMENT
- * Prevents multiple intervals from overlapping
- */
 window.activePollInterval = null;
 
 function clearExistingPoll() {
@@ -4570,25 +4660,18 @@ function clearExistingPoll() {
     }
 }
 
-/**
- * Defensive check to safely filter out stations with missing coordinates
- */
 function getValidStations() {
     return (window.globalRawStations || []).filter(s => 
         s.lat !== null && s.lon !== null && !isNaN(s.lat) && !isNaN(s.lon)
     );
 }
 
-/**
- * Unified Status UI: Displays centered, non-disruptive notifications
- */
 function updateStatusUI(message, options = {}) {
     const existing = document.getElementById('status-container');
     if (existing) existing.remove();
 
     const container = document.createElement('div');
     container.id = 'status-container';
-
     container.style.cssText = `
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
         z-index: 9999; background: #ffffff; padding: 12px 24px; border-radius: 10px; 
@@ -4629,23 +4712,16 @@ function updateStatusUI(message, options = {}) {
 
 async function pollForCompletion(query) {
     clearExistingPoll();
-    const startTime = Date.now(); // 1. Record start time
+    const startTime = Date.now();
     
     window.activePollInterval = setInterval(async () => {
         try {
-            console.log('trying...');
-
-            // 2. Buffer: Do not check until at least 8-10 seconds have passed
             if (Date.now() - startTime < 10000) return;
             
-            console.log('fetching...');
-
             const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
             if (!res.ok) throw new Error("Server error");
             
             const { hasNulls } = await res.json();
-            
-            console.log('waiting...');
             
             if (!hasNulls) {
                 clearExistingPoll();
@@ -4654,32 +4730,26 @@ async function pollForCompletion(query) {
                     onYes: () => {
                         const container = document.getElementById('status-container');
                         if (container) container.remove();
-                        const searchBar = document.getElementById("searchBar");
-                        searchBar?.classList.remove("loading");
+                        document.getElementById("searchBar")?.classList.remove("loading");
                         getPricesNow(query, false); 
                     },
                     onNo: () => console.log("User dismissed final refresh")
                 });
             }
-
-            console.log('Clear!');
-
         } catch (err) {
             console.warn("Polling attempt failed, retrying in 5s...", err.message);
         }
     }, 5000);
 }
 
-async function getPricesNow(searchQuery, forceRefresh = false) {
+async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
     if (window.isSearching && !forceRefresh) return;
     
-    // 1. Reset state before starting
     clearExistingPoll();
     window.isSearching = true;
     const searchBar = document.getElementById("searchBar");
     searchBar?.classList.add("loading");
 
-    // Immediate feedback for the user
     updateStatusUI("Searching database...", { persistent: true });
 
     try {
@@ -4688,9 +4758,12 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
         const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                               (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || "Denver");
+                                   (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
 
-        // Geocoding Helper
+        // --- DEBUG LOG ---
+        console.log("📤 Sending Gas Price Request to Backend:", sanitizedQuery);
+
+        // Frontend Geocoding Cache FlyTo Check
         const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
         const cachedCoords = localStorage.getItem(cacheKey);
         if (cachedCoords) {
@@ -4706,6 +4779,8 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 search: sanitizedQuery, 
+                queryType: meta.queryType || "general", // Maps safely to the passed meta object
+                components: meta.components || {},      // Maps safely to the passed components
                 fuelGradeSelection: window.activeFuelType || "regular",
                 forceRefresh: forceRefresh 
             })
@@ -4715,21 +4790,18 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         
         const responseData = await response.json();
 
-        // 2. Handle Logic States
         if (responseData.status === "STALE") {
             updateStatusUI(responseData.message, {
-                onYes: () => getPricesNow(sanitizedQuery, true),
+                onYes: () => getPricesNow(sanitizedQuery, true, meta), // Preserve meta on refresh
                 onNo: () => console.log("User kept current data")
             });
-        } 
-        else if (responseData.info) {
+        } else if (responseData.info) {
             updateStatusUI(responseData.info, { persistent: true });
             if (responseData.info.includes("Geocoding")) {
                 pollForCompletion(sanitizedQuery);
             }
         }
 
-        // 3. Render Stations
         const stations = responseData.stations || [];
         const isGeocoding = responseData.info?.includes("Geocoding");
         
@@ -4744,7 +4816,6 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
             zip: s.zip || ""
         }));
 
-        // PRO MOVE: Defensive check to prevent empty map warnings during geocoding
         const validStations = getValidStations();
         if (validStations.length > 0) {
             if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
@@ -4758,198 +4829,193 @@ async function getPricesNow(searchQuery, forceRefresh = false) {
         console.error("🔴 Sync failed:", error);
         updateStatusUI("Sync failed. Please try again.", { persistent: false });
     } finally {
-        // ALWAYS reset state
         window.isSearching = false;
         searchBar?.classList.remove("loading");
     }
 }
+
+
 /* ==========================================================================
-        STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
-        ========================================================================== */
+   STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
+   ========================================================================== */
+function applyClientSideMapFilters() {
+    if (!window.map) return;
 
-    function applyClientSideMapFilters() {
-        if (!window.map) return;
+    const filters = {
+        address: document.getElementById('filterAddress')?.value.trim().toLowerCase(),
+        city: document.getElementById('filterCity')?.value.trim().toLowerCase(),
+        zip: document.getElementById('filterZip')?.value.trim(),
+        store: document.getElementById('filterStoreName')?.value.trim().toLowerCase(),
+        maxPrice: window.maxPriceAllowed
+    };
 
-        // 1. Gather Filter Data
-        const filters = {
-            address: document.getElementById('filterAddress')?.value.trim().toLowerCase(),
-            city: document.getElementById('filterCity')?.value.trim().toLowerCase(),
-            zip: document.getElementById('filterZip')?.value.trim(),
-            store: document.getElementById('filterStoreName')?.value.trim().toLowerCase(),
-            maxPrice: window.maxPriceAllowed
-        };
-
-        // 2. Perform Filter & Sort (Pure Data Operations)
-        const processed = window.globalRawStations
-            .filter(s => {
-                if (filters.maxPrice && s.price > filters.maxPrice) return false;
-                if (filters.address && !s.address?.toLowerCase().includes(filters.address)) return false;
-                if (filters.city && !s.city?.toLowerCase().includes(filters.city)) return false;
-                if (filters.zip && !s.zip?.includes(filters.zip)) return false;
-                if (filters.store && !s.name?.toLowerCase().includes(filters.store)) return false;
-                return true;
-            })
-            .sort((a, b) => {
-                return window.activeSortPreference === 'price' 
-                    ? (a.price - b.price) 
-                    : (a.distance - b.distance);
-            });
-
-        // 3. UI Update (DOM Manipulation Only)
-        clearMarkers();
-        processed.forEach(s => renderStationMarker(s));
-        
-        if (typeof rebuildSidebarStationList === "function") {
-            rebuildSidebarStationList(processed);
-        }
-
-        // 4. Smooth Viewport Adjustment
-        if (processed.length > 0) {
-            const bounds = processed.map(s => [s.lat, s.lon]);
-            window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
-        }
-    }
-        
-    /* ==========================================================================
-        STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
-        ========================================================================== */
-    function switchMapTheme(themeName) {
-        if (typeof window.map === 'undefined' || !window.map || typeof window.map.addLayer !== 'function') return;
-
-        if (window.currentTileLayer) window.map.removeLayer(window.currentTileLayer);
-
-        const activeTheme = themeName || 'google';
-        const targetUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
-        const targetAttribution = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
-
-        window.map.eachLayer(function(layer) {
-            if (layer instanceof L.TileLayer) {
-                window.map.removeLayer(layer);
-            }
+    const processed = window.globalRawStations
+        .filter(s => {
+            if (filters.maxPrice && s.price > filters.maxPrice) return false;
+            if (filters.address && !s.address?.toLowerCase().includes(filters.address)) return false;
+            if (filters.city && !s.city?.toLowerCase().includes(filters.city)) return false;
+            if (filters.zip && !s.zip?.includes(filters.zip)) return false;
+            if (filters.store && !s.name?.toLowerCase().includes(filters.store)) return false;
+            return true;
+        })
+        .sort((a, b) => {
+            return window.activeSortPreference === 'price' 
+                ? (a.price - b.price) 
+                : (a.distance - b.distance);
         });
 
-        const tileOptions = {
-            maxZoom: 20,
-            minZoom: 4,
-            updateWhenIdle: true,
-            attribution: targetAttribution
-        };
-
-        if (activeTheme !== 'google') {
-            tileOptions.subdomains = 'abc';
-        }
-
-        window.currentTileLayer = L.tileLayer(targetUrl, tileOptions).addTo(window.map);
-
-        const dynamicStyleId = 'dynamic-dark-popup-override';
-        let popupStyleElement = document.getElementById(dynamicStyleId);
-        
-        if (!popupStyleElement) {
-            popupStyleElement = document.createElement('style');
-            popupStyleElement.id = dynamicStyleId;
-            document.head.appendChild(popupStyleElement);
-        }
-        
-        if (activeTheme === 'midnight') {
-            popupStyleElement.innerHTML = `
-                .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
-                .custom-popup h3 { color: #f5f8ff !important; }
-                .custom-popup p { color: #dee0e3 !important; }
-                .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
-            `;
-        } else {
-            popupStyleElement.innerHTML = ''; 
-        }
+    clearMarkers();
+    processed.forEach(s => renderStationMarker(s));
+    
+    if (typeof rebuildSidebarStationList === "function") {
+        rebuildSidebarStationList(processed);
     }
 
-    function renderStationMarker(station) {
-        if (!window.map || !station) return;
+    if (processed.length > 0) {
+        const bounds = processed.map(s => [s.lat, s.lon]);
+        window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
+    }
+}
+      
+  
+/* ==========================================================================
+   STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
+   ========================================================================== */
+function switchMapTheme(themeName) {
+    if (typeof window.map === 'undefined' || !window.map || typeof window.map.addLayer !== 'function') return;
 
-        // 🎯 FIXED: Reconfigured Leaflet Icon declaration to utilize structured center anchors to avoid marker drifting
-        const priceIcon = L.divIcon({
-            className: 'gas-price-marker', 
-            html: `<div class="marker-pin-bubble">${station.displayPrice}</div>`,     
-            iconSize: [60, 30],         // Defined default bound limits to anchor reliably
-            iconAnchor: [30, 15]        // Anchored perfectly over coordinates regardless of font scales
-        });
+    if (window.currentTileLayer) window.map.removeLayer(window.currentTileLayer);
 
-        let displayTime = "Updated recently";
-        if (station.postedTime) {
-            try {
-                displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
-            } catch(e) { displayTime = station.postedTime; }
+    const activeTheme = themeName || 'google';
+    const targetUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
+    const targetAttribution = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
+
+    window.map.eachLayer(function(layer) {
+        if (layer instanceof L.TileLayer) {
+            window.map.removeLayer(layer);
         }
+    });
 
-        const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(window.map);
-        marker.bindPopup(`
-            <b>${station.name}</b><br>
-            ${station.address}<br>
-            <b>${station.displayPrice}</b><br>
-            <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
-                🕒 ${displayTime}
-            </div>
-        `);
+    const tileOptions = {
+        maxZoom: 20,
+        minZoom: 4,
+        updateWhenIdle: true,
+        attribution: targetAttribution
+    };
 
-        window.markers.push(marker);
+    if (activeTheme !== 'google') {
+        tileOptions.subdomains = 'abc';
     }
 
-    /* IMPROVED: Marker Management with Memory Protection */
-    function clearMarkers() {
-        if (window.markers && window.markers.length > 0) {
-            window.markers.forEach(marker => {
-                if (marker && marker.off) marker.off(); // Remove internal events
-                if (window.map) window.map.removeLayer(marker);
+    window.currentTileLayer = L.tileLayer(targetUrl, tileOptions).addTo(window.map);
+
+    const dynamicStyleId = 'dynamic-dark-popup-override';
+    let popupStyleElement = document.getElementById(dynamicStyleId);
+    
+    if (!popupStyleElement) {
+        popupStyleElement = document.createElement('style');
+        popupStyleElement.id = dynamicStyleId;
+        document.head.appendChild(popupStyleElement);
+    }
+    
+    if (activeTheme === 'midnight') {
+        popupStyleElement.innerHTML = `
+            .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
+            .custom-popup h3 { color: #f5f8ff !important; }
+            .custom-popup p { color: #dee0e3 !important; }
+            .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
+        `;
+    } else {
+        popupStyleElement.innerHTML = ''; 
+    }
+}
+
+function renderStationMarker(station) {
+    if (!window.map || !station) return;
+
+    const priceIcon = L.divIcon({
+        className: 'gas-price-marker', 
+        html: `<div class="marker-pin-bubble">${station.displayPrice}</div>`,    
+        iconSize: [60, 30],        
+        iconAnchor: [30, 15]       
+    });
+
+    let displayTime = "Updated recently";
+    if (station.postedTime) {
+        try {
+            displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             });
-            window.markers = []; // Force garbage collection reference
-        }
+        } catch(e) { displayTime = station.postedTime; }
     }
 
-    function dropDenverWelcomeMarker() {
-        const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
-            icon: L.divIcon({ className: 'black-marker-icon' })
-        }).addTo(window.map);
-        
-        centerMarker.bindPopup(`
-            <div class="custom-popup">
-                <h3>Welcome to Denver!</h3>
-                <p>Set your custom location in <b>Preferences</b> to update your default starting view area.</p>
-            </div>
-        `).openPopup();
-        window.markers.push(centerMarker);
-    }
+    const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(window.map);
+    marker.bindPopup(`
+        <b>${station.name}</b><br>
+        ${station.address}<br>
+        <b>${station.displayPrice}</b><br>
+        <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+            🕒 ${displayTime}
+        </div>
+    `);
 
-    function applyTextScaling(scale, triggerRefresh = true) {
-        if (scale === 'large') {
-            document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
-            document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
-        } else {
-            document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
-            document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
-        }
-        if (triggerRefresh) applyClientSideMapFilters();
-    }
+    window.markers.push(marker);
+}
 
-    function applyMarkerContrast(mode, triggerRefresh = true) {
-        const contrastStyleId = 'dynamic-marker-contrast-override';
-        let styleEl = document.getElementById(contrastStyleId);
-        
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = contrastStyleId;
-            document.head.appendChild(styleEl);
-        }
-        
-        styleEl.innerHTML = (mode === 'high') ? `
-            .gas-price-marker { 
-                box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
-                font-weight: 800 !important;
-                border: 2px solid #000 !important;
-            }` : '';
-            
-        if (triggerRefresh) applyClientSideMapFilters();
+function clearMarkers() {
+    if (window.markers && window.markers.length > 0) {
+        window.markers.forEach(marker => {
+            if (marker && marker.off) marker.off();
+            if (window.map) window.map.removeLayer(marker);
+        });
+        window.markers = [];
     }
+}
+
+function dropDenverWelcomeMarker() {
+    const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
+        icon: L.divIcon({ className: 'black-marker-icon' })
+    }).addTo(window.map);
+    
+    centerMarker.bindPopup(`
+        <div class="custom-popup">
+            <h3>Welcome to Denver!</h3>
+            <p>Set your custom location in <b>Preferences</b> to update your default starting view area.</p>
+        </div>
+    `).openPopup();
+    window.markers.push(centerMarker);
+}
+
+function applyTextScaling(scale, triggerRefresh = true) {
+    if (scale === 'large') {
+        document.documentElement.style.setProperty('--gas-marker-font-size', '16px');
+        document.documentElement.style.setProperty('--gas-marker-padding', '6px 10px');
+    } else {
+        document.documentElement.style.setProperty('--gas-marker-font-size', '13px');
+        document.documentElement.style.setProperty('--gas-marker-padding', '4px 8px');
+    }
+    if (triggerRefresh) applyClientSideMapFilters();
+}
+
+function applyMarkerContrast(mode, triggerRefresh = true) {
+    const contrastStyleId = 'dynamic-marker-contrast-override';
+    let styleEl = document.getElementById(contrastStyleId);
+    
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = contrastStyleId;
+        document.head.appendChild(styleEl);
+    }
+    
+    styleEl.innerHTML = (mode === 'high') ? `
+        .gas-price-marker { 
+            box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
+            font-weight: 800 !important;
+            border: 2px solid #000 !important;
+        }` : '';
+        
+    if (triggerRefresh) applyClientSideMapFilters();
+}
 </script>
 
         <script type="text/javascript"> var infolinks_pid = 3446312; var infolinks_wsid = 0; </script> <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
