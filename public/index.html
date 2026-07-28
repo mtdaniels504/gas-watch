@@ -1390,7 +1390,6 @@
     height: 100%;
     max-height: 64dvh;
     padding: 6px 8px;
-    background: #fff;
     font-family: 'Satoshi', sans-serif;
     overflow-x: hidden;
     overflow-y: auto;
@@ -1402,21 +1401,17 @@
     align-items: center;
     margin-bottom: 6px;
     padding-bottom: 4px;
-    border-bottom: 1.5px solid #eceef2;
 }
 
 .sidebar-list-header h3 {
     font-weight: 625;
     font-size: clamp(0.7rem, 0.375rem + 1.06dvw, .9rem);
-    color: #0060b5;
     margin: 0;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-list-header span, 
 #stationCountBadge {
     font-size: clamp(0.45rem, 0.3rem + 0.7dvw, 0.55rem);
-    color: #666;
     font-weight: 600;
 }
 
@@ -1430,24 +1425,17 @@
 }
 
 .station-card {
-    background: linear-gradient(178deg, #fff 0%, #eceef2 100%);
-    border: 1px solid #e5e6e7;
     border-radius: 4px;
     padding: 6px 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
 }
 
 .station-card:hover {
-    background: #fff;
-    border-color: #0060b5;
     transform: translateY(-1px);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
 }
 
 .station-card-top {
-    background: linear-gradient(178deg, #fff 0%, #eceef2 100%);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1457,48 +1445,32 @@
 .station-name {
     font-weight: 625;
     font-size: clamp(0.6rem, 0.35rem + 0.9dvw, 0.8rem);
-    color: #121418;
     margin: 0;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .station-price-badge {
-    background: linear-gradient(178deg, #2274c7 0%, #075baf 100%);
-    color: #fff;
     font-weight: 600;
     font-size: clamp(0.5rem, 0.3rem + 0.65dvw, 0.7rem);
     padding: 2px 6px;
     border-radius: 3px;
-    border: 1px solid #0060b5;
     white-space: nowrap;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
 }
 
 .station-address {
     font-size: clamp(0.45rem, 0.28em + 0.61dvw, 0.58rem);
-    color: #121418;
     margin: 4px 0;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.03);
-}
-
-.station-card-body { 
-    background: linear-gradient(178deg, #fff 0%, #eceef2 100%);
 }
 
 .station-card-footer {
-    background: transparent;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: clamp(0.425rem, 0.25rem + 0.55dvw, 0.52rem);
-    border-top: 1px solid #eceef2;
-    color: #121418;
     padding-top: 4px;
 }
 
 .station-card-footer span:last-child {
     font-weight: 600;
-    color: #0060b5;
 }
 
             /*displayReport*/
@@ -3278,6 +3250,21 @@
                     '.exitFChat': {border: '1px solid #0f5999', background: 'linear-gradient(180deg, #075baf 0%, #2274c7 100%)', color: '#ffffff'},
                     '.exitFChat:hover': {background: 'linear-gradient(180deg, #0f5999 0%, #1160af 100%)'},
                     '.exitFChat:focus': {background: 'linear-gradient(180deg, #075baf 0%, #1160af 100%)'},
+
+                    // Add these lines inside your intLightNorm palette object:
+                    '#sortList': { background: `${white1}` },
+                    '.sidebar-list-header': { 'border-bottom': '1.5px solid #eceef2' },
+                    '.sidebar-list-header h3': { color: `${accentColor}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.05)' },
+                    '.sidebar-list-header span, #stationCountBadge': { color: `${greyDark}` },
+                    '.station-card': { background: 'linear-gradient(178deg, #fff 0%, #eceef2 100%)', border: '1px solid #e5e6e7', 'box-shadow': '0 0 10px rgba(0, 0, 0, 0.03)' },
+                    '.station-card:hover': { background: `${white1}`, 'border-color': `${accentColor}`, 'box-shadow': '0 0 10px rgba(0, 0, 0, 0.06)' },
+                    '.station-card-top': { background: 'linear-gradient(178deg, #fff 0%, #eceef2 100%)' },
+                    '.station-name': { color: `${black1}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.05)' },
+                    '.station-price-badge': { background: 'linear-gradient(178deg, #2274c7 0%, #075baf 100%)', color: `${white1}`, border: `1px solid ${accentColor}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.03)' },
+                    '.station-address': { color: `${black1}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.03)' },
+                    '.station-card-body': { background: 'linear-gradient(178deg, #fff 0%, #eceef2 100%)' },
+                    '.station-card-footer': { background: 'transparent', 'border-top': '1px solid #eceef2', color: `${black1}` },
+                    '.station-card-footer span:last-child': { color: `${accentColor}` },
                 },
 
                 intLightNeon: {
@@ -3362,6 +3349,26 @@
                     '.exitFChat': {border: `1px solid ${cobaltLight}`, background: `linear-gradient(180deg, ${cobalt2} 0%, ${cobaltLight} 100%)`, color: `${white1}`},
                     '.exitFChat:hover': {background: `linear-gradient(180deg, ${cobalt1} 0%, ${cobaltDark} 100%)`, 'box-shadow': `0 0 16px rgba(7, 91, 175, 0.4)`},
                     '.exitFChat:focus': {background: `linear-gradient(180deg, ${cobaltLight} 0%, ${cobalt2} 100%)`},
+
+                    // --- LIGHT NEON SIDEBAR STATION LIST STYLING ---
+                    '#sortList': { background: `${white2}` },
+                    '.sidebar-list-header': { 'border-bottom': `1.5px solid ${whiteBlueNeon}` },
+                    '.sidebar-list-header h3': { color: `${cobalt1}`, 'text-shadow': '0 0 10px rgba(7, 91, 175, 0.3)' },
+                    '.sidebar-list-header span, #stationCountBadge': { color: `${cobaltDark}` },
+
+                    '.station-card': { background: `linear-gradient(178deg, ${white1} 0%, ${whiteBlue} 100%)`, border: `1.5px solid ${cobalt2}`, 'box-shadow': '0 0 15px rgba(7, 91, 175, 0.1)' },
+                    '.station-card:hover': { background: `${white1}`, 'border-color': `${cobaltLight}`, 'box-shadow': '0 0 25px rgba(34, 116, 199, 0.25)' },
+
+                    '.station-card-top': { background: 'transparent' },
+                    '.station-name': { color: `${cobalt1}`, 'text-shadow': '0 0 8px rgba(7, 91, 175, 0.25)' },
+
+                    '.station-price-badge': { background: `linear-gradient(178deg, ${cobaltLight} 0%, ${cobalt1} 100%)`, color: `${white1}`, border: `1.5px solid ${whiteBlueNeon}`, 'box-shadow': '0 0 10px rgba(34, 116, 199, 0.3)' },
+
+                    '.station-address': { color: `${cobaltDark}` },
+                    '.station-card-body': { background: 'transparent' },
+
+                    '.station-card-footer': { background: 'transparent', 'border-top': `1px solid ${whiteBlueNeon}`, color: `${cobaltDark}` },
+                    '.station-card-footer span:last-child': { color: `${cobalt1}` },
                 },
 
 
@@ -3450,7 +3457,22 @@
 
                     // 💎 Flawless neutral separation for overlay drawers on standard dark mode
                     '.subNav, .filterDisplay': {background: 'rgba(18, 20, 24, 0.95)', border: '1px solid rgba(255, 255, 255, 0.15)', 'box-shadow': '0 20px 40px rgba(0, 0, 0, 0.85), 0 0 12px rgba(242, 242, 246, 0.02)', 'backdrop-filter': 'blur(10px)'},
-                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.04)', 'margin-top': '4px', padding: '4px'}
+                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.04)', 'margin-top': '4px', padding: '4px'},
+
+                    // Add these lines inside your dark palette object:
+                    '#sortList': { background: `${black1}` },
+                    '.sidebar-list-header': { 'border-bottom': '1.5px solid rgba(255, 255, 255, 0.12)' },
+                    '.sidebar-list-header h3': { color: `${white1}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.5)' },
+                    '.sidebar-list-header span, #stationCountBadge': { color: `${grey2}` },
+                    '.station-card': { background: 'rgba(18, 20, 24, 0.65)', border: '1px solid rgba(255, 255, 255, 0.12)', 'box-shadow': '0 4px 20px rgba(0, 0, 0, 0.5)' },
+                    '.station-card:hover': { background: 'rgba(18, 20, 24, 0.75)', 'border-color': 'rgba(255, 255, 255, 0.25)', 'box-shadow': '0 10px 30px rgba(0, 0, 0, 0.65)' },
+                    '.station-card-top': { background: 'transparent' },
+                    '.station-name': { color: `${white2}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.4)' },
+                    '.station-price-badge': { background: 'linear-gradient(178deg, #222 0%, #111 100%)', color: `${white1}`, border: '1px solid rgba(255, 255, 255, 0.15)', 'box-shadow': '0 4px 12px rgba(0, 0, 0, 0.4)' },
+                    '.station-address': { color: `${white2}` },
+                    '.station-card-body': { background: 'transparent' },
+                    '.station-card-footer': { background: 'transparent', 'border-top': '1px solid rgba(255, 255, 255, 0.1)', color: `${white2}` },
+                    '.station-card-footer span:last-child': { color: `${white1}` }
                 },
 
                 darkNeon: {
@@ -3538,7 +3560,22 @@
 
                     // High-octane smoked glass overlay panel isolation strings
                     '.subNav, .filterDisplay': {background: 'rgba(18, 20, 24, 0.5)', border: '1.5px solid ${cobalt1}', 'box-shadow': '0 20px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(7, 91, 175, 0.3)', 'backdrop-filter': 'blur(10px)'},
-                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.45)', border: '1px solid ${cobaltDark}', 'margin-top': '4px', padding: '4px'}
+                    '.subNavMoreBox': {background: 'rgba(0, 0, 0, 0.45)', border: '1px solid ${cobaltDark}', 'margin-top': '4px', padding: '4px'},
+
+                    // Add these lines inside your darkNeon palette object:
+                    '#sortList': { background: `${black2}` },
+                    '.sidebar-list-header': { 'border-bottom': `1.5px solid ${cobaltDark}` },
+                    '.sidebar-list-header h3': { color: `${white1}`, 'text-shadow': '0 0 15px rgba(0, 96, 181, 0.7)' },
+                    '.sidebar-list-header span, #stationCountBadge': { color: `${whiteBlue}` },
+                    '.station-card': { background: 'rgba(0, 0, 0, 0.65)', border: `1.5px solid ${cobalt1}`, 'box-shadow': '0 0 25px rgba(0, 96, 181, 0.35)' },
+                    '.station-card:hover': { background: 'rgba(0, 0, 0, 0.75)', 'border-color': `${cobaltLight}`, 'box-shadow': '0 0 35px rgba(34, 116, 199, 0.6)' },
+                    '.station-card-top': { background: 'transparent' },
+                    '.station-name': { color: `${white1}`, 'text-shadow': '0 0 12px rgba(0, 96, 181, 0.6)' },
+                    '.station-price-badge': { background: `linear-gradient(178deg, ${cobaltDark} 0%, ${black1} 100%)`, color: `${white1}`, border: `1.5px solid ${cobalt1}`, 'box-shadow': '0 0 12px rgba(0, 96, 181, 0.4)' },
+                    '.station-address': { color: `${whiteBlue}` },
+                    '.station-card-body': { background: 'transparent' },
+                    '.station-card-footer': { background: 'transparent', 'border-top': `1.5px solid ${cobaltDark}`, color: `${whiteBlue}` },
+                    '.station-card-footer span:last-child': { color: `${whiteBlueNeon}` }
                 },
             };
 
