@@ -3885,8 +3885,12 @@
 
                 navTab.addEventListener('click', () => {
                     //Display Target Body and Add Actives
-                    targetClass.forEach(t => t.style.display = 'none');
+                    targetClass.forEach(t => {
+                        t.style.display = 'none';
+                        t.classList.remove('active');
+                    });
                     target.style.display = 'block';
+                    target.classList.add('active');
                 });
             });
 
