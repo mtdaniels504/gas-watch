@@ -110,28 +110,28 @@ app.post('/api/gas-prices', async (req, res) => {
 });
 
 app.get('/api/check-progress', async (req, res) => {
-  try {
-    const { query } = req.query;
-    
-    if (!query) {
-      return res.status(400).json({ error: 'Query required' });
+    try {
+        const { query } = req.query;
+        
+        if (!query) {
+            return res.status(400).json({ error: 'Query required' });
+        }
+
+        // Check if any station matching the query still has NULL or empty string lat/lon
+        const { count, error } = await supabase
+            .from('gas_stations')
+            .select('*', { count: 'exact', head: true })
+            .or(`city.ilike.%${query}%,address.ilike.%${query}%`)
+            .or('lat.is.null,lon.is.null,lat.eq.\'\',lon.eq.\'\'');
+
+        if (error) throw error;
+
+        return res.json({ hasNulls: count > 0 });
+
+    } catch (err) {
+        console.error('🚨 Progress Check Error:', err);
+        return res.status(500).json({ error: 'Failed to check progress' });
     }
-
-    // Check if any station matching the query still has NULL lat or lon
-    const { count, error } = await supabase
-      .from('gas_stations')
-      .select('*', { count: 'exact', head: true })
-      .or(`city.ilike.%${query}%,address.ilike.%${query}%`)
-      .or('lat.is.null,lon.is.null');
-
-    if (error) throw error;
-
-    return res.json({ hasNulls: count > 0 });
-
-  } catch (err) {
-    console.error('🚨 Progress Check Error:', err);
-    return res.status(500).json({ error: 'Failed to check progress' });
-  }
 });
 
 // --- SERVER STARTUP ---
