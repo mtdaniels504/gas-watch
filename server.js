@@ -19,21 +19,19 @@ const supabase = createClient(
 
 function applyLocationFilter(queryBuilder, queryType, components) {
   const city = components?.city?.toLowerCase() || '';
-  const state = components?.state?.toLowerCase() || '';
+  const state = components?.state?.toUpperCase() || '';
   const zip = components?.zip || '';
   const storeOrAddress = components?.storeOrAddress?.toLowerCase() || '';
 
   switch (queryType) {
     case 'city_state':
-      // Filters by both city and state address parts
-      return queryBuilder.ilike('city', `%${city}%`).ilike('address', `%${state}%`);
+      return queryBuilder.ilike('city', `%${city}%`).eq('state', state);
     case 'city':
       return queryBuilder.ilike('city', `%${city}%`);
     case 'zip':
       return queryBuilder.eq('zip', zip);
     case 'state':
-      // Filters strictly by state within the address field
-      return queryBuilder.ilike('address', `%${state}%`);
+      return queryBuilder.eq('state', state); // Use exact column match instead of address substring search
     case 'text_fallback':
     default:
       const fallback = storeOrAddress || city || zip;
