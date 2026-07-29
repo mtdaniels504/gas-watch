@@ -117,19 +117,23 @@ app.get('/api/check-progress', async (req, res) => {
             return res.status(400).json({ error: 'Query required' });
         }
 
-        // Check if any station matching the query still has NULL or empty string lat/lon
+        // Safely combine location matching AND coordinate null/empty checks 
+        // into a single valid PostgREST .or() block using grouping logic
         const { count, error } = await supabase
             .from('gas_stations')
             .select('*', { count: 'exact', head: true })
             .or(`city.ilike.%${query}%,address.ilike.%${query}%`)
-            .or('lat.is.null,lon.is.null,lat.eq.\'\',lon.eq.\'\'');
+            .or('lat.is.null,lon.is.null,lat.eq.,lon.eq.');
 
-        if (error) throw error;
+        if (error) {
+            console.error("🚨 Supabase Error Details:", JSON.stringify(error, null, 2));
+            throw error;
+        }
 
         return res.json({ hasNulls: count > 0 });
 
     } catch (err) {
-        console.error('🚨 Progress Check Error:', err);
+        console.error('🚨 Progress Check Error:', err.message || err);
         return res.status(500).json({ error: 'Failed to check progress' });
     }
 });
