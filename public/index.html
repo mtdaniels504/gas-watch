@@ -4377,976 +4377,990 @@
         <script src="https://unpkg.com/@popperjs/core@^2.0.0"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
-<script>
-/* ==========================================================================
-   STAGE 1: GLOBAL APP STATE & DICTIONARY MATRIX CONTAINERS
-   ========================================================================== */
-window.map = window.map || null;
-window.currentTileLayer = window.currentTileLayer || null;
-window.isSearching = false;
-window.markers = [];
-window.globalRawStations = [];
-
-// Unified Global Runtime Application Sync States
-window.activeRadiusMiles = 10; 
-window.maxPriceAllowed = null;
-window.activeFuelType = 'regular';
-window.activeHomeBaseLocation = "";
-window.activeSortPreference = 'price';
-
-// Baseline Storage Reference Profile Keys
-const PREF_KEYS = {
-    homeBase: 'gasWatch_prefHomeBase',
-    fuel: 'gasWatch_prefFuel',
-    radius: 'gasWatch_prefRadius',
-    maxPrice: 'gasWatch_prefMaxPrice',
-    sort: 'gasWatch_prefSort',
-    skin: 'gasWatch_mapTheme', 
-    text: 'gasWatch_prefText',
-    contrast: 'gasWatch_prefMarkerContrast'
-};
-
-// --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
-const MAP_THEME_TILES = {
-    google: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
-    matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
-    navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
-};
-
-const MAP_THEME_ATTRIBUTIONS = {
-    google: '© OpenStreetMap contributors',
-    iphone: '© OpenStreetMap contributors, © CARTO',
-    midnight: '© OpenStreetMap contributors, © JawgMaps',
-    matrix: '© OpenStreetMap contributors, © JawgMaps',
-    navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
-};
-
-// Baseline Fallback Coordinates (Denver, CO)
-const FALLBACK_LAT = 39.73921;
-const FALLBACK_LON = -104.9903;
-const FALLBACK_CITY = "Denver";
-
-// Master list of states & abbreviations for validation (all lowercase)
-const VALID_STATES_SET = new Set([
-    "al","ak","az","ar","ca","co","ct","de","fl","ga","hi","id","il","in","ia","ks","ky","la","me","md","ma","mi","mn","ms","mo","mt","ne","nv","nh","nj","nm","ny","nc","nd","oh","ok","or","pa","ri","sc","sd","tn","tx","ut","vt","va","wa","wv","wi","wy",
-    "alabama","alaska","arizona","arkansas","california","colorado","connecticut","delaware","florida","georgia","hawaii","idaho","illinois","indiana","iowa","kansas","kentucky","louisiana","maine","maryland","massachusetts","michigan","minnesota","mississippi","missouri","montana","nebraska","nevada","new hampshire","new jersey","new mexico","new york","north carolina","north dakota","ohio","oklahoma","oregon","pennsylvania","rhode island","south carolina","south dakota","tennessee","texas","utah","vermont","virginia","washington","west virginia","wisconsin","wyoming"
-]);
-
-/* --- PERFORMANCE UTILITY: High Efficiency Input Debouncer --- */
-function debounce(func, delay = 200) {
-    let timeoutId;
-    return function(...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-const debouncedClientFilter = debounce(() => applyClientSideMapFilters(), 200);
-
-
-/* ==========================================================================
-   SHARED CORE ENGINE: UNIFORM LOCATION PARSING & NORMALIZATION
-   ========================================================================== */
-function cleanUpString(str) {
-    if (!str) return "";
-    return str.replace(/^[^a-zA-Z0-9!^\*\+]+|[^a-zA-Z0-9!^\*\+]+$/g, "").trim();
-}
-
-function isValidCityInSystem(cityName) {
-    if (!cityName || cityName.length < 2) return false;
-    return true; // Hook into database validation check here if available
-}
-
-function parseLocationQuery(rawInput) {
-    if (!rawInput) return { storeOrAddress: null, city: null, state: null, zip: null, rawQuery: "" };
-
-    let workString = cleanUpString(rawInput);
-    let searchZip = null;
-    let searchState = null;
-    let searchCity = null;
-
-    // 1. Zip Code Check (5-digit or 5+4 at tail end)
-    const zipRegex = /\b\d{5}(-\d{4})?$/;
-    const zipMatch = workString.match(zipRegex);
-    if (zipMatch) {
-        searchZip = zipMatch[0];
-        workString = workString.replace(zipRegex, "").trim();
-    }
-
-    workString = cleanUpString(workString);
-
-    // 2. State Validation Check (Last 1 or 2 words)
-    let words = workString.split(/\s+/);
-    if (words.length > 0) {
-        let lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z]/g, "");
-        let lastTwoWords = words.length > 1 ? `${words[words.length - 2]} ${words[words.length - 1]}`.toLowerCase().replace(/[^a-z\s]/g, "") : "";
-        
-        if (VALID_STATES_SET.has(lastTwoWords)) {
-            searchState = lastTwoWords;
-            words.splice(words.length - 2, 2);
-            workString = words.join(" ");
-        } else if (VALID_STATES_SET.has(lastWord)) {
-            searchState = lastWord;
-            words.pop();
-            workString = words.join(" ");
-        }
-    }
-
-    workString = cleanUpString(workString);
-
-    // 3. City & Comma Check
-    let candidateCityString = "";
-    const rightmostCommaIndex = workString.lastIndexOf(',');
-
-    if (rightmostCommaIndex !== -1) {
-        candidateCityString = cleanUpString(workString.substring(rightmostCommaIndex + 1));
-    } else {
-        candidateCityString = workString;
-    }
-
-    if (isValidCityInSystem(candidateCityString)) {
-        searchCity = candidateCityString;
-        if (rightmostCommaIndex !== -1) {
-            workString = workString.substring(0, rightmostCommaIndex);
-        } else {
-            workString = ""; 
-        }
-    }
-
-    // 4. Residual text acts as Store Name or Street Address for frontend centering
-    let searchAddressOrStore = cleanUpString(workString);
-
-    return {
-        storeOrAddress: searchAddressOrStore || null,
-        city: searchCity || null,
-        state: searchState || null,
-        zip: searchZip || null,
-        rawQuery: rawInput
-    };
-}
-
-
-/* ==========================================================================
-   STAGE 2: MASTER ORCHESTRATION ENGINE (DOM LIFECYCLE)
-   ========================================================================== */
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("⚙️ Orchestration Engine: Initializing...");
-
-    const mapContainer = document.getElementById('map');
-    if (!mapContainer) {
-        console.error("❌ Fatal Error: #map container not found in DOM.");
-        return;
-    }
-
-    // Clear previous sessions
-    ['Address', 'City', 'State', 'Zip', 'StoreName', 'Radius', 'Fuel', 'MaxPrice'].forEach(k => {
-        sessionStorage.removeItem(`gasWatch_sess${k}`);
-    });
-
-    hydrateRuntimeState();
-
-    const startLat = parseFloat(localStorage.getItem('gasWatch_prefLat')) || FALLBACK_LAT;
-    const startLon = parseFloat(localStorage.getItem('gasWatch_prefLon')) || FALLBACK_LON;
-
-    window.map = L.map('map', { zoomControl: true, tap: false }).setView([startLat, startLon], 12);
-
-    const runtimeSkinToken = localStorage.getItem(PREF_KEYS.skin) || 'google';
-    switchMapTheme(runtimeSkinToken);
-
-    mirrorStateToUIForms();
-    setupInteractiveComponentsListeners();
-
-    window.map.whenReady(() => {
-        console.log("📍 Map engine ready. Initializing data fetch...");
-        window.map.invalidateSize();
-        
-        // --- HOME BASE / INITIAL LOAD PRECEDENCE ---
-        const savedHome = localStorage.getItem(PREF_KEYS.homeBase);
-
-        if (savedHome && savedHome.trim() !== "") {
-            console.log("🚀 Home Base takes precedence:", savedHome);
-            window.activeHomeBaseLocation = savedHome.trim();
-            searchLocation(null, window.activeHomeBaseLocation);
-        } else {
-            const sessionCity = sessionStorage.getItem('gasWatch_sessCity');
-            const sessionAddress = sessionStorage.getItem('gasWatch_sessAddress');
-            const composedSessionLoc = sessionCity || sessionAddress;
-
-            if (composedSessionLoc) {
-                console.log("📍 Using session filter location:", composedSessionLoc);
-                searchLocation(null, composedSessionLoc);
-            } else {
-                console.log("📍 No home or session set. Using fallback:", FALLBACK_CITY);
-                dropDenverWelcomeMarker();
-                searchLocation(null, FALLBACK_CITY);
-            }
-        }
-    });
-});
-
-
-/* ==========================================================================
-   STAGE 3: RUNTIME STATE STORAGE HYDRATION & MIRRORING
-   ========================================================================== */
-function hydrateRuntimeState() {
-    const resolveState = (sessKey, localKey, defaultVal) => {
-        const sess = sessionStorage.getItem(sessKey);
-        if (sess !== null) return sess;
-        const local = localStorage.getItem(localKey);
-        return local !== null ? local : defaultVal;
-    };
-
-    window.activeRadiusMiles = parseInt(resolveState('gasWatch_sessRadius', PREF_KEYS.radius, '10'), 10) || 10;
-    window.activeFuelType = resolveState('gasWatch_sessFuel', PREF_KEYS.fuel, 'regular');
-    window.activeSortPreference = localStorage.getItem(PREF_KEYS.sort) || 'price';
-    window.activeHomeBaseLocation = localStorage.getItem(PREF_KEYS.homeBase) || "";
-
-    const rawMaxPrice = resolveState('gasWatch_sessMaxPrice', PREF_KEYS.maxPrice, '');
-    window.maxPriceAllowed = rawMaxPrice !== '' ? parseFloat(rawMaxPrice) : null;
-
-    applyTextScaling(localStorage.getItem(PREF_KEYS.text) || 'normal', false);
-    applyMarkerContrast(localStorage.getItem(PREF_KEYS.contrast) || 'normal', false);
-}
-
-function mirrorStateToUIForms() {
-    const syncVal = (elementId, val) => {
-        const el = document.getElementById(elementId);
-        if (el) el.value = val || '';
-    };
-
-    syncVal('fuelType', window.activeFuelType);
-    syncVal('filterMaxPrice', window.maxPriceAllowed);
-    
-    const distanceSlider = document.getElementById("distanceRange");
-    const distanceLabel = document.getElementById("distanceValue");
-    if (distanceSlider) distanceSlider.value = window.activeRadiusMiles;
-    if (distanceLabel) {
-        if (distanceLabel.tagName === "INPUT") distanceLabel.value = window.activeRadiusMiles;
-        else distanceLabel.textContent = window.activeRadiusMiles;
-    }
-
-    // Dropdown sync (if applicable)
-    const sortSelect = document.getElementById('sortPreferenceSelect');
-    if (sortSelect) sortSelect.value = window.activeSortPreference;
-
-
-    syncVal('filterAddress', sessionStorage.getItem('gasWatch_sessAddress'));
-    syncVal('filterCity', sessionStorage.getItem('gasWatch_sessCity'));
-    syncVal('filterState', sessionStorage.getItem('gasWatch_sessState'));
-    syncVal('filterZip', sessionStorage.getItem('gasWatch_sessZip'));
-    syncVal('filterStoreName', sessionStorage.getItem('gasWatch_sessStoreName'));
-
-    syncVal('prefHomeBase', window.activeHomeBaseLocation);
-    syncVal('prefDefaultFuel', window.activeFuelType);
-    syncVal('prefDefaultRadius', window.activeRadiusMiles);
-    syncVal('prefMaxPrice', window.maxPriceAllowed !== null ? window.maxPriceAllowed : '');
-    syncVal('prefDefaultSort', window.activeSortPreference);
-    syncVal('prefMapSkin', localStorage.getItem(PREF_KEYS.skin) || 'google');
-    syncVal('prefTextSize', localStorage.getItem(PREF_KEYS.text) || 'normal');
-    syncVal('prefMarkerContrast', localStorage.getItem(PREF_KEYS.contrast) || 'normal');
-}
-
-
-/* ==========================================================================
-   STAGE 4: CLIENT INTERACTIVE HANDLERS & UNIFIED SEARCH CONTROLLER
-   ========================================================================== */
-function searchLocation(customTargetId, overrideQuery) {
-    if (window.isSearching) return;
-    
-    let rawInput = "";
-    if (overrideQuery) {
-        rawInput = overrideQuery;
-    } else {
-        const targetId = (typeof customTargetId === 'string') ? customTargetId : 'searchBar';
-        const bar = document.getElementById(targetId);
-        rawInput = bar ? bar.value.trim() : "";
-        if (bar) bar.blur();
-    }
-    
-    if (!rawInput) return;
-
-    // Run unified parser engine
-    const parsedLocation = parseLocationQuery(rawInput);
-    window.activeHomeBaseLocation = parsedLocation;
-
-    // Build backend priority query string
-    let priorityQuery = "";
-    let queryType = "general"; // Default type
-
-    if (parsedLocation.city && parsedLocation.state) {
-        priorityQuery = `${parsedLocation.city}, ${parsedLocation.state}`;
-        queryType = "city_state";
-    } else if (parsedLocation.city) {
-        priorityQuery = parsedLocation.city;
-        queryType = "city";
-    } else if (parsedLocation.zip) {
-        priorityQuery = parsedLocation.zip;
-        queryType = "zip";
-    } else if (parsedLocation.state) {
-        priorityQuery = parsedLocation.state;
-        queryType = "state";
-    } else {
-        priorityQuery = parsedLocation.storeOrAddress || rawInput;
-        queryType = "text_fallback";
-    }
-
-    // Pass both the text query, the explicit type, and the parsed components
-    getPricesNow(priorityQuery, false, {
-        queryType: queryType,
-        components: parsedLocation
-    });
-}
-
-function setupInteractiveComponentsListeners() {
-    const searchBar = document.getElementById("searchBar");
-    searchBar?.addEventListener("keydown", function(e) {
-        if (e.key === "Enter") { e.preventDefault(); searchLocation('searchBar'); }
-    });
-    document.getElementById("extSearchIcon")?.addEventListener("click", function(e) {
-        e.preventDefault(); searchLocation('searchBar');
-    });
-
-    document.getElementById("distanceRange")?.addEventListener("input", function() {
-        const distanceLabel = document.getElementById("distanceValue");
-        if (distanceLabel) {
-            if (distanceLabel.tagName === "INPUT") distanceLabel.value = this.value;
-            else distanceLabel.textContent = this.value;
-        }
-        window.activeRadiusMiles = parseInt(this.value, 10) || 10;
-        applyClientSideMapFilters();
-    });
-
-    document.getElementById("fuelType")?.addEventListener("change", function() {
-        window.activeFuelType = this.value;
-        triggerNetworkOrClientRefresh();
-    });
-
-    document.getElementById("filterMaxPrice")?.addEventListener("input", function() {
-        const parsedVal = this.value.trim();
-        window.maxPriceAllowed = parsedVal !== "" ? parseFloat(parsedVal) : null;
-        applyClientSideMapFilters();
-    });
-
-    ['filterAddress', 'filterCity', 'filterZip', 'filterStoreName'].forEach(fieldId => {
-        document.getElementById(fieldId)?.addEventListener("input", debouncedClientFilter);
-    });
-
-    document.getElementById('prefHomeBase')?.addEventListener('change', function() {
-        const freshHome = this.value.trim();
-        localStorage.setItem(PREF_KEYS.homeBase, freshHome);
-        window.activeHomeBaseLocation = freshHome;
-        if (freshHome) searchLocation(null, freshHome);
-    });
-
-    document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.fuel, this.value);
-        window.activeFuelType = this.value;
-        const quickFuel = document.getElementById('fuelType');
-        if (quickFuel) quickFuel.value = this.value;
-        triggerNetworkOrClientRefresh();
-    });
-
-    document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.radius, this.value);
-        window.activeRadiusMiles = parseInt(this.value, 10) || 10;
-        
-        const quickSlider = document.getElementById('distanceRange');
-        const quickLabel = document.getElementById('distanceValue');
-        if (quickSlider) quickSlider.value = this.value;
-        if (quickLabel) {
-            if (quickLabel.tagName === "INPUT") quickLabel.value = this.value;
-            else quickLabel.textContent = this.value;
-        }
-        triggerNetworkOrClientRefresh();
-    });
-
-    document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
-        const freshMax = this.value.trim();
-        localStorage.setItem(PREF_KEYS.maxPrice, freshMax);
-        window.maxPriceAllowed = freshMax !== '' ? parseFloat(freshMax) : null;
-
-        const quickPrice = document.getElementById('filterMaxPrice');
-        if (quickPrice) quickPrice.value = freshMax;
-        applyClientSideMapFilters();
-    });
-
-    document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.sort, this.value);
-        window.activeSortPreference = this.value;
-        applyClientSideMapFilters();
-    });
-
-    document.getElementById('prefMapSkin')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.skin, this.value);
-        switchMapTheme(this.value);
-    });
-
-    document.getElementById('prefTextSize')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.text, this.value);
-        applyTextScaling(this.value, true);
-    });
-    
-    document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
-        localStorage.setItem(PREF_KEYS.contrast, this.value);
-        applyMarkerContrast(this.value, true);
-    });
-
-    // Or if using the dropdown version:
-    document.getElementById('sortPreferenceSelect')?.addEventListener('change', function() {
-        window.activeSortPreference = this.value;
-        localStorage.setItem(PREF_KEYS.sort, this.value);
-        applyClientSideMapFilters();
-    });
-
-    const filterForm = document.querySelector(".filterForm");
-    if (filterForm) {
-        filterForm.addEventListener("submit", function(event) {
-            event.preventDefault();
-
-            const rawAddress = document.getElementById("filterAddress")?.value.trim() || "";
-            const rawCity = document.getElementById("filterCity")?.value.trim() || "";
-            const rawState = document.getElementById("filterState")?.value.trim() || "";
-            const rawZip = document.getElementById("filterZip")?.value.trim() || "";
-            const rawStore = document.getElementById("filterStoreName")?.value.trim() || "";
-            const quickSliderVal = document.getElementById("distanceRange")?.value || "10";
-            const quickPriceVal = document.getElementById("filterMaxPrice")?.value.trim() || "";
-
-            sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
-            sessionStorage.setItem('gasWatch_sessCity', rawCity);
-            sessionStorage.setItem('gasWatch_sessState', rawState);
-            sessionStorage.setItem('gasWatch_sessZip', rawZip);
-            sessionStorage.setItem('gasWatch_sessStoreName', rawStore);
-            sessionStorage.setItem('gasWatch_sessRadius', quickSliderVal);
-            sessionStorage.setItem('gasWatch_sessFuel', window.activeFuelType);
-            sessionStorage.setItem('gasWatch_sessMaxPrice', quickPriceVal);
-
-            let composedLocation = rawZip || (rawAddress ? `${rawAddress} ${rawCity} ${rawState}`.trim() : rawCity);
-
-            if (document.getElementById('saveFiltersAsPrefs')?.checked) {
-                localStorage.setItem(PREF_KEYS.radius, quickSliderVal);
-                localStorage.setItem(PREF_KEYS.fuel, window.activeFuelType);
-                localStorage.setItem(PREF_KEYS.maxPrice, quickPriceVal);
-
-                if (composedLocation) {
-                    localStorage.setItem(PREF_KEYS.homeBase, composedLocation);
-                    window.activeHomeBaseLocation = composedLocation;
-                }
-                mirrorStateToUIForms();
-            }
-
-            if (!composedLocation) {
-                composedLocation = document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY;
-            }
-
-            searchLocation(null, composedLocation);
-
-            const displayPanel = document.getElementById("filterDisplay");
-            if (displayPanel) displayPanel.style.display = "none";
-        });
-    }
-    
-    document.getElementById("clearFiltersBtn")?.addEventListener("click", function(e) {
-        e.preventDefault();
-        sessionStorage.clear();
-
-        window.activeRadiusMiles = parseInt(localStorage.getItem(PREF_KEYS.radius) || '10', 10) || 10;
-        window.activeFuelType = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
-        const rawLocalPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
-        window.maxPriceAllowed = rawLocalPrice !== '' ? parseFloat(rawLocalPrice) : null;
-
-        const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
-        if (saveCheckbox) saveCheckbox.checked = false;
-
-        mirrorStateToUIForms();
-        
-        const targetQuery = window.activeHomeBaseLocation || document.getElementById("searchBar")?.value.trim() || FALLBACK_CITY;
-        searchLocation(null, targetQuery);
-    });
-}
-
-function triggerNetworkOrClientRefresh() {
-    const currentSearch = document.getElementById("searchBar")?.value.trim() || "";
-    const targetQuery = currentSearch || window.activeHomeBaseLocation || FALLBACK_CITY;
-    searchLocation(null, targetQuery);
-}
-
-
-/* ==========================================================================
-   STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
-   ========================================================================== */
-window.activePollInterval = null;
-
-function clearExistingPoll() {
-    if (window.activePollInterval) {
-        clearInterval(window.activePollInterval);
-        window.activePollInterval = null;
-    }
-}
-
-// Helper to calculate distance between two coordinates in miles
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-    const R = 3958.8; // Radius of earth in miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-function getValidStations() {
-    return (window.globalRawStations || []).filter(s => 
-        s.lat !== null && s.lon !== null && !isNaN(s.lat) && !isNaN(s.lon)
-    );
-}
-
-function updateStatusUI(message, options = {}) {
-    const existing = document.getElementById('status-container');
-    if (existing) existing.remove();
-
-    const container = document.createElement('div');
-    container.id = 'status-container';
-    container.style.cssText = `
-        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-        z-index: 900; background: #ffffff; padding: 12px 24px; border-radius: 10px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #eee; 
-        display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 300px;
-        justify-content: center; margin-bottom: 10px;
-    `;
-
-    const loadmsg = document.createElement('p');
-    loadmsg.style.cssText = "margin:0; font-size:14px; color:#333; text-align:center;";
-    loadmsg.innerText = message;
-    container.appendChild(loadmsg);
-
-    if (options.onYes) {
-        const btnStyle = `
-            border:none; background:#007bff; color:white; 
-            padding:6px 14px; border-radius:10px; cursor:pointer; font-size:12px; 
-            font-weight:600; height: 15px;
-        `;
-        
-        const btnYes = document.createElement('button');
-        btnYes.innerText = options.isMapRefresh ? "Update Map" : "Refresh Prices";
-        btnYes.style.cssText = btnStyle;
-        btnYes.onclick = () => { options.onYes(); container.remove(); };
-
-        const btnNo = document.createElement('button');
-        btnNo.innerText = "Keep Current";
-        btnNo.style.cssText = btnStyle.replace("#007bff", "#6c757d");
-        btnNo.onclick = () => { if(options.onNo) options.onNo(); container.remove(); };
-
-        container.appendChild(btnYes);
-        container.appendChild(btnNo);
-    } else if (!options.persistent) {
-        setTimeout(() => { if (container) container.remove(); }, 5000);
-    }
-    const appShell = document.getElementById('map') || document.body;
-    appShell.appendChild(container);
-}
-
-async function pollForCompletion(query) {
-    clearExistingPoll();
-    const startTime = Date.now();
-    
-    window.activePollInterval = setInterval(async () => {
-        try {
-            if (Date.now() - startTime < 10000) return;
-            
-            const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
-            if (!res.ok) throw new Error("Server error");
-            
-            const { hasNulls } = await res.json();
-            
-            if (!hasNulls) {
-                clearExistingPoll();
-                updateStatusUI("Geocoding complete! New prices now available.", {
-                    isMapRefresh: true,
-                    onYes: () => {
-                        const container = document.getElementById('status-container');
-                        if (container) container.remove();
-                        document.getElementById("searchBar")?.classList.remove("loading");
-                        getPricesNow(query, false); 
-                    },
-                    onNo: () => console.log("User dismissed final refresh")
-                });
-            }
-        } catch (err) {
-            console.warn("Polling attempt failed, retrying in 5s...", err.message);
-        }
-    }, 5000);
-}
-
-async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
-    if (window.isSearching && !forceRefresh) return;
-    
-    clearExistingPoll();
-    window.isSearching = true;
-    const searchBar = document.getElementById("searchBar");
-    searchBar?.classList.add("loading");
-
-    updateStatusUI("Searching database...", { persistent: true });
-
-    try {
-        if (typeof clearMarkers === "function") clearMarkers();
-        window.globalRawStations = [];
-        if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
-
-        const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                                 (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
-
-        // --- DEBUG LOG ---
-        console.log("📤 Sending Gas Price Request to Backend:", sanitizedQuery);
-
-        // Frontend Geocoding Cache FlyTo Check
-        const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
-        const cachedCoords = localStorage.getItem(cacheKey);
-        if (cachedCoords) {
-            const { lat, lon } = JSON.parse(cachedCoords);
-            window.map?.flyTo([lat, lon], 12);
-        }
-
-        let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
-            ? "http://localhost:3000/api/gas-prices" : "/api/gas-prices";
-
-        const response = await fetch(BACKEND_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                search: sanitizedQuery, 
-                queryType: meta.queryType || "general", 
-                components: meta.components || {},      
-                fuelGradeSelection: window.activeFuelType || "regular",
-                forceRefresh: forceRefresh 
-            })
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const responseData = await response.json();
-
-        if (responseData.status === "STALE") {
-            updateStatusUI(responseData.message, {
-                onYes: () => getPricesNow(sanitizedQuery, true, meta), 
-                onNo: () => console.log("User kept current data")
-            });
-        } else if (responseData.info) {
-            updateStatusUI(responseData.info, { persistent: true });
-            if (responseData.info.includes("Geocoding")) {
-                pollForCompletion(sanitizedQuery);
-            }
-        }
-
-        const stations = responseData.stations || [];
-        const isGeocoding = responseData.info?.includes("Geocoding");
-        
-        const mapCenter = window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON };
-
-        window.globalRawStations = stations.map(s => {
-            const lat = (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null;
-            const lon = (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null;
-            const dist = calculateDistance(mapCenter.lat, mapCenter.lng, lat, lon);
-
-            return {
-                lat: lat,
-                lon: lon,
-                name: s.name || "Gas Station",
-                address: s.address || "Unknown Address",
-                price: parseFloat(s.price) || 0,
-                displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
-                postedTime: s.last_updated || null,
-                zip: s.zip || "",
-                distance: dist !== null ? dist : 9999
+        <script>
+            /* ==========================================================================
+            STAGE 1: GLOBAL APP STATE & DICTIONARY MATRIX CONTAINERS
+            ========================================================================== */
+            window.map = window.map || null;
+            window.currentTileLayer = window.currentTileLayer || null;
+            window.isSearching = false;
+            window.markers = [];
+            window.globalRawStations = [];
+
+            // Unified Global Runtime Application Sync States
+            window.activeRadiusMiles = 10; 
+            window.maxPriceAllowed = null;
+            window.activeFuelType = 'regular';
+            window.activeHomeBaseLocation = "";
+            window.activeSortPreference = 'price';
+
+            // Baseline Storage Reference Profile Keys
+            const PREF_KEYS = {
+                homeBase: 'gasWatch_prefHomeBase',
+                fuel: 'gasWatch_prefFuel',
+                radius: 'gasWatch_prefRadius',
+                maxPrice: 'gasWatch_prefMaxPrice',
+                sort: 'gasWatch_prefSort',
+                skin: 'gasWatch_mapTheme', 
+                text: 'gasWatch_prefText',
+                contrast: 'gasWatch_prefMarkerContrast'
             };
-        });
 
-        const validStations = getValidStations();
-        if (validStations.length > 0) {
-            if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
-        } else if (!isGeocoding) {
-            updateStatusUI("No stations found for this area.", { persistent: false });
-        }
-        
-        window.map?.invalidateSize();
+            // --- 2. MULTI-SKIN MAP CONNECTIONS MATRIX ---
+            const MAP_THEME_TILES = {
+                google: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                iphone: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                midnight: 'https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',      
+                matrix: 'https://{s}.tile.jawg.io/jawg-matrix/{z}/{x}/{y}.png?access-token=3Q0ZCj5NWd6t67lmCx5pYaonmhoinouM3rGIserZQ7JYkWs3fFDfZnzDC2DtyASa',
+                navigation: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
+            };
 
-    } catch (error) {
-        console.error("🔴 Sync failed:", error);
-        updateStatusUI("Sync failed. Please try again.", { persistent: false });
-    } finally {
-        window.isSearching = false;
-        searchBar?.classList.remove("loading");
-    }
-}
+            const MAP_THEME_ATTRIBUTIONS = {
+                google: '© OpenStreetMap contributors',
+                iphone: '© OpenStreetMap contributors, © CARTO',
+                midnight: '© OpenStreetMap contributors, © JawgMaps',
+                matrix: '© OpenStreetMap contributors, © JawgMaps',
+                navigation: '© OpenStreetMap contributors, Tiles style by Humanitarian OSM'
+            };
+
+            // Baseline Fallback Coordinates (Denver, CO)
+            const FALLBACK_LAT = 39.73921;
+            const FALLBACK_LON = -104.9903;
+            const FALLBACK_CITY = "Denver";
+
+            // Master list of states & abbreviations for validation (all lowercase)
+            const VALID_STATES_SET = new Set([
+                "al","ak","az","ar","ca","co","ct","de","fl","ga","hi","id","il","in","ia","ks","ky","la","me","md","ma","mi","mn","ms","mo","mt","ne","nv","nh","nj","nm","ny","nc","nd","oh","ok","or","pa","ri","sc","sd","tn","tx","ut","vt","va","wa","wv","wi","wy",
+                "alabama","alaska","arizona","arkansas","california","colorado","connecticut","delaware","florida","georgia","hawaii","idaho","illinois","indiana","iowa","kansas","kentucky","louisiana","maine","maryland","massachusetts","michigan","minnesota","mississippi","missouri","montana","nebraska","nevada","new hampshire","new jersey","new mexico","new york","north carolina","north dakota","ohio","oklahoma","oregon","pennsylvania","rhode island","south carolina","south dakota","tennessee","texas","utah","vermont","virginia","washington","west virginia","wisconsin","wyoming"
+            ]);
+
+            /* --- PERFORMANCE UTILITY: High Efficiency Input Debouncer --- */
+            function debounce(func, delay = 200) {
+                let timeoutId;
+                return function(...args) {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+            const debouncedClientFilter = debounce(() => applyClientSideMapFilters(), 200);
 
 
-/* ==========================================================================
-   STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
-   ========================================================================== */
+            /* ==========================================================================
+            SHARED CORE ENGINE: UNIFORM LOCATION PARSING & NORMALIZATION
+            ========================================================================== */
+            function cleanUpString(str) {
+                if (!str) return "";
+                return str.replace(/^[^a-zA-Z0-9!^\*\+]+|[^a-zA-Z0-9!^\*\+]+$/g, "").trim();
+            }
 
-/* ==========================================================================
-   DIRECT SIDEBAR POPULATOR (Drop this right into your script)
-   ========================================================================== */
-function rebuildSidebarStationList(stations) {
-    const container = document.getElementById("sidebarStationList");
-    const badge = document.getElementById("stationCountBadge");
-    if (!container) return;
+            function isValidCityInSystem(cityName) {
+                if (!cityName || cityName.length < 2) return false;
+                return true; // Hook into database validation check here if available
+            }
 
-    container.innerHTML = "";
-    
-    if (!stations || stations.length === 0) {
-        if (badge) badge.innerText = "0 found";
-        container.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px; font-size: 13px;">No stations to display</div>`;
-        return;
-    }
+            function parseLocationQuery(rawInput) {
+                if (!rawInput) return { storeOrAddress: null, city: null, state: null, zip: null, rawQuery: "" };
 
-    if (badge) badge.innerText = `${stations.length} found`;
+                let workString = cleanUpString(rawInput);
+                let searchZip = null;
+                let searchState = null;
+                let searchCity = null;
 
-    stations.forEach(station => {
-        let displayTime = "Recently";
-        if (station.postedTime) {
-            try {
-                displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric'
+                // 1. Zip Code Check (5-digit or 5+4 at tail end)
+                const zipRegex = /\b\d{5}(-\d{4})?$/;
+                const zipMatch = workString.match(zipRegex);
+                if (zipMatch) {
+                    searchZip = zipMatch[0];
+                    workString = workString.replace(zipRegex, "").trim();
+                }
+
+                workString = cleanUpString(workString);
+
+                // 2. State Validation Check (Last 1 or 2 words)
+                let words = workString.split(/\s+/);
+                if (words.length > 0) {
+                    let lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z]/g, "");
+                    let lastTwoWords = words.length > 1 ? `${words[words.length - 2]} ${words[words.length - 1]}`.toLowerCase().replace(/[^a-z\s]/g, "") : "";
+                    
+                    if (VALID_STATES_SET.has(lastTwoWords)) {
+                        searchState = lastTwoWords;
+                        words.splice(words.length - 2, 2);
+                        workString = words.join(" ");
+                    } else if (VALID_STATES_SET.has(lastWord)) {
+                        searchState = lastWord;
+                        words.pop();
+                        workString = words.join(" ");
+                    }
+                }
+
+                workString = cleanUpString(workString);
+
+                // 3. City & Comma Check
+                let candidateCityString = "";
+                const rightmostCommaIndex = workString.lastIndexOf(',');
+
+                if (rightmostCommaIndex !== -1) {
+                    candidateCityString = cleanUpString(workString.substring(rightmostCommaIndex + 1));
+                } else {
+                    candidateCityString = workString;
+                }
+
+                if (isValidCityInSystem(candidateCityString)) {
+                    searchCity = candidateCityString;
+                    if (rightmostCommaIndex !== -1) {
+                        workString = workString.substring(0, rightmostCommaIndex);
+                    } else {
+                        workString = ""; 
+                    }
+                }
+
+                // 4. Residual text acts as Store Name or Street Address for frontend centering
+                let searchAddressOrStore = cleanUpString(workString);
+
+                return {
+                    storeOrAddress: searchAddressOrStore || null,
+                    city: searchCity || null,
+                    state: searchState || null,
+                    zip: searchZip || null,
+                    rawQuery: rawInput
+                };
+            }
+
+
+            /* ==========================================================================
+            STAGE 2: MASTER ORCHESTRATION ENGINE (DOM LIFECYCLE)
+            ========================================================================== */
+            document.addEventListener("DOMContentLoaded", function() {
+                console.log("⚙️ Orchestration Engine: Initializing...");
+
+                const mapContainer = document.getElementById('map');
+                if (!mapContainer) {
+                    console.error("❌ Fatal Error: #map container not found in DOM.");
+                    return;
+                }
+
+                // Clear previous sessions
+                ['Address', 'City', 'State', 'Zip', 'StoreName', 'Radius', 'Fuel', 'MaxPrice'].forEach(k => {
+                    sessionStorage.removeItem(`gasWatch_sess${k}`);
                 });
-            } catch(e) { displayTime = "Recently"; }
-        }
 
-        const distanceText = station.distance !== undefined && station.distance !== 9999 
-            ? `${station.distance.toFixed(1)} mi away` : '';
-        
-        const card = document.createElement('div');
-        card.className = 'station-card';
-        card.innerHTML = `
-            <div class="station-card-top">
-                <h4 class="station-name">${station.name}</h4>
-                <div class="station-price-badge">${station.displayPrice}</div>
-            </div>
-            <div class="station-card-body">
-                <p class="station-address">${station.address}</p>
-                <div class="station-card-footer">
-                    <span>🕒 Updated ${displayTime}</span>
-                    <span class="station-card-distance" style="font-weight: 600;;">${distanceText}</span>
-                </div>
-            </div>
-        `;
+                hydrateRuntimeState();
 
-        // Strictly flies to location without hijacking or altering your custom marker popups
-        card.addEventListener('click', () => {
-            if (station.lat && station.lon && window.map) {
-                window.map.flyTo([station.lat, station.lon], 15);
-            }
-        });
+                const startLat = parseFloat(localStorage.getItem('gasWatch_prefLat')) || FALLBACK_LAT;
+                const startLon = parseFloat(localStorage.getItem('gasWatch_prefLon')) || FALLBACK_LON;
 
-        container.appendChild(card);
-    });
-}
+                window.map = L.map('map', { zoomControl: true, tap: false }).setView([startLat, startLon], 12);
 
-function applyClientSideMapFilters() {
-    if (!window.map) return;
+                const runtimeSkinToken = localStorage.getItem(PREF_KEYS.skin) || 'google';
+                switchMapTheme(runtimeSkinToken);
 
-    const filters = {
-        address: document.getElementById('filterAddress')?.value.trim().toLowerCase(),
-        city: document.getElementById('filterCity')?.value.trim().toLowerCase(),
-        zip: document.getElementById('filterZip')?.value.trim(),
-        store: document.getElementById('filterStoreName')?.value.trim().toLowerCase(),
-        maxPrice: window.maxPriceAllowed
-    };
+                mirrorStateToUIForms();
+                setupInteractiveComponentsListeners();
 
-    const processed = window.globalRawStations
-        .filter(s => {
-            if (filters.maxPrice && s.price > filters.maxPrice) return false;
-            if (filters.address && !s.address?.toLowerCase().includes(filters.address)) return false;
-            if (filters.city && !s.city?.toLowerCase().includes(filters.city)) return false;
-            if (filters.zip && !s.zip?.includes(filters.zip)) return false;
-            if (filters.store && !s.name?.toLowerCase().includes(filters.store)) return false;
-            return true;
-        })
-        .sort((a, b) => {
-            if (window.activeSortPreference === 'distance') {
-                return (a.distance || 9999) - (b.distance || 9999);
-            } else {
-                const priceA = a.price > 0 ? a.price : 9999;
-                const priceB = b.price > 0 ? b.price : 9999;
-                return priceA - priceB;
-            }
-        });
+                window.map.whenReady(() => {
+                    console.log("📍 Map engine ready. Initializing data fetch...");
+                    window.map.invalidateSize();
+                    
+                    // --- HOME BASE / INITIAL LOAD PRECEDENCE ---
+                    const savedHome = localStorage.getItem(PREF_KEYS.homeBase);
 
-    clearMarkers();
-    processed.forEach(s => renderStationMarker(s));
-    
-    if (typeof rebuildSidebarStationList === "function") {
-        rebuildSidebarStationList(processed);
-    }
+                    if (savedHome && savedHome.trim() !== "") {
+                        console.log("🚀 Home Base takes precedence:", savedHome);
+                        window.activeHomeBaseLocation = savedHome.trim();
+                        searchLocation(null, window.activeHomeBaseLocation);
+                    } else {
+                        const sessionCity = sessionStorage.getItem('gasWatch_sessCity');
+                        const sessionAddress = sessionStorage.getItem('gasWatch_sessAddress');
+                        const composedSessionLoc = sessionCity || sessionAddress;
 
-    if (processed.length > 0) {
-        const bounds = processed.map(s => [s.lat, s.lon]);
-        window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
-    }
-}
-      
- 
-/* ==========================================================================
-   STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
-   ========================================================================== */
-function switchMapTheme(themeName) {
-    if (typeof window.map === 'undefined' || !window.map || typeof window.map.addLayer !== 'function') return;
-
-    if (window.currentTileLayer) window.map.removeLayer(window.currentTileLayer);
-
-    const activeTheme = themeName || 'google';
-    const targetUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
-    const targetAttribution = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
-
-    window.map.eachLayer(function(layer) {
-        if (layer instanceof L.TileLayer) {
-            window.map.removeLayer(layer);
-        }
-    });
-
-    const tileOptions = {
-        maxZoom: 20,
-        minZoom: 4,
-        updateWhenIdle: true,
-        attribution: targetAttribution
-    };
-
-    if (activeTheme !== 'google') {
-        tileOptions.subdomains = 'abc';
-    }
-
-    window.currentTileLayer = L.tileLayer(targetUrl, tileOptions).addTo(window.map);
-
-    const dynamicStyleId = 'dynamic-dark-popup-override';
-    let popupStyleElement = document.getElementById(dynamicStyleId);
-    
-    if (!popupStyleElement) {
-        popupStyleElement = document.createElement('style');
-        popupStyleElement.id = dynamicStyleId;
-        document.head.appendChild(popupStyleElement);
-    }
-    
-    if (activeTheme === 'midnight') {
-        popupStyleElement.innerHTML = `
-            .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
-            .custom-popup h3 { color: #f5f8ff !important; }
-            .custom-popup p { color: #dee0e3 !important; }
-            .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
-        `;
-    } else {
-        popupStyleElement.innerHTML = ''; 
-    }
-}
-
-function renderStationMarker(station) {
-    if (!window.map || !station) return;
-
-    // Read current scaling state live from the document root element
-    const currentFontSize = getComputedStyle(document.documentElement).getPropertyValue('--gas-marker-font-size').trim();
-    
-    // Scale container boundaries proportionally based on the 3 tiers
-    let iconWidth = 50;
-    let iconHeight = 22;
-    
-    if (currentFontSize.includes('15px')) {
-        iconWidth = 72; // Large state (prominent & bold)
-        iconHeight = 34;
-    } else if (currentFontSize.includes('9.5px')) {
-        iconWidth = 36; // Small state (compact)
-        iconHeight = 16;
-    }
-
-    const priceIcon = L.divIcon({
-        className: 'gas-price-marker', 
-        html: `<div class="marker-pin-bubble">${station.displayPrice}</div>`,    
-        iconSize: [iconWidth, iconHeight],        
-        iconAnchor: [iconWidth / 2, iconHeight / 2]       
-    });
-
-    let displayTime = "Updated recently";
-    if (station.postedTime) {
-        try {
-            displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        if (composedSessionLoc) {
+                            console.log("📍 Using session filter location:", composedSessionLoc);
+                            searchLocation(null, composedSessionLoc);
+                        } else {
+                            console.log("📍 No home or session set. Using fallback:", FALLBACK_CITY);
+                            dropDenverWelcomeMarker();
+                            searchLocation(null, FALLBACK_CITY);
+                        }
+                    }
+                });
             });
-        } catch(e) { displayTime = station.postedTime; }
-    }
 
-    const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(window.map);
-    marker.bindPopup(`
-        <b>${station.name}</b><br>
-        ${station.address}<br>
-        <b>${station.displayPrice}</b><br>
-        <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
-            🕒 ${displayTime}
-        </div>
-    `);
 
-    window.markers.push(marker);
-}
+            /* ==========================================================================
+            STAGE 3: RUNTIME STATE STORAGE HYDRATION & MIRRORING
+            ========================================================================== */
+            function hydrateRuntimeState() {
+                const resolveState = (sessKey, localKey, defaultVal) => {
+                    const sess = sessionStorage.getItem(sessKey);
+                    if (sess !== null) return sess;
+                    const local = localStorage.getItem(localKey);
+                    return local !== null ? local : defaultVal;
+                };
 
-function clearMarkers() {
-    if (window.markers && window.markers.length > 0) {
-        window.markers.forEach(marker => {
-            if (marker && marker.off) marker.off();
-            if (window.map) window.map.removeLayer(marker);
-        });
-        window.markers = [];
-    }
-}
+                window.activeRadiusMiles = parseInt(resolveState('gasWatch_sessRadius', PREF_KEYS.radius, '10'), 10) || 10;
+                window.activeFuelType = resolveState('gasWatch_sessFuel', PREF_KEYS.fuel, 'regular');
+                window.activeSortPreference = localStorage.getItem(PREF_KEYS.sort) || 'price';
+                window.activeHomeBaseLocation = localStorage.getItem(PREF_KEYS.homeBase) || "";
 
-function dropDenverWelcomeMarker() {
-    const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
-        icon: L.divIcon({ className: 'black-marker-icon' })
-    }).addTo(window.map);
-    
-    centerMarker.bindPopup(`
-        <div class="custom-popup">
-            <h3>Welcome to Denver!</h3>
-            <p>Set your custom location in <b>Preferences</b> to update your default starting view area.</p>
-        </div>
-    `).openPopup();
-    window.markers.push(centerMarker);
-}
+                const rawMaxPrice = resolveState('gasWatch_sessMaxPrice', PREF_KEYS.maxPrice, '');
+                window.maxPriceAllowed = rawMaxPrice !== '' ? parseFloat(rawMaxPrice) : null;
 
-function applyTextScaling(scale, triggerRefresh = true) {
-    if (scale === 'large') {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '14px');
-        document.documentElement.style.setProperty('--gas-marker-padding', '5px 9px');
-    } else if (scale === 'small') {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '7.5px');
-        document.documentElement.style.setProperty('--gas-marker-padding', '2px 4px');
-    } else {
-        // Standard starting point (11px)
-        document.documentElement.style.setProperty('--gas-marker-font-size', '10.5px');
-        document.documentElement.style.setProperty('--gas-marker-padding', '3px 6px');
-    }
-    
-    if (triggerRefresh) applyClientSideMapFilters();
-}
+                applyTextScaling(localStorage.getItem(PREF_KEYS.text) || 'normal', false);
+                applyMarkerContrast(localStorage.getItem(PREF_KEYS.contrast) || 'normal', false);
+            }
 
-function applyMarkerContrast(mode, triggerRefresh = true) {
-    const contrastStyleId = 'dynamic-marker-contrast-override';
-    let styleEl = document.getElementById(contrastStyleId);
-    
-    if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = contrastStyleId;
-        document.head.appendChild(styleEl);
-    }
-    
-    styleEl.innerHTML = (mode === 'high') ? `
-        .gas-price-marker { 
-            box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
-            font-weight: 800 !important;
-            border: 2px solid #000 !important;
-        }` : '';
-        
-    if (triggerRefresh) applyClientSideMapFilters();
-}
-</script>
+            function mirrorStateToUIForms() {
+                const syncVal = (elementId, val) => {
+                    const el = document.getElementById(elementId);
+                    if (el) el.value = val || '';
+                };
+
+                syncVal('fuelType', window.activeFuelType);
+                syncVal('filterMaxPrice', window.maxPriceAllowed);
+                
+                const distanceSlider = document.getElementById("distanceRange");
+                const distanceLabel = document.getElementById("distanceValue");
+                if (distanceSlider) distanceSlider.value = window.activeRadiusMiles;
+                if (distanceLabel) {
+                    if (distanceLabel.tagName === "INPUT") distanceLabel.value = window.activeRadiusMiles;
+                    else distanceLabel.textContent = window.activeRadiusMiles;
+                }
+
+                // Dropdown sync (if applicable)
+                const sortSelect = document.getElementById('sortPreferenceSelect');
+                if (sortSelect) sortSelect.value = window.activeSortPreference;
+
+
+                syncVal('filterAddress', sessionStorage.getItem('gasWatch_sessAddress'));
+                syncVal('filterCity', sessionStorage.getItem('gasWatch_sessCity'));
+                syncVal('filterState', sessionStorage.getItem('gasWatch_sessState'));
+                syncVal('filterZip', sessionStorage.getItem('gasWatch_sessZip'));
+                syncVal('filterStoreName', sessionStorage.getItem('gasWatch_sessStoreName'));
+
+                syncVal('prefHomeBase', window.activeHomeBaseLocation);
+                syncVal('prefDefaultFuel', window.activeFuelType);
+                syncVal('prefDefaultRadius', window.activeRadiusMiles);
+                syncVal('prefMaxPrice', window.maxPriceAllowed !== null ? window.maxPriceAllowed : '');
+                syncVal('prefDefaultSort', window.activeSortPreference);
+                syncVal('prefMapSkin', localStorage.getItem(PREF_KEYS.skin) || 'google');
+                syncVal('prefTextSize', localStorage.getItem(PREF_KEYS.text) || 'normal');
+                syncVal('prefMarkerContrast', localStorage.getItem(PREF_KEYS.contrast) || 'normal');
+            }
+
+
+            /* ==========================================================================
+            STAGE 4: CLIENT INTERACTIVE HANDLERS & UNIFIED SEARCH CONTROLLER
+            ========================================================================== */
+            function searchLocation(customTargetId, overrideQuery) {
+                if (window.isSearching) return;
+                
+                let rawInput = "";
+                if (overrideQuery) {
+                    rawInput = overrideQuery;
+                } else {
+                    const targetId = (typeof customTargetId === 'string') ? customTargetId : 'searchBar';
+                    const bar = document.getElementById(targetId);
+                    rawInput = bar ? bar.value.trim() : "";
+                    if (bar) bar.blur();
+                }
+                
+                if (!rawInput) return;
+
+                // Run unified parser engine
+                const parsedLocation = parseLocationQuery(rawInput);
+                window.activeHomeBaseLocation = parsedLocation;
+
+                // Build backend priority query string
+                let priorityQuery = "";
+                let queryType = "general"; // Default type
+
+                if (parsedLocation.city && parsedLocation.state) {
+                    priorityQuery = `${parsedLocation.city}, ${parsedLocation.state}`;
+                    queryType = "city_state";
+                } else if (parsedLocation.city) {
+                    priorityQuery = parsedLocation.city;
+                    queryType = "city";
+                } else if (parsedLocation.zip) {
+                    priorityQuery = parsedLocation.zip;
+                    queryType = "zip";
+                } else if (parsedLocation.state) {
+                    priorityQuery = parsedLocation.state;
+                    queryType = "state";
+                } else {
+                    priorityQuery = parsedLocation.storeOrAddress || rawInput;
+                    queryType = "text_fallback";
+                }
+
+                // Pass both the text query, the explicit type, and the parsed components
+                getPricesNow(priorityQuery, false, {
+                    queryType: queryType,
+                    components: parsedLocation
+                });
+            }
+
+            function setupInteractiveComponentsListeners() {
+                const searchBar = document.getElementById("searchBar");
+                searchBar?.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") { e.preventDefault(); searchLocation('searchBar'); }
+                });
+                document.getElementById("extSearchIcon")?.addEventListener("click", function(e) {
+                    e.preventDefault(); searchLocation('searchBar');
+                });
+
+                document.getElementById("distanceRange")?.addEventListener("input", function() {
+                    const distanceLabel = document.getElementById("distanceValue");
+                    if (distanceLabel) {
+                        if (distanceLabel.tagName === "INPUT") distanceLabel.value = this.value;
+                        else distanceLabel.textContent = this.value;
+                    }
+                    window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+                    applyClientSideMapFilters();
+                });
+
+                document.getElementById("fuelType")?.addEventListener("change", function() {
+                    window.activeFuelType = this.value;
+                    triggerNetworkOrClientRefresh();
+                });
+
+                document.getElementById("filterMaxPrice")?.addEventListener("input", function() {
+                    const parsedVal = this.value.trim();
+                    window.maxPriceAllowed = parsedVal !== "" ? parseFloat(parsedVal) : null;
+                    applyClientSideMapFilters();
+                });
+
+                ['filterAddress', 'filterCity', 'filterZip', 'filterStoreName'].forEach(fieldId => {
+                    document.getElementById(fieldId)?.addEventListener("input", debouncedClientFilter);
+                });
+
+                document.getElementById('prefHomeBase')?.addEventListener('change', function() {
+                    const freshHome = this.value.trim();
+                    localStorage.setItem(PREF_KEYS.homeBase, freshHome);
+                    window.activeHomeBaseLocation = freshHome;
+                    if (freshHome) searchLocation(null, freshHome);
+                });
+
+                document.getElementById('prefDefaultFuel')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.fuel, this.value);
+                    window.activeFuelType = this.value;
+                    const quickFuel = document.getElementById('fuelType');
+                    if (quickFuel) quickFuel.value = this.value;
+                    triggerNetworkOrClientRefresh();
+                });
+
+                document.getElementById('prefDefaultRadius')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.radius, this.value);
+                    window.activeRadiusMiles = parseInt(this.value, 10) || 10;
+                    
+                    const quickSlider = document.getElementById('distanceRange');
+                    const quickLabel = document.getElementById('distanceValue');
+                    if (quickSlider) quickSlider.value = this.value;
+                    if (quickLabel) {
+                        if (quickLabel.tagName === "INPUT") quickLabel.value = this.value;
+                        else quickLabel.textContent = this.value;
+                    }
+                    triggerNetworkOrClientRefresh();
+                });
+
+                document.getElementById('prefMaxPrice')?.addEventListener('input', function() {
+                    const freshMax = this.value.trim();
+                    localStorage.setItem(PREF_KEYS.maxPrice, freshMax);
+                    window.maxPriceAllowed = freshMax !== '' ? parseFloat(freshMax) : null;
+
+                    const quickPrice = document.getElementById('filterMaxPrice');
+                    if (quickPrice) quickPrice.value = freshMax;
+                    applyClientSideMapFilters();
+                });
+
+                document.getElementById('prefDefaultSort')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.sort, this.value);
+                    window.activeSortPreference = this.value;
+                    applyClientSideMapFilters();
+                });
+
+                document.getElementById('prefMapSkin')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.skin, this.value);
+                    switchMapTheme(this.value);
+                });
+
+                document.getElementById('prefTextSize')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.text, this.value);
+                    applyTextScaling(this.value, true);
+                });
+                
+                document.getElementById('prefMarkerContrast')?.addEventListener('change', function() {
+                    localStorage.setItem(PREF_KEYS.contrast, this.value);
+                    applyMarkerContrast(this.value, true);
+                });
+
+                // Or if using the dropdown version:
+                document.getElementById('sortPreferenceSelect')?.addEventListener('change', function() {
+                    window.activeSortPreference = this.value;
+                    localStorage.setItem(PREF_KEYS.sort, this.value);
+                    applyClientSideMapFilters();
+                });
+
+                const filterForm = document.querySelector(".filterForm");
+                if (filterForm) {
+                    filterForm.addEventListener("submit", function(event) {
+                        event.preventDefault();
+
+                        const rawAddress = document.getElementById("filterAddress")?.value.trim() || "";
+                        const rawCity = document.getElementById("filterCity")?.value.trim() || "";
+                        const rawState = document.getElementById("filterState")?.value.trim() || "";
+                        const rawZip = document.getElementById("filterZip")?.value.trim() || "";
+                        const rawStore = document.getElementById("filterStoreName")?.value.trim() || "";
+                        const quickSliderVal = document.getElementById("distanceRange")?.value || "10";
+                        const quickPriceVal = document.getElementById("filterMaxPrice")?.value.trim() || "";
+
+                        sessionStorage.setItem('gasWatch_sessAddress', rawAddress);
+                        sessionStorage.setItem('gasWatch_sessCity', rawCity);
+                        sessionStorage.setItem('gasWatch_sessState', rawState);
+                        sessionStorage.setItem('gasWatch_sessZip', rawZip);
+                        sessionStorage.setItem('gasWatch_sessStoreName', rawStore);
+                        sessionStorage.setItem('gasWatch_sessRadius', quickSliderVal);
+                        sessionStorage.setItem('gasWatch_sessFuel', window.activeFuelType);
+                        sessionStorage.setItem('gasWatch_sessMaxPrice', quickPriceVal);
+
+                        // Build location query for database fetch (City/State/Zip take precedence)
+                        let locationParts = [];
+                        if (rawCity) locationParts.push(rawCity);
+                        if (rawState) locationParts.push(rawState);
+                        if (rawZip) locationParts.push(rawZip);
+                        
+                        let databaseLocationQuery = locationParts.join(" ");
+                        
+                        // If no city/state/zip was provided, fall back to address or home base
+                        if (!databaseLocationQuery) {
+                            databaseLocationQuery = rawAddress || window.activeHomeBaseLocation || FALLBACK_CITY;
+                        } else if (rawAddress) {
+                            // Attach address for frontend map parsing, but keep it structured
+                            databaseLocationQuery = `${rawAddress}, ${databaseLocationQuery}`;
+                        }
+
+                        if (document.getElementById('saveFiltersAsPrefs')?.checked) {
+                            localStorage.setItem(PREF_KEYS.radius, quickSliderVal);
+                            localStorage.setItem(PREF_KEYS.fuel, window.activeFuelType);
+                            localStorage.setItem(PREF_KEYS.maxPrice, quickPriceVal);
+
+                            if (databaseLocationQuery) {
+                                localStorage.setItem(PREF_KEYS.homeBase, databaseLocationQuery);
+                                window.activeHomeBaseLocation = databaseLocationQuery;
+                            }
+                            mirrorStateToUIForms();
+                        }
+
+                        // Send through unified parser engine
+                        searchLocation(null, databaseLocationQuery);
+
+                        const displayPanel = document.getElementById("filterDisplay");
+                        if (displayPanel) displayPanel.style.display = "none";
+                    });
+                }
+                
+                document.getElementById("clearFiltersBtn")?.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    sessionStorage.clear();
+
+                    window.activeRadiusMiles = parseInt(localStorage.getItem(PREF_KEYS.radius) || '10', 10) || 10;
+                    window.activeFuelType = localStorage.getItem(PREF_KEYS.fuel) || 'regular';
+                    const rawLocalPrice = localStorage.getItem(PREF_KEYS.maxPrice) || '';
+                    window.maxPriceAllowed = rawLocalPrice !== '' ? parseFloat(rawLocalPrice) : null;
+
+                    const saveCheckbox = document.getElementById('saveFiltersAsPrefs');
+                    if (saveCheckbox) saveCheckbox.checked = false;
+
+                    mirrorStateToUIForms();
+                    
+                    const targetQuery = window.activeHomeBaseLocation || document.getElementById("searchBar")?.value.trim() || FALLBACK_CITY;
+                    searchLocation(null, targetQuery);
+                });
+            }
+
+            function triggerNetworkOrClientRefresh() {
+                const currentSearch = document.getElementById("searchBar")?.value.trim() || "";
+                const targetQuery = currentSearch || window.activeHomeBaseLocation || FALLBACK_CITY;
+                searchLocation(null, targetQuery);
+            }
+
+
+            /* ==========================================================================
+            STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
+            ========================================================================== */
+            window.activePollInterval = null;
+
+            function clearExistingPoll() {
+                if (window.activePollInterval) {
+                    clearInterval(window.activePollInterval);
+                    window.activePollInterval = null;
+                }
+            }
+
+            // Helper to calculate distance between two coordinates in miles
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+                const R = 3958.8; // Radius of earth in miles
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                        Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            function getValidStations() {
+                return (window.globalRawStations || []).filter(s => 
+                    s.lat !== null && s.lon !== null && !isNaN(s.lat) && !isNaN(s.lon)
+                );
+            }
+
+            function updateStatusUI(message, options = {}) {
+                const existing = document.getElementById('status-container');
+                if (existing) existing.remove();
+
+                const container = document.createElement('div');
+                container.id = 'status-container';
+                container.style.cssText = `
+                    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+                    z-index: 900; background: #ffffff; padding: 12px 24px; border-radius: 10px; 
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #eee; 
+                    display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 300px;
+                    justify-content: center; margin-bottom: 10px;
+                `;
+
+                const loadmsg = document.createElement('p');
+                loadmsg.style.cssText = "margin:0; font-size:14px; color:#333; text-align:center;";
+                loadmsg.innerText = message;
+                container.appendChild(loadmsg);
+
+                if (options.onYes) {
+                    const btnStyle = `
+                        border:none; background:#007bff; color:white; 
+                        padding:6px 14px; border-radius:10px; cursor:pointer; font-size:12px; 
+                        font-weight:600; height: 15px;
+                    `;
+                    
+                    const btnYes = document.createElement('button');
+                    btnYes.innerText = options.isMapRefresh ? "Update Map" : "Refresh Prices";
+                    btnYes.style.cssText = btnStyle;
+                    btnYes.onclick = () => { options.onYes(); container.remove(); };
+
+                    const btnNo = document.createElement('button');
+                    btnNo.innerText = "Keep Current";
+                    btnNo.style.cssText = btnStyle.replace("#007bff", "#6c757d");
+                    btnNo.onclick = () => { if(options.onNo) options.onNo(); container.remove(); };
+
+                    container.appendChild(btnYes);
+                    container.appendChild(btnNo);
+                } else if (!options.persistent) {
+                    setTimeout(() => { if (container) container.remove(); }, 5000);
+                }
+                const appShell = document.getElementById('map') || document.body;
+                appShell.appendChild(container);
+            }
+
+            async function pollForCompletion(query) {
+                clearExistingPoll();
+                const startTime = Date.now();
+                
+                window.activePollInterval = setInterval(async () => {
+                    try {
+                        if (Date.now() - startTime < 10000) return;
+                        
+                        const res = await fetch(`/api/check-progress?query=${encodeURIComponent(query)}`);
+                        if (!res.ok) throw new Error("Server error");
+                        
+                        const { hasNulls } = await res.json();
+                        
+                        if (!hasNulls) {
+                            clearExistingPoll();
+                            updateStatusUI("Geocoding complete! New prices now available.", {
+                                isMapRefresh: true,
+                                onYes: () => {
+                                    const container = document.getElementById('status-container');
+                                    if (container) container.remove();
+                                    document.getElementById("searchBar")?.classList.remove("loading");
+                                    getPricesNow(query, false); 
+                                },
+                                onNo: () => console.log("User dismissed final refresh")
+                            });
+                        }
+                    } catch (err) {
+                        console.warn("Polling attempt failed, retrying in 5s...", err.message);
+                    }
+                }, 5000);
+            }
+
+            async function getPricesNow(searchQuery, forceRefresh = false, meta = {}) {
+                if (window.isSearching && !forceRefresh) return;
+                
+                clearExistingPoll();
+                window.isSearching = true;
+                const searchBar = document.getElementById("searchBar");
+                searchBar?.classList.add("loading");
+
+                updateStatusUI("Searching database...", { persistent: true });
+
+                try {
+                    if (typeof clearMarkers === "function") clearMarkers();
+                    window.globalRawStations = [];
+                    if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
+
+                    const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
+                                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
+
+                    // --- DEBUG LOG ---
+                    console.log("📤 Sending Gas Price Request to Backend:", sanitizedQuery);
+
+                    // Frontend Geocoding Cache FlyTo Check
+                    const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
+                    const cachedCoords = localStorage.getItem(cacheKey);
+                    if (cachedCoords) {
+                        const { lat, lon } = JSON.parse(cachedCoords);
+                        window.map?.flyTo([lat, lon], 12);
+                    }
+
+                    let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
+                        ? "http://localhost:3000/api/gas-prices" : "/api/gas-prices";
+
+                    const response = await fetch(BACKEND_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            search: sanitizedQuery, 
+                            queryType: meta.queryType || "general", 
+                            components: meta.components || {},      
+                            fuelGradeSelection: window.activeFuelType || "regular",
+                            forceRefresh: forceRefresh 
+                        })
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const responseData = await response.json();
+
+                    if (responseData.status === "STALE") {
+                        updateStatusUI(responseData.message, {
+                            onYes: () => getPricesNow(sanitizedQuery, true, meta), 
+                            onNo: () => console.log("User kept current data")
+                        });
+                    } else if (responseData.info) {
+                        updateStatusUI(responseData.info, { persistent: true });
+                        if (responseData.info.includes("Geocoding")) {
+                            pollForCompletion(sanitizedQuery);
+                        }
+                    }
+
+                    const stations = responseData.stations || [];
+                    const isGeocoding = responseData.info?.includes("Geocoding");
+                    
+                    const mapCenter = window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON };
+
+                    window.globalRawStations = stations.map(s => {
+                        const lat = (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null;
+                        const lon = (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null;
+                        const dist = calculateDistance(mapCenter.lat, mapCenter.lng, lat, lon);
+
+                        return {
+                            lat: lat,
+                            lon: lon,
+                            name: s.name || "Gas Station",
+                            address: s.address || "Unknown Address",
+                            price: parseFloat(s.price) || 0,
+                            displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
+                            postedTime: s.last_updated || null,
+                            zip: s.zip || "",
+                            distance: dist !== null ? dist : 9999
+                        };
+                    });
+
+                    const validStations = getValidStations();
+                    if (validStations.length > 0) {
+                        if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
+                    } else if (!isGeocoding) {
+                        updateStatusUI("No stations found for this area.", { persistent: false });
+                    }
+                    
+                    window.map?.invalidateSize();
+
+                } catch (error) {
+                    console.error("🔴 Sync failed:", error);
+                    updateStatusUI("Sync failed. Please try again.", { persistent: false });
+                } finally {
+                    window.isSearching = false;
+                    searchBar?.classList.remove("loading");
+                }
+            }
+
+
+            /* ==========================================================================
+            STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
+            ========================================================================== */
+
+            /* ==========================================================================
+            DIRECT SIDEBAR POPULATOR (Drop this right into your script)
+            ========================================================================== */
+            function rebuildSidebarStationList(stations) {
+                const container = document.getElementById("sidebarStationList");
+                const badge = document.getElementById("stationCountBadge");
+                if (!container) return;
+
+                container.innerHTML = "";
+                
+                if (!stations || stations.length === 0) {
+                    if (badge) badge.innerText = "0 found";
+                    container.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 20px; font-size: 13px;">No stations to display</div>`;
+                    return;
+                }
+
+                if (badge) badge.innerText = `${stations.length} found`;
+
+                stations.forEach(station => {
+                    let displayTime = "Recently";
+                    if (station.postedTime) {
+                        try {
+                            displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
+                                month: 'short', day: 'numeric'
+                            });
+                        } catch(e) { displayTime = "Recently"; }
+                    }
+
+                    const distanceText = station.distance !== undefined && station.distance !== 9999 
+                        ? `${station.distance.toFixed(1)} mi away` : '';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'station-card';
+                    card.innerHTML = `
+                        <div class="station-card-top">
+                            <h4 class="station-name">${station.name}</h4>
+                            <div class="station-price-badge">${station.displayPrice}</div>
+                        </div>
+                        <div class="station-card-body">
+                            <p class="station-address">${station.address}</p>
+                            <div class="station-card-footer">
+                                <span>🕒 Updated ${displayTime}</span>
+                                <span class="station-card-distance" style="font-weight: 600;;">${distanceText}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    // Strictly flies to location without hijacking or altering your custom marker popups
+                    card.addEventListener('click', () => {
+                        if (station.lat && station.lon && window.map) {
+                            window.map.flyTo([station.lat, station.lon], 15);
+                        }
+                    });
+
+                    container.appendChild(card);
+                });
+            }
+
+            function applyClientSideMapFilters() {
+                if (!window.map) return;
+
+                const filters = {
+                    // Read session or form filters
+                    city: (sessionStorage.getItem('gasWatch_sessCity') || document.getElementById('filterCity')?.value || '').trim().toLowerCase(),
+                    zip: (sessionStorage.getItem('gasWatch_sessZip') || document.getElementById('filterZip')?.value || '').trim(),
+                    store: (sessionStorage.getItem('gasWatch_sessStoreName') || document.getElementById('filterStoreName')?.value || '').trim().toLowerCase(),
+                    maxPrice: window.maxPriceAllowed
+                };
+
+                const processed = window.globalRawStations
+                    .filter(s => {
+                        // Price Filter
+                        if (filters.maxPrice && s.price > filters.maxPrice) return false;
+                        
+                        // Optional Brand / Store Name Filter
+                        if (filters.store && !s.name?.toLowerCase().includes(filters.store)) return false;
+
+                        // Zip Code Filter (if specified and non-empty)
+                        if (filters.zip && s.zip && !s.zip.includes(filters.zip)) return false;
+
+                        return true;
+                    })
+                    .sort((a, b) => {
+                        if (window.activeSortPreference === 'distance') {
+                            return (a.distance || 9999) - (b.distance || 9999);
+                        } else {
+                            const priceA = a.price > 0 ? a.price : 9999;
+                            const priceB = b.price > 0 ? b.price : 9999;
+                            return priceA - priceB;
+                        }
+                    });
+
+                clearMarkers();
+                processed.forEach(s => renderStationMarker(s));
+                
+                if (typeof rebuildSidebarStationList === "function") {
+                    rebuildSidebarStationList(processed);
+                }
+
+                if (processed.length > 0) {
+                    const bounds = processed.map(s => [s.lat, s.lon]);
+                    window.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
+                }
+            }    
+            
+            /* ==========================================================================
+            STAGE 7: LEAFLET RENDERING INTERFACES (CANVAS SEPARATION LAYER)
+            ========================================================================== */
+            function switchMapTheme(themeName) {
+                if (typeof window.map === 'undefined' || !window.map || typeof window.map.addLayer !== 'function') return;
+
+                if (window.currentTileLayer) window.map.removeLayer(window.currentTileLayer);
+
+                const activeTheme = themeName || 'google';
+                const targetUrl = MAP_THEME_TILES[activeTheme] || MAP_THEME_TILES.google;
+                const targetAttribution = MAP_THEME_ATTRIBUTIONS[activeTheme] || MAP_THEME_ATTRIBUTIONS.google;
+
+                window.map.eachLayer(function(layer) {
+                    if (layer instanceof L.TileLayer) {
+                        window.map.removeLayer(layer);
+                    }
+                });
+
+                const tileOptions = {
+                    maxZoom: 20,
+                    minZoom: 4,
+                    updateWhenIdle: true,
+                    attribution: targetAttribution
+                };
+
+                if (activeTheme !== 'google') {
+                    tileOptions.subdomains = 'abc';
+                }
+
+                window.currentTileLayer = L.tileLayer(targetUrl, tileOptions).addTo(window.map);
+
+                const dynamicStyleId = 'dynamic-dark-popup-override';
+                let popupStyleElement = document.getElementById(dynamicStyleId);
+                
+                if (!popupStyleElement) {
+                    popupStyleElement = document.createElement('style');
+                    popupStyleElement.id = dynamicStyleId;
+                    document.head.appendChild(popupStyleElement);
+                }
+                
+                if (activeTheme === 'midnight') {
+                    popupStyleElement.innerHTML = `
+                        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #121418 !important; color: #fff !important; }
+                        .custom-popup h3 { color: #f5f8ff !important; }
+                        .custom-popup p { color: #dee0e3 !important; }
+                        .price-tag { background: #05509b !important; color: #fff !important; border: 1px solid #0060b5 !important; }
+                    `;
+                } else {
+                    popupStyleElement.innerHTML = ''; 
+                }
+            }
+
+            function renderStationMarker(station) {
+                if (!window.map || !station) return;
+
+                // Read current scaling state live from the document root element
+                const currentFontSize = getComputedStyle(document.documentElement).getPropertyValue('--gas-marker-font-size').trim();
+                
+                // Scale container boundaries proportionally based on the 3 tiers
+                let iconWidth = 50;
+                let iconHeight = 22;
+                
+                if (currentFontSize.includes('15px')) {
+                    iconWidth = 72; // Large state (prominent & bold)
+                    iconHeight = 34;
+                } else if (currentFontSize.includes('9.5px')) {
+                    iconWidth = 36; // Small state (compact)
+                    iconHeight = 16;
+                }
+
+                const priceIcon = L.divIcon({
+                    className: 'gas-price-marker', 
+                    html: `<div class="marker-pin-bubble">${station.displayPrice}</div>`,    
+                    iconSize: [iconWidth, iconHeight],        
+                    iconAnchor: [iconWidth / 2, iconHeight / 2]       
+                });
+
+                let displayTime = "Updated recently";
+                if (station.postedTime) {
+                    try {
+                        displayTime = new Date(station.postedTime).toLocaleDateString('en-US', {
+                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        });
+                    } catch(e) { displayTime = station.postedTime; }
+                }
+
+                const marker = L.marker([station.lat, station.lon], { icon: priceIcon }).addTo(window.map);
+                marker.bindPopup(`
+                    <b>${station.name}</b><br>
+                    ${station.address}<br>
+                    <b>${station.displayPrice}</b><br>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px;">
+                        🕒 ${displayTime}
+                    </div>
+                `);
+
+                window.markers.push(marker);
+            }
+
+            function clearMarkers() {
+                if (window.markers && window.markers.length > 0) {
+                    window.markers.forEach(marker => {
+                        if (marker && marker.off) marker.off();
+                        if (window.map) window.map.removeLayer(marker);
+                    });
+                    window.markers = [];
+                }
+            }
+
+            function dropDenverWelcomeMarker() {
+                const centerMarker = L.marker([FALLBACK_LAT, FALLBACK_LON], {
+                    icon: L.divIcon({ className: 'black-marker-icon' })
+                }).addTo(window.map);
+                
+                centerMarker.bindPopup(`
+                    <div class="custom-popup">
+                        <h3>Welcome to Denver!</h3>
+                        <p>Set your custom location in <b>Preferences</b> to update your default starting view area.</p>
+                    </div>
+                `).openPopup();
+                window.markers.push(centerMarker);
+            }
+
+            function applyTextScaling(scale, triggerRefresh = true) {
+                if (scale === 'large') {
+                    document.documentElement.style.setProperty('--gas-marker-font-size', '14px');
+                    document.documentElement.style.setProperty('--gas-marker-padding', '5px 9px');
+                } else if (scale === 'small') {
+                    document.documentElement.style.setProperty('--gas-marker-font-size', '7.5px');
+                    document.documentElement.style.setProperty('--gas-marker-padding', '2px 4px');
+                } else {
+                    // Standard starting point (11px)
+                    document.documentElement.style.setProperty('--gas-marker-font-size', '10.5px');
+                    document.documentElement.style.setProperty('--gas-marker-padding', '3px 6px');
+                }
+                
+                if (triggerRefresh) applyClientSideMapFilters();
+            }
+
+            function applyMarkerContrast(mode, triggerRefresh = true) {
+                const contrastStyleId = 'dynamic-marker-contrast-override';
+                let styleEl = document.getElementById(contrastStyleId);
+                
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = contrastStyleId;
+                    document.head.appendChild(styleEl);
+                }
+                
+                styleEl.innerHTML = (mode === 'high') ? `
+                    .gas-price-marker { 
+                        box-shadow: 0 0 0 2px #fff, 0 6px 20px rgba(0,0,0,0.4) !important; 
+                        font-weight: 800 !important;
+                        border: 2px solid #000 !important;
+                    }` : '';
+                    
+                if (triggerRefresh) applyClientSideMapFilters();
+            }
+        </script>
 
         <script type="text/javascript"> var infolinks_pid = 3446312; var infolinks_wsid = 0; </script> <script type="text/javascript" src="//resources.infolinks.com/js/infolinks_main.js"></script>
     </body>
