@@ -2346,7 +2346,7 @@
 
             <!-- Body -->
             <section class="Body part" id="extBody">
-                <div class="displayBox">   
+                <div class="displayBox" id="displayBox">   
                     <!-- Create a div element to hold the map -->
                     <div id="map">
                         <!-- Map will be dynamically populated in script -->
@@ -4944,7 +4944,7 @@ function updateStatusUI(message, options = {}) {
     } else if (!options.persistent) {
         setTimeout(() => { if (container) container.remove(); }, 5000);
     }
-    const appShell = document.getElementById('map') || document.body;
+    const appShell = document.getElementById('displayBox') || document.body;
     appShell.appendChild(container);
 }
 
