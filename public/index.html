@@ -4884,7 +4884,7 @@
 
 
             /* ==========================================================================
-            STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
+                STAGE 5: NETWORK LAYER FETCH & PAYLOAD NORMALIZATION (NON-BLOCKING)
             ========================================================================== */
             window.activePollInterval = null;
 
@@ -5019,7 +5019,7 @@
                     if (cachedCoords) {
                         const { lat, lon } = JSON.parse(cachedCoords);
                         targetCenter = { lat, lon };
-                        window.map?.flyTo([lat, lon], 12); // Keep your travel app flyTo trick!
+                        window.map?.flyTo([lat, lon], 12);
                     }
 
                     let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
@@ -5039,9 +5039,22 @@
 
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     
-                    const responseData = response.json ? await response.json() : await response.json(); // (keep your json parse)
+                    const responseData = await response.json();
 
-                    // 2. If the backend returned a center coordinate or stations, establish our anchor point
+                    // 2. Handle Logic States (STALE & INFO Prompts Restored Properly)
+                    if (responseData.status === "STALE") {
+                        updateStatusUI(responseData.message, {
+                            onYes: () => getPricesNow(sanitizedQuery, true, meta),
+                            onNo: () => console.log("User kept current data")
+                        });
+                    } 
+                    else if (responseData.info) {
+                        updateStatusUI(responseData.info, { persistent: true });
+                        if (responseData.info.includes("Geocoding")) {
+                            pollForCompletion(sanitizedQuery);
+                        }
+                    }
+
                     const stations = responseData.stations || [];
                     
                     // If we didn't have cached coords, see if backend gave us a center or derive it from the first valid station
@@ -5091,7 +5104,7 @@
                     const validStations = getValidStations();
                     if (validStations.length > 0) {
                         if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
-                    } else if (!responseData.info?.includes("Geocoding")) {
+                    } else if (!responseData.info?.includes("Geocoding") && responseData.status !== "STALE") {
                         updateStatusUI("No stations found for this area.", { persistent: false });
                     }
                     
@@ -5105,6 +5118,7 @@
                     searchBar?.classList.remove("loading");
                 }
             }
+
             /* ==========================================================================
             STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
             ========================================================================== */
