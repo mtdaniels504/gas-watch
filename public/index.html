@@ -5007,17 +5007,19 @@
                     if (typeof rebuildSidebarStationList === "function") rebuildSidebarStationList([]);
 
                     const sanitizedQuery = (typeof searchQuery === 'string') ? searchQuery.trim() : 
-                                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
+                            (document.getElementById("searchBar")?.value.trim() || window.activeHomeBaseLocation || FALLBACK_CITY);
 
-                    // --- DEBUG LOG ---
                     console.log("📤 Sending Gas Price Request to Backend:", sanitizedQuery);
 
-                    // Frontend Geocoding Cache FlyTo Check
+                    // 1. Check local cache first for instant target coordinates
                     const cacheKey = `geo_${sanitizedQuery.toLowerCase()}`;
                     const cachedCoords = localStorage.getItem(cacheKey);
+                    let targetCenter = null;
+
                     if (cachedCoords) {
                         const { lat, lon } = JSON.parse(cachedCoords);
-                        window.map?.flyTo([lat, lon], 12);
+                        targetCenter = { lat, lon };
+                        window.map?.flyTo([lat, lon], 12); // Keep your travel app flyTo trick!
                     }
 
                     let BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
@@ -5037,30 +5039,35 @@
 
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     
-                    const responseData = await response.json();
+                    const responseData = response.json ? await response.json() : await response.json(); // (keep your json parse)
 
-                    if (responseData.status === "STALE") {
-                        updateStatusUI(responseData.message, {
-                            onYes: () => getPricesNow(sanitizedQuery, true, meta), 
-                            onNo: () => console.log("User kept current data")
-                        });
-                    } else if (responseData.info) {
-                        updateStatusUI(responseData.info, { persistent: true });
-                        if (responseData.info.includes("Geocoding")) {
-                            pollForCompletion(sanitizedQuery);
+                    // 2. If the backend returned a center coordinate or stations, establish our anchor point
+                    const stations = responseData.stations || [];
+                    
+                    // If we didn't have cached coords, see if backend gave us a center or derive it from the first valid station
+                    if (!targetCenter) {
+                        if (responseData.center) {
+                            targetCenter = responseData.center;
+                        } else if (stations.length > 0) {
+                            const firstValid = stations.find(s => s.lat && s.lon);
+                            targetCenter = firstValid ? { lat: parseFloat(firstValid.lat), lon: parseFloat(firstValid.lon) } : null;
                         }
                     }
 
-                    const stations = responseData.stations || [];
-                    const isGeocoding = responseData.info?.includes("Geocoding");
-                    
-                    const mapCenter = window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON };
+                    // Fallback to current map center or default city if nothing else exists
+                    const calcCenter = targetCenter || (window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON });
 
+                    // If we have a newly discovered center from the backend and didn't fly yet, fly now!
+                    if (!cachedCoords && targetCenter && window.map) {
+                        window.map.flyTo([targetCenter.lat, targetCenter.lon], 12);
+                    }
+
+                    // 3. Map stations and calculate distance using our reliable target center
                     window.globalRawStations = stations.map(s => {
                         const lat = (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null;
                         const lon = (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null;
-                        // Inside getPricesNow(), when mapping window.globalRawStations:
-                        const dist = calculateDistance(mapCenter.lat, mapCenter.lng, lat, lon);
+                        
+                        const dist = calculateDistance(calcCenter.lat, calcCenter.lng, lat, lon);
 
                         return {
                             lat: lat,
@@ -5071,7 +5078,6 @@
                             displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
                             postedTime: s.last_updated || null,
                             zip: s.zip || "",
-                            // Change fallback from 9999 to Infinity so they always sort to the absolute bottom
                             distance: (dist !== null && !isNaN(dist)) ? dist : Infinity 
                         };
                     });
@@ -5079,7 +5085,7 @@
                     const validStations = getValidStations();
                     if (validStations.length > 0) {
                         if (typeof applyClientSideMapFilters === "function") applyClientSideMapFilters();
-                    } else if (!isGeocoding) {
+                    } else if (!responseData.info?.includes("Geocoding")) {
                         updateStatusUI("No stations found for this area.", { persistent: false });
                     }
                     
@@ -5093,7 +5099,6 @@
                     searchBar?.classList.remove("loading");
                 }
             }
-
 
             /* ==========================================================================
             STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
