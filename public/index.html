@@ -5247,15 +5247,15 @@ function renderStationMarker(station) {
     const currentFontSize = getComputedStyle(document.documentElement).getPropertyValue('--gas-marker-font-size').trim();
     
     // Scale container boundaries proportionally based on the 3 tiers
-    let iconWidth = 52;
-    let iconHeight = 24;
+    let iconWidth = 50;
+    let iconHeight = 22;
     
     if (currentFontSize.includes('15px')) {
-        iconWidth = 76; // Large state (prominent & bold)
-        iconHeight = 36;
+        iconWidth = 72; // Large state (prominent & bold)
+        iconHeight = 34;
     } else if (currentFontSize.includes('9.5px')) {
-        iconWidth = 44; // Small state (compact)
-        iconHeight = 20;
+        iconWidth = 36; // Small state (compact)
+        iconHeight = 16;
     }
 
     const priceIcon = L.divIcon({
@@ -5313,14 +5313,14 @@ function dropDenverWelcomeMarker() {
 
 function applyTextScaling(scale, triggerRefresh = true) {
     if (scale === 'large') {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '15px');
+        document.documentElement.style.setProperty('--gas-marker-font-size', '14px');
         document.documentElement.style.setProperty('--gas-marker-padding', '5px 9px');
     } else if (scale === 'small') {
-        document.documentElement.style.setProperty('--gas-marker-font-size', '9.5px');
+        document.documentElement.style.setProperty('--gas-marker-font-size', '7.5px');
         document.documentElement.style.setProperty('--gas-marker-padding', '2px 4px');
     } else {
         // Standard starting point (11px)
-        document.documentElement.style.setProperty('--gas-marker-font-size', '11px');
+        document.documentElement.style.setProperty('--gas-marker-font-size', '10.5px');
         document.documentElement.style.setProperty('--gas-marker-padding', '3px 6px');
     }
     
