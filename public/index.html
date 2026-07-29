@@ -3264,7 +3264,7 @@
                     '.station-address': { color: `${black1}`, 'text-shadow': '1px 1px 1px rgba(0, 0, 0, 0.03)' },
                     '.station-card-body': { background: 'linear-gradient(178deg, #fff 0%, #eceef2 100%)' },
                     '.station-card-footer': { background: 'transparent', 'border-top': '1px solid #eceef2', color: `${black1}` },
-                    '.station-card-footer span:last-child': { color: `${cobalt1}` },
+                    '.station-card-distance': { color: `${cobalt1}` },
                 },
 
                 intLightNeon: {
@@ -3368,7 +3368,7 @@
                     '.station-card-body': { background: 'transparent' },
 
                     '.station-card-footer': { background: 'transparent', 'border-top': `1px solid ${whiteBlueNeon}`, color: `${cobaltDark}` },
-                    '.station-card-footer span:last-child': { color: `${cobalt1}` },
+                    '.station-card-distance': { color: `${cobalt1}` },
                 },
 
 
@@ -3472,7 +3472,7 @@
                     '.station-address': { color: `${white2}` },
                     '.station-card-body': { background: 'transparent' },
                     '.station-card-footer': { background: 'transparent', 'border-top': '1px solid rgba(255, 255, 255, 0.1)', color: `${white2}` },
-                    '.station-card-footer span:last-child': { color: `${white1}` }
+                    '.station-card-distance': { color: `${white1}` }
                 },
 
                 darkNeon: {
@@ -3575,7 +3575,7 @@
                     '.station-address': { color: `${whiteBlue}` },
                     '.station-card-body': { background: 'transparent' },
                     '.station-card-footer': { background: 'transparent', 'border-top': `1.5px solid ${cobaltDark}`, color: `${whiteBlue}` },
-                    '.station-card-footer span:last-child': { color: `${white1}` }
+                    '.station-card-distance': { color: `${whiteBlueNeon}` }
                 },
             };
 
@@ -5124,7 +5124,7 @@ function rebuildSidebarStationList(stations) {
                 <p class="station-address">${station.address}</p>
                 <div class="station-card-footer">
                     <span>🕒 Updated ${displayTime}</span>
-                    <span style="font-weight: 600; color: #0f172a;">${distanceText}</span>
+                    <span class="station-card-distance" style="font-weight: 600; color: #0f172a;">${distanceText}</span>
                 </div>
             </div>
         `;
