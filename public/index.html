@@ -5055,7 +5055,13 @@
                     }
 
                     // Fallback to current map center or default city if nothing else exists
-                    const calcCenter = targetCenter || (window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON });
+                    const rawCenter = targetCenter || (window.map ? window.map.getCenter() : { lat: FALLBACK_LAT, lng: FALLBACK_LON });
+                    
+                    // Safely normalize longitude whether it came as 'lon' or Leaflet's 'lng'
+                    const calcCenter = {
+                        lat: rawCenter.lat,
+                        lon: rawCenter.lon !== undefined ? rawCenter.lon : rawCenter.lng
+                    };
 
                     // If we have a newly discovered center from the backend and didn't fly yet, fly now!
                     if (!cachedCoords && targetCenter && window.map) {
@@ -5067,7 +5073,7 @@
                         const lat = (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null;
                         const lon = (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null;
                         
-                        const dist = calculateDistance(calcCenter.lat, calcCenter.lng, lat, lon);
+                        const dist = calculateDistance(calcCenter.lat, calcCenter.lon, lat, lon);
 
                         return {
                             lat: lat,
@@ -5099,7 +5105,6 @@
                     searchBar?.classList.remove("loading");
                 }
             }
-
             /* ==========================================================================
             STAGE 6: MASTER MAP RE-RENDERING & FILTERS ENGINE
             ========================================================================== */
@@ -5148,7 +5153,7 @@
                             <p class="station-address">${station.address}</p>
                             <div class="station-card-footer">
                                 <span>🕒 Updated ${displayTime}</span>
-                                <span class="station-card-distance" style="font-weight: 600;;">${distanceText}</span>
+                                <span class="station-card-distance" style="font-weight: 600;">${distanceText}</span>
                             </div>
                         </div>
                     `;
