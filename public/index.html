@@ -1121,7 +1121,7 @@
                 position: absolute;
                 width: calc(175px + 17.5dvw);
                 height: auto;
-                z-index: 999;
+                z-index: 9999;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
@@ -1275,7 +1275,7 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-start;
-                z-index: 999;
+                z-index: 9999;
                 top: 60px;
                 right: 0;
             }
@@ -1351,10 +1351,6 @@
                 box-shadow: none;
                 margin: 0;
                 padding: 0;
-            }
-
-            #status-container {
-                z-index: 990;
             }
 
 
@@ -4910,8 +4906,8 @@ function updateStatusUI(message, options = {}) {
     const container = document.createElement('div');
     container.id = 'status-container';
     container.style.cssText = `
-        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        background: #ffffff; padding: 12px 24px; border-radius: 10px; 
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+        z-index: 900; background: #ffffff; padding: 12px 24px; border-radius: 10px; 
         box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #eee; 
         display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 300px;
         justify-content: center;
