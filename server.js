@@ -17,9 +17,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-/**
- * Helper to build precise Supabase queries based on structured components & queryType
- */
 function applyLocationFilter(queryBuilder, queryType, components) {
   const city = components?.city?.toLowerCase() || '';
   const state = components?.state?.toLowerCase() || '';
@@ -28,12 +25,14 @@ function applyLocationFilter(queryBuilder, queryType, components) {
 
   switch (queryType) {
     case 'city_state':
-      return queryBuilder.ilike('city', `%${city}%`); // Can combine with state if stored in db
+      // Filters by both city and state address parts
+      return queryBuilder.ilike('city', `%${city}%`).ilike('address', `%${state}%`);
     case 'city':
       return queryBuilder.ilike('city', `%${city}%`);
     case 'zip':
       return queryBuilder.eq('zip', zip);
     case 'state':
+      // Filters strictly by state within the address field
       return queryBuilder.ilike('address', `%${state}%`);
     case 'text_fallback':
     default:
