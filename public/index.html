@@ -5059,6 +5059,7 @@
                     window.globalRawStations = stations.map(s => {
                         const lat = (s.lat !== null && s.lat !== undefined && s.lat !== '') ? parseFloat(s.lat) : null;
                         const lon = (s.lon !== null && s.lon !== undefined && s.lon !== '') ? parseFloat(s.lon) : null;
+                        // Inside getPricesNow(), when mapping window.globalRawStations:
                         const dist = calculateDistance(mapCenter.lat, mapCenter.lng, lat, lon);
 
                         return {
@@ -5070,7 +5071,8 @@
                             displayPrice: `$${parseFloat(s.price || 0).toFixed(2)}`,
                             postedTime: s.last_updated || null,
                             zip: s.zip || "",
-                            distance: dist !== null ? dist : 9999
+                            // Change fallback from 9999 to Infinity so they always sort to the absolute bottom
+                            distance: (dist !== null && !isNaN(dist)) ? dist : Infinity 
                         };
                     });
 
@@ -5125,8 +5127,10 @@
                         } catch(e) { displayTime = "Recently"; }
                     }
 
-                    const distanceText = station.distance !== undefined && station.distance !== 9999 
-                        ? `${station.distance.toFixed(1)} mi away` : '';
+                    // Inside rebuildSidebarStationList():
+                    const distanceText = (station.distance !== undefined && station.distance !== null && station.distance !== Infinity) 
+                        ? `${station.distance.toFixed(1)} mi away` 
+                        : '';
                     
                     const card = document.createElement('div');
                     card.className = 'station-card';
@@ -5181,7 +5185,10 @@
                     })
                     .sort((a, b) => {
                         if (window.activeSortPreference === 'distance') {
-                            return (a.distance || 9999) - (b.distance || 9999);
+                            // Explicitly handle null/undefined/Infinity to avoid falsy '0' bug
+                            const distA = (a.distance !== undefined && a.distance !== null) ? a.distance : Infinity;
+                            const distB = (b.distance !== undefined && b.distance !== null) ? b.distance : Infinity;
+                            return distA - distB;
                         } else {
                             const priceA = a.price > 0 ? a.price : 9999;
                             const priceB = b.price > 0 ? b.price : 9999;
