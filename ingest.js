@@ -104,6 +104,7 @@ async function runIngestion(searchQuery, sortStrategy = 'price_asc', limit = 20)
                 name: s.name || "Unknown Station",
                 address: fullAddress,
                 city: (s.address_locality || 'unknown').toLowerCase(),
+                state: s.address_region ? s.address_region.toUpperCase() : null,
                 zip: s.address_postalCode || '',
                 price: rawPrice ? parseFloat(rawPrice) : null,
                 last_updated: new Date().toISOString(),
@@ -139,14 +140,13 @@ async function smartIngestion(searchQuery, queryType, components) {
     let dbQuery = supabase.from('gas_stations').select('last_updated');
 
     const city = components?.city?.toLowerCase() || '';
-    const state = components?.state?.toLowerCase() || '';
+    const state = components?.state?.toUpperCase() || '';
     const zip = components?.zip || '';
-    const storeOrAddress = components?.storeOrAddress?.toLowerCase() || '';
 
-    // Handle database filtering explicitly based on frontend queryType
+    // Handle database filtering cleanly based strictly on structured queryType prioritization
     switch (queryType) {
         case 'city_state':
-            dbQuery = dbQuery.ilike('city', `%${city}%`).ilike('address', `%${state}%`);
+            dbQuery = dbQuery.ilike('city', `%${city}%`).eq('state', state);
             break;
         case 'city':
             dbQuery = dbQuery.ilike('city', `%${city}%`);
@@ -155,11 +155,11 @@ async function smartIngestion(searchQuery, queryType, components) {
             dbQuery = dbQuery.eq('zip', zip);
             break;
         case 'state':
-            dbQuery = dbQuery.ilike('address', `%${state}%`);
+            dbQuery = dbQuery.eq('state', state);
             break;
         case 'text_fallback':
         default:
-            const fallback = storeOrAddress || city || zip || searchQuery;
+            const fallback = city || zip || searchQuery;
             dbQuery = dbQuery.or(`city.ilike.%${fallback}%,address.ilike.%${fallback}%,name.ilike.%${fallback}%`);
             break;
     }
