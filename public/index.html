@@ -5132,9 +5132,9 @@
                         } catch(e) { displayTime = "Recently"; }
                     }
 
-                    // Inside rebuildSidebarStationList():
-                    const distanceText = (station.distance !== undefined && station.distance !== null && station.distance !== Infinity) 
-                        ? `${station.distance.toFixed(1)} mi away` 
+                    const rawDist = parseFloat(station.distance);
+                    const distanceText = (!isNaN(rawDist) && rawDist !== Infinity) 
+                        ? `${rawDist.toFixed(1)} mi away` 
                         : '';
                     
                     const card = document.createElement('div');
