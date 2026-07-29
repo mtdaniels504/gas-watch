@@ -143,7 +143,7 @@ async function smartIngestion(searchQuery, queryType, components) {
     const state = components?.state?.toUpperCase() || '';
     const zip = components?.zip || '';
 
-    // Handle database filtering cleanly based strictly on structured queryType prioritization
+    // Apply location filter so we check freshness for THIS specific area, not globally
     switch (queryType) {
         case 'city_state':
             dbQuery = dbQuery.ilike('city', `%${city}%`).eq('state', state);
