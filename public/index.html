@@ -4940,7 +4940,8 @@ function updateStatusUI(message, options = {}) {
     } else if (!options.persistent) {
         setTimeout(() => { if (container) container.remove(); }, 5000);
     }
-    document.body.appendChild(container);
+    const appShell = document.getElementById('map') || document.body;
+    appShell.appendChild(container);
 }
 
 async function pollForCompletion(query) {
