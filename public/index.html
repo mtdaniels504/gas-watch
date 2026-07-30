@@ -1119,7 +1119,7 @@
 
             .subNav {
                 position: absolute;
-                width: calc(175px + 17.5dvw);
+                width: calc(225px + 10dvw);
                 height: auto;
                 z-index: 9999;
                 display: flex;
@@ -1191,7 +1191,7 @@
 
             .subNavRow2 {
                 max-width: calc(100% - 8px);
-                margin-left: 8px;
+                margin: 1px 0 1px 5px;
             }
 
             .prefHomeBaseDiv {
@@ -1201,7 +1201,7 @@
                 align-items: center;
             }
 
-            #prefHomeBase {
+            #prefHomeBase, #extPrefHomeBase {
                 width: 100%;
             }
 
@@ -1211,17 +1211,19 @@
                 justify-content: flex-end;
                 align-items: stretch;
                 gap: 1px;
+                padding: 0;
+                margin: 0;
             }
 
             .subNavHr {
                 width: 1.5px;
                 height: auto;
-                margin: 1px 0 3px 8px;
+                margin: 2px 2px 2px 5px;
             }
 
             .subNavMoreBox {
                 flex: 1;
-                margin: 0 0 0 -3px;
+                margin: 0 0 0 2px;
                 padding-left: 0;
             }
 
@@ -2378,7 +2380,7 @@
                         <!-- Ext Nav Links -->
                         <div class="navLinksBox">
                             <div class="navLinks">
-                                <button class="navLink">Map</button>
+                                <button class="navLink exitButton" data-cont="Extended">Map</button>
                                 <div class="navLinksShadows">
                                     <hr class="vertHr shadow navLinksHr">
                                 </div>
@@ -2419,92 +2421,295 @@
                                 <!--extSubNav(Head)-->
                                 <div class="subNav" id="extSubNav" style="display: none;">
 
-                                    <!--subNavHome-->
-                                    <div class="subNavRow">
-                                        <span class="subNavItem">Home</span>
-                                        <i class="subNavButton subHomeButton fa-solid fa-home"></i>
-                                    </div>
+                                    <div class="subNavContent">
+                                        <!--subNavHome-->
+                                        <div class="subNavRow">
+                                            <span class="subNavItem">Home</span>
+                                            <i class="IconC subNavButton subHomeButton fa-solid fa-home"></i>
+                                        </div>
 
-                                    <!--subNavFriends-->
-                                    <div class="subNavRow" data-target="#extSubNav-friends" data-slug="#extSubMore-friends">
-                                        <span class="subNavItem">Friends</span>
-                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-friends"></i>
-                                    </div>
-                                    <!--subNavMore-->
-                                    <div class="subNavMore" id="extSubNav-friends" style="display: none;">
-                                        <hr class="subNavHr">
-                                        <div class="subNavMoreBox">
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">Find Friends</span>
-                                                <i class="subNavButton subPlusButton">+</i>
+                                        <!-- ==========================================================================
+                                            SUBNAV HELP & ACCORDION FAQ SECTION
+                                            ========================================================================== -->
+                                        <div class="subNavRow" data-target="#extSubNav-help" data-slug="#extSubMore-help">
+                                            <span class="subNavItem">Help</span>
+                                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="extSubMore-help"></i>
+                                        </div>
+
+                                        <div class="subNavMore" id="extSubNav-help" style="display: none;">
+                                            <hr class="subNavHr">
+                                            <div class="subNavMoreBox subNavGroup1">
+                                                
+                                                <!-- Nested Core FAQ Header Row Toggle Trigger -->
+                                                <div class="subNavRow subNavRow2" data-target="#ext-faq-list-container" data-slug="#ext-faq-master-plus">
+                                                    <span class="subNavItem" style="font-weight: 600;">FAQs</span>
+                                                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="ext-faq-master-plus"></i>
+                                                </div>
+
+                                                <!-- Hidden Inner FAQ Sheet Wrapper -->
+                                                <div id="ext-faq-list-container" class="column" style="display: none; width: 100%; align-items: flex-start; gap: 4px; padding-left: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
+                                                    
+                                                    <!-- Question 1: Data Freshness -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-1" data-slug="#ext-faq-chev-1" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">How fresh are these gas prices?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-1" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-1" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our backend scrapes live pricing feeds. Prices refresh continuously throughout the day, logging a localized timestamp directly inside each marker's information popup.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 2: Inaccurate Pricing Report -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-2" data-slug="#ext-faq-chev-2" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">What if a price on the map is wrong?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-2" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-2" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Gas station owners can change corporate street signs rapidly. Tap any pricing marker bubble to click the built-in "Flag Report" element to ping our queue for verification parameters.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 3: Missing Station Geocodes -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-3" data-slug="#ext-faq-chev-3" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why can't I see a specific station?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-3" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-3" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Check your preferences. It's likely hidden by an active filter parameter—such as your Maximum Price Cap threshold or selected Search Radius boundary settings.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 4: Cash vs Credit Divergence -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-4" data-slug="#ext-faq-chev-4" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are these cash or credit card prices?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-4" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-4" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Our engine maps the absolute lowest rate available. If a location carries different parameters, we default explicitly to cash values to secure the best look on the tracking pills.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 5: Browser GPS Blocking -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-5" data-slug="#ext-faq-chev-5" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Why isn't the "Near Me" button locating me?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-5" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-5" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Your browser or mobile device might be blocking location permissions. Tap the lock icon in your browser's address bar, enable 'Location access,' and refresh the page to let the map glide to your spot.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 6: Fuel Grade Variations -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-6" data-slug="#ext-faq-chev-6" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does the map show Midgrade and Diesel?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-6" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-6" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Yes! While the map default is Regular, you can open your sliding filter form panel or change your permanent account Preferences to instantly swap all map pins to view Midgrade, Premium, or Diesel prices.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 7: International Data Scope -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-7" data-slug="#ext-faq-chev-7" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Does this app work outside the US?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-7" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-7" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">Currently, our scraper nodes optimize for the United States and parts of North America. We are steadily expanding our database connectivity to track European and global fuel networks soon.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Question 8: EV Charging Point Data Future -->
+                                                    <div class="column" style="width: 100%; align-items: flex-start; background: transparent; border: none; box-shadow: none; margin: 0; padding: 2px;">
+                                                        <div class="row subNavRow" data-target="#ext-faq-ans-8" data-slug="#ext-faq-chev-8" style="width: 100%; justify-content: space-between; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0;">
+                                                            <span class="fineP" style="font-weight: 600; text-align: left; max-width: 85%;">Are Electric Vehicle charging rates tracked?</span>
+                                                            <i class="IconC fa-solid fa-chevron-down subMoreToggle" id="ext-faq-chev-8" style="font-size: 0.45rem;"></i>
+                                                        </div>
+                                                        <div id="ext-faq-ans-8" class="subNavRow2" style="display: none;">
+                                                            <p class="fineP textMuted" style="text-align: left; line-height: 1.3; opacity: 0.85;">This feature is on our immediate horizon line! We are actively designing a complementary data layer to let users instantly map local EV charging kilowatt costs alongside combustion fuel nodes.</p>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
                                             </div>
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">Follows</span>
-                                                <i class="subNavButton subPlusButton">+</i>
+                                        </div>        
+                                        
+                                        <!--subNavSettings-->
+                                        <div class="subNavRow" data-target="#extSubNav-settings" data-slug="#extSubMore-settings">
+                                            <span class="subNavItem">Settings</span>
+                                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="extSubMore-settings"></i>
+                                        </div>
+                                        <!--subNavMore-->
+                                        <div class="subNavMore" id="extSubNav-settings" style="display: none;">
+                                            <hr class="subNavHr">
+                                            <div class="subNavMoreBox">
+                                                <!-- ==========================================================================
+                                                    SUBNAV PREFERENCES ACCORDION
+                                                    ========================================================================== -->
+                                                <div class="subNavRow subNavRow2" data-target="#extSubNav-preferences" data-slug="#extSubMore-preferences">
+                                                    <span class="subNavItem">Preferences</span>
+                                                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="extSubMore-preferences"></i>
+                                                </div>
+
+                                                <div class="subNavMore" id="extSubNav-preferences" style="display: none;">
+                                                    <hr class="subNavHr">
+                                                    <div class="subNavMoreBox">
+                                                        
+                                                        <!-- 🏠 NEW Feature 0: Persistent Home Base Anchor String -->
+                                                        <div class="subNavRow2 prefHomeBaseDiv" style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 2px;">
+                                                            <span class="lesserP subNavItem prefHomeBaseSpan" style="font-weight: 600; width: 100px;">Home Base</span>
+                                                            <input type="text" 
+                                                                id="extPrefHomeBase" 
+                                                                class="lesserP" 
+                                                                placeholder="e.g., Austin, TX or 90210" 
+                                                                style="box-sizing: border-box; padding: 4px 6px; height: calc(18px + 0.5vw);">
+                                                        </div>
+
+                                                        <!-- Feature 1: Persistent Fuel Type Choice -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Default Grade</span>
+                                                            <select class="lesserP subSmallSelect" id="extPrefDefaultFuel">
+                                                                <option value="regular">Regular</option>
+                                                                <option value="midgrade">Midgrade</option>
+                                                                <option value="premium">Premium</option>
+                                                                <option value="diesel">Diesel</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Feature 2: Default Search Radius Boundary -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Search Radius</span>
+                                                            <select class="lesserP subSmallSelect" id="extPrefDefaultRadius">
+                                                                <option value="5">5 Miles</option>
+                                                                <option value="10">10 Miles</option>
+                                                                <option value="15">15 Miles</option>
+                                                                <option value="20">20 Miles</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Feature 3: Sorting Preference Hierarchy -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Primary Sort</span>
+                                                            <select class="lesserP subSmallSelect" id="extPrefDefaultSort">
+                                                                <option value="price">Cheapest First</option>
+                                                                <option value="distance">Closest First</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Feature 4: Persistent Maximum Price Input Wrapper Group -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Max Price Cap</span>
+                                                            
+                                                            <!-- Unified structural row holding the currency sticker anchor -->
+                                                            <div style="display: flex; align-items: center;">
+                                                                <span class="lesserP" style="padding-right: 2px; user-select: none;">$</span>
+                                                                <input type="number" 
+                                                                    step="0.01" 
+                                                                    min="0.00" 
+                                                                    class="lesserP" 
+                                                                    id="extPrefMaxPrice" 
+                                                                    placeholder="3.50" 
+                                                                    style="width: calc(30px + 3dvw); border: none !important; box-shadow: none !important; padding: 0 !important; height: 100% !important; text-align: center;">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- ==========================================================================
+                                                    SUBNAV ACCESSIBILITY ACCORDION
+                                                    ========================================================================== -->
+                                                <div class="subNavRow subNavRow2" data-target="#extSubNav-accessibility" data-slug="#extSubMore-accessibility">
+                                                    <span class="subNavItem">Accessibility</span>
+                                                    <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="extSubMore-accessibility"></i>
+                                                </div>
+
+                                                <div class="subNavMore" id="extSubNav-accessibility" style="display: none;">
+                                                    <hr class="subNavHr">
+                                                    <div class="subNavMoreBox">
+                                                        
+                                                        <!-- Accessibility Dropdown 1: Interactive Map Theme Switcher -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Map Theme</span>
+                                                            <select class="lesserP" id="extPrefMapSkin" class="subSmallSelect">
+                                                                <option value="google">Google Light</option>
+                                                                <option value="iphone">iPhone iOS (Clean)</option>
+                                                                <option value="midnight">Jawg Charcoal (Dark)</option>
+                                                                <option value="matrix">Jawg Neon (Matrix)</option>
+                                                                <option value="navigation">Waze Nav (Tactical)</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Accessibility 4: Live UI Color Theme Switcher -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Color Theme</span>
+                                                            <select class="lesserP subSmallSelect" id="extPrefColorTheme">
+                                                                <option value="intLightNorm">Light Standard</option>
+                                                                <option value="intLightNeon">Light Neon</option>
+                                                                <option value="dark">Dark Standard</option>
+                                                                <option value="darkNeon">Dark Neon</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Accessibility 3: Text Sizing Magnifier -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Marker Bubble Size</span>
+                                                            <select class="lesserP subSmallSelect" id="extPrefTextSize">
+                                                                <option value="small">Small</option>
+                                                                <option value="normal" selected>Standard</option>
+                                                                <option value="large">Large Text</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- NEW Accessibility 4: Marker Visual Contrast Contrast -->
+                                                        <div class="subNavRow2" style="width: 100%;">
+                                                            <span class="lesserP subNavItem">Marker Contrast</span>
+                                                            <select class="lesserP subSmallSelect" id="extPrefMarkerContrast">
+                                                                <option value="normal">Standard</option>
+                                                                <option value="high">High Opacity / Bold</option>
+                                                            </select>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                        <!--subNavAccount-->
+                                        <div class="subNavRow" data-target="#extSubNav-account" data-slug="#extSubMore-account">
+                                            <span class="subNavItem">Account</span>
+                                            <i class="IconC subNavButton subMoreToggle fa-solid fa-chevron-down" id="extSubMore-account"></i>
+                                        </div>
+                                        <!--subNavMore-->
+                                        <div class="subNavMore" id="extSubNav-account" style="display: none;">
+                                            <hr class="subNavHr">
+                                            <div class="subNavMoreBox">
+                                                <div class="subNavRow2">
+                                                    <span class="subNavItem">My Account</span>
+                                                    <i class="IconC subNavButton subPlusButton">+</i>
+                                                </div>
+                                                <div class="subNavRow2">
+                                                    <span class="subNavItem">Create Account</span>
+                                                    <i class="IconC subNavButton subPlusButton">+</i>
+                                                </div>
+                                                <div class="subNavRow2">
+                                                    <span class="subNavItem">Sign In</span>
+                                                    <i class="IconC subNavButton subPlusButton">+</i>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!--subNavHelp-->
-                                    <div class="subNavRow" data-target="#extSubNav-help" data-slug="#extSubMore-help">
-                                        <span class="subNavItem">Help</span>
-                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-help"></i>
+                                    <div class="subNav-adBox" style="display: none;">
                                     </div>
-                                    <!--subNavMore-->
-                                    <div class="subNavMore" id="extSubNav-help" style="display: none;">
-                                        <hr class="subNavHr">
-                                        <div class="subNavMoreBox">
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">FAQs</span>
-                                                <i class="subNavButton subPlusButton">+</i>
-                                            </div>
-                                        </div>
-                                    </div>         
-                                    
-                                    <!--subNavSettings-->
-                                    <div class="subNavRow" data-target="#extSubNav-settings" data-slug="#extSubMore-settings">
-                                        <span class="subNavItem">Settings</span>
-                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-settings"></i>
-                                    </div>
-                                    <!--subNavMore-->
-                                    <div class="subNavMore" id="extSubNav-settings" style="display: none;">
-                                        <hr class="subNavHr">
-                                        <div class="subNavMoreBox">
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">Accessibility</span>
-                                                <i class="subNavButton subPlusButton">+</i>
-                                            </div>
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">Preferences</span>
-                                                <i class="subNavButton subPlusButton">+</i>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!--subNavAccount-->
-                                    <div class="subNavRow" data-target="#extSubNav-account" data-slug="#extSubMore-account">
-                                        <span class="subNavItem">Account</span>
-                                        <i class="subNavButton displayIcon subMoreToggle fa-solid fa-chevron-down" id="extSubMore-account"></i>
-                                    </div>
-                                    <!--subNavMore-->
-                                    <div class="subNavMore" id="extSubNav-account" style="display: none;">
-                                        <hr class="subNavHr">
-                                        <div class="subNavMoreBox">
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">My Account</span>
-                                                <i class="subNavButton subPlusButton">+</i>
-                                            </div>
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">Create Account</span>
-                                                <i class="subNavButton subPlusButton">+</i>
-                                            </div>
-                                            <div class="subNavRow2">
-                                                <span class="subNavItem">Sign In</span>
-                                                <i class="subNavButton subPlusButton">+</i>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                 </div>
 
                             </div>
@@ -2635,7 +2840,7 @@
                                 </div>
 
                                 <!-- Editorial Block: Fuel Market Trends & News Ticker -->
-                                <section class="part" style="width: 100%; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                <section class="part" style="flex-grow: 1; height: 100%; width: 100%; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
                                     <h3>Crude Analysis & Trends</h3>
                                     <hr>
                                     <div class="column" style="width: 100%; align-items: flex-start; gap: 6px; margin-top: 4px; background: transparent; border: none; box-shadow: none;">
@@ -3080,9 +3285,9 @@
                 <div class="filterForm" id="sortList" style="display: none;">
                     <div class="filterRow" style="display: flex; flex-direction: column; gap: 12px; padding: 15px;">
                         <label class="lesserP" style="font-weight: 600;">Sort Stations By:</label>
-                        <select id="sortPreferenceSelect" class="form-control" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd; color: #333;">
-                            <option value="price">Sort by: Lowest Price</option>
-                            <option value="distance">Sort by: Closest Distance</option>
+                        <select id="sortPreferenceSelect" class="form-control" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; color: #333;">
+                            <option value="price" style="color: #333;" selected>Sort by: Lowest Price</option>
+                            <option value="distance" style="color: #333;">Sort by: Closest Distance</option>
                         </select>
                     </div>
                     <!-- Add this where your sidebar container is located in your HTML -->
@@ -3269,6 +3474,8 @@
                     '.station-card-body': { background: 'linear-gradient(178deg, #fff 0%, #eceef2 100%)' },
                     '.station-card-footer': { background: 'transparent', 'border-top': '1px solid #eceef2', color: `${black1}` },
                     '.station-card-distance': { color: `${cobalt1}` },
+
+                    '#Extended': { background: `${white2}`, border: `1.5px solid ${grey1}` },
                 },
 
                 intLightNeon: {
@@ -3373,6 +3580,8 @@
 
                     '.station-card-footer': { background: 'transparent', 'border-top': `1px solid ${whiteBlueNeon}`, color: `${cobaltDark}` },
                     '.station-card-distance': { color: `${cobalt1}` },
+
+                    '#Extended': { background: `${white1}`, border: `1.5px solid ${cobalt2}`, 'box-shadow': `0 0 25px rgba(7, 91, 175, 0.22), 0 0 10px rgba(34, 116, 199, 0.15), inset 0 0 12px ${whiteBlueNeon}` },
                 },
 
 
@@ -3476,7 +3685,9 @@
                     '.station-address': { color: `${white2}` },
                     '.station-card-body': { background: 'transparent' },
                     '.station-card-footer': { background: 'transparent', 'border-top': '1px solid rgba(255, 255, 255, 0.1)', color: `${white2}` },
-                    '.station-card-distance': { color: `${white1}` }
+                    '.station-card-distance': { color: `${white1}` },
+
+                    '#Extended': { background: `rgba(18, 20, 24, 1)` },
                 },
 
                 darkNeon: {
@@ -3579,7 +3790,9 @@
                     '.station-address': { color: `${whiteBlue}` },
                     '.station-card-body': { background: 'transparent' },
                     '.station-card-footer': { background: 'transparent', 'border-top': `1.5px solid ${cobaltDark}`, color: `${whiteBlue}` },
-                    '.station-card-distance': { color: `${whiteBlueNeon}` }
+                    '.station-card-distance': { color: `${whiteBlueNeon}` },
+
+                    '#Extended': { background: `{black1}` },
                 },
             };
 
